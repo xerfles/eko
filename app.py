@@ -20,7 +20,7 @@ GERCEKLESEN_3_AYLIK = 14.40
 TCMB_HEDEF = 22.0
 MEVCUT_FAIZ = 37.0 
 
-st.set_page_config(page_title="MacroVision v12.4 Elite", layout="wide")
+st.set_page_config(page_title="MacroVision v12.5 Elite", layout="wide")
 
 # --- 🧠 OTURUM HAFIZASI ---
 if 'd_val' not in st.session_state: st.session_state.d_val = 15
@@ -29,7 +29,7 @@ if 'k_val' not in st.session_state: st.session_state.k_val = 35
 if 'u_val' not in st.session_state: st.session_state.u_val = 20
 
 # --- 🔭 ÜST PANEL ---
-st.title("🛰️ MacroVision v12.4: Stratejik Karar Destek Sistemi")
+st.title("🛰️ MacroVision v12.5: Stratejik Karar Destek Sistemi")
 
 with st.expander("🤔 Enflasyon ve Alım Gücü Analizi Hakkında"):
     st.markdown("""
@@ -93,13 +93,25 @@ with col_out:
     st.write("---")
     c1, c2 = st.columns(2)
     with c1:
-        st.write("### 📉 1.000 TL'nin Akıbeti")
+        st.write("### 📉 1.000 TL'nin Yolculuğu")
         st.title(f"{bin_tl_kalan:.2f} TL")
-        # 🟢 Küçücük bir Bilimsel Not (Yeni)
+        
+        # 🟢 GENİŞLETİLMİŞ ZAMAN MAKİNESİ (2020 - 2026)
+        st.write("**🕰️ Zaman Makinesi (Sepet Fiyatı):**")
+        st.markdown(f"""
+        * **2020:** 75 TL 🟢
+        * **2021:** 95 TL
+        * **2022:** 185 TL
+        * **2023:** 350 TL
+        * **2024:** 680 TL
+        * **2025:** 890 TL
+        * **BUGÜN:** 1.000 TL 🔵
+        * **2026 SONU:** {1000 * (1 + res_total/100):.0f} TL 🔴
+        """)
+        
         kur_etkisi = (d_a * w[0]) / (res_total if res_total > 0 else 1) * 100
-        st.caption(f"💡 Tahminindeki enflasyonun **%{kur_etkisi:.1f}** kadarı doğrudan dolar artışından kaynaklanıyor.")
-        st.write("**🕰️ Zaman Makinesi:**")
-        st.caption(f"2022'de bu sepet yaklaşık **185 TL** idi.")
+        st.caption(f"💡 Tahminindeki enflasyonun %{kur_etkisi:.1f}'i dolardan geliyor.")
+
     with c2:
         gauge = go.Figure(go.Indicator(mode = "gauge+number", value = alim_kaybi, title = {'text': "Değer Kaybı (%)"}, gauge = {'axis': {'range': [0, 100]}, 'bar': {'color': "#e74c3c"}}))
         gauge.update_layout(height=230, margin=dict(l=20, r=20, t=50, b=20))
@@ -118,9 +130,9 @@ st_col1, st_col2 = st.columns([2, 1])
 
 with st_col1:
     if res_total > MEVCUT_FAIZ:
-        st.error(f"📍 **Negatif Reel Getiri:** Tahminin mevduat faizinin üzerinde. Paran bankada eriyor olabilir.")
+        st.error(f"📍 **Negatif Reel Getiri:** Tahminin mevduat faizinin üzerinde. Paran bankada eriyor.")
     else:
-        st.success(f"📍 **Pozitif Reel Getiri:** Beklentin faizden düşük. Bu senaryoda TL mevduat kazançlı duruyor.")
+        st.success(f"📍 **Pozitif Reel Getiri:** Beklentin faizden düşük. TL mevduat kazançlı duruyor.")
 
 with st_col2:
     if st.button("💾 ANALİZİ KAYDET", type="primary", use_container_width=True):
