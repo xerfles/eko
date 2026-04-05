@@ -20,7 +20,7 @@ GERCEKLESEN_3_AYLIK = 14.40
 TCMB_HEDEF = 22.0
 MEVCUT_FAIZ = 37.0 
 
-st.set_page_config(page_title="MacroVision v14.0 Ultimate", layout="wide")
+st.set_page_config(page_title="MacroVision v14.1 Ultimate", layout="wide")
 
 # --- 🧠 OTURUM HAFIZASI ---
 if 'd_val' not in st.session_state: st.session_state.d_val = 15
@@ -29,7 +29,7 @@ if 'k_val' not in st.session_state: st.session_state.k_val = 35
 if 'u_val' not in st.session_state: st.session_state.u_val = 20
 
 # --- 🔭 ÜST PANEL ---
-st.title("🛰️ MacroVision v14.0: Ultimate Ekonomik Simülasyon")
+st.title("🛰️ MacroVision v14.1: Ultimate Ekonomik Simülasyon")
 
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("💵 Dolar (Spot)", f"{GUNCEL_DOLAR} TL")
@@ -45,8 +45,6 @@ col_in, col_out = st.columns([1, 2])
 with col_in:
     st.subheader("⚙️ Senaryo Modelleme")
     u_name = st.text_input("Analist Adı:", "Analist_01")
-    
-    # 🟢 FİKİR 3: Harcama Sepeti Özelleştirmesi (Custom Profil eklendi)
     u_prof = st.selectbox("Harcama Sepeti Profili:", ["Öğrenci", "Emekli", "Çalışan", "Kamu Personeli", "Esnaf", "Özel (Kendi Ağırlığım)"])
     
     st.write("**🚀 Hızlı Ayarlar:**")
@@ -69,7 +67,6 @@ with col_in:
     risk_f = st.radio("⚠️ Temel Risk Odağı:", ["Doların Fırlaması", "Fiyat Artışları", "Lojistik Zamları", "Hizmet Zamları"])
 
 # --- 🧮 HESAPLAMA MOTORU ---
-# Özel profil seçilirse ağırlıklar eşit dağıtılır veya kullanıcıya bırakılır
 weights = {
     "Öğrenci": [0.2, 0.25, 0.40, 0.15], 
     "Emekli": [0.10, 0.50, 0.30, 0.10], 
@@ -79,7 +76,14 @@ weights = {
     "Özel (Kendi Ağırlığım)": [0.25, 0.25, 0.25, 0.25]
 }
 w = weights[u_prof]
-res_9ay = (d_a * w[0] + g_a * w[1] + k_a * w[2] + u_a * w[3])
+
+# Her kalemin enflasyona katkısını hesapla
+katki_dolar = d_a * w[0]
+katki_gida = g_a * w[1]
+katki_kira = k_a * w[2]
+katki_ulasim = u_a * w[3]
+
+res_9ay = katki_dolar + katki_gida + katki_kira + katki_ulasim
 res_total = GERCEKLESEN_3_AYLIK + res_9ay
 tahmini_kur_tl = GUNCEL_DOLAR * (1 + d_a/100)
 alim_kaybi = (1 - (1 / (1 + res_total/100))) * 100
@@ -103,9 +107,17 @@ with col_out:
         st.markdown(f"**Ekonomik Ateş Ölçer:**")
         st.markdown(f'<div style="background-color: lightgrey; border-radius: 5px;"><div style="background-color: {bar_color}; width: {min(res_total, 100)}%; height: 20px; border-radius: 5px;"></div></div>', unsafe_allow_html=True)
         
-        # 🟢 FİKİR 1: Yaşama Rehberi & Katkı Analizi
-        den = res_9ay if res_9ay > 0 else 1
-        st.info(f"💡 **Rehber:** Bütçeni en çok %{(max(d_a*w[0], g_a*w[1], k_a*w[2], u_a*w[3])/den)*100:.1f} pay ile '{risk_f}' etkiliyor. Tasarruf için bu kalemi dengele!")
+        # 🟢 DİNAMİK REHBER DÜZELTİLDİ: En yüksek katkıyı bulur
+        katkilar = {
+            "Dolar Kuru": katki_dolar,
+            "Gıda Harcamaları": katki_gida,
+            "Kira Bedeli": katki_kira,
+            "Ulaşım Masrafları": katki_ulasim
+        }
+        max_katki_ad = max(katkilar, key=katkilar.get)
+        max_katki_pay = (katkilar[max_katki_ad] / (res_9ay if res_9ay > 0 else 1)) * 100
+        
+        st.info(f"💡 **Rehber:** Senin bütçeni en çok **%{max_katki_pay:.1f}** pay ile **'{max_katki_ad}'** etkiliyor. Bu alandaki zamlara karşı önlem almalısın!")
 
     with c2:
         gauge = go.Figure(go.Indicator(mode = "gauge+number", value = alim_kaybi, title = {'text': "Değer Kaybı (%)"}, gauge = {'axis': {'range': [0, 100]}, 'bar': {'color': "#e74c3c"}}))
@@ -114,44 +126,10 @@ with col_out:
 
 st.divider()
 
-# 🟢 FİKİR 4: Görselleştirilmiş Zaman Tüneli Grafiği
+# --- 🕰️ ZAMAN TÜNELİ GRAFİĞİ ---
 st.subheader("🕰️ Zaman Tüneli: 1.000 TL'nin Erimeden Önceki Hali")
 history_data = {
     "Yıl": ["2020", "2021", "2022", "2023", "2024", "2025", "BUGÜN", "2026 SONU"],
     "Sepet Değeri (TL)": [75, 95, 185, 350, 680, 890, 1000, 1000 * (1 + res_total/100)]
 }
-df_line = pd.DataFrame(history_data)
-fig_line = px.line(df_line, x="Yıl", y="Sepet Değeri (TL)", text="Sepet Değeri (TL)", markers=True)
-fig_line.update_traces(textposition="top center", line_color="#e74c3c")
-st.plotly_chart(fig_line, use_container_width=True)
-
-# 🟢 FİKİR 5: Oyunlaştırma (Liderlik Tablosu Taslağı)
-st.sidebar.subheader("🏆 Analist Liderlik Tablosu")
-if os.path.exists(DB_FILE):
-    df_rank = pd.read_csv(DB_FILE)
-    st.sidebar.dataframe(df_rank[['Katılımcı', 'Yıl_Sonu_Toplam']].sort_values(by="Yıl_Sonu_Toplam").head(5))
-
-# --- 💾 KAYIT VE FİKİR 2: Sosyal Paylaşım Kartı ---
-if st.button("💾 ANALİZİ KAYDET VE KIYASLA", type="primary", use_container_width=True):
-    save_data(u_name, u_prof, res_9ay, res_total, tahmini_kur_tl, risk_f, alim_kaybi, bin_tl_kalan)
-    st.balloons()
-    
-    if os.path.exists(DB_FILE):
-        df_hist = pd.read_csv(DB_FILE)
-        avg_total = df_hist['Yıl_Sonu_Toplam'].mean()
-        
-        # Sosyal Kart Görünümü
-        st.success(f"""
-        ### 📇 Beklenti Kartın Hazır!
-        **Analist:** {u_name} | **Profil:** {u_prof}
-        **Yıl Sonu Beklentisi:** %{res_total:.2f}
-        **Toplum Ortalaması:** %{avg_total:.2f}
-        *Analizin başarıyla kaydedildi.*
-        """)
-
-# --- 🛡️ ADMIN ---
-st.sidebar.markdown("---")
-admin_key = st.sidebar.text_input("🔐 Admin", type="password")
-if admin_key == "alper2026":
-    if os.path.exists(DB_FILE):
-        st.dataframe(pd.read_csv(DB_FILE), use_container_width=True)
+df_line = pd.DataFrame(history_data
