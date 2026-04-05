@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 
 # --- 📁 VERİ YÖNETİMİ ---
-DB_FILE = 'macrovision_v11_elite.csv'
+DB_FILE = 'macrovision_v12_final.csv'
 
 def save_data(isim, profil, beklenti_9ay, toplam, dolar, risk, alim_kaybi, erime):
     cols = ['Tarih', 'Katılımcı', 'Profil', '9_Ay_Enf', 'Yıl_Sonu_Toplam', 'Dolar_Beklentisi', 'Ana_Risk', 'Değer_Kaybı_Yüzde', 'Bin_TL_Kalan']
@@ -20,14 +20,15 @@ GERCEKLESEN_3_AYLIK = 14.40
 TCMB_HEDEF = 22.0
 MEVCUT_FAIZ = 37.0 
 
-st.set_page_config(page_title="MacroVision v11 Elite", layout="wide")
+st.set_page_config(page_title="MacroVision v12 Elite", layout="wide")
 
-# --- 🛰️ ÜST PANEL ---
-st.title("🛰️ MacroVision v11: Ekonomik Beklenti & Strateji Paneli")
-with st.expander("🤔 Bu Uygulama Neyi Ölçer? (Halk İçin Özet)"):
+# --- 🔭 ÜST PANEL ---
+st.title("🛰️ MacroVision v12: Stratejik Beklenti & Zaman Makinesi")
+
+with st.expander("🤔 Enflasyon ve Alım Gücü Hakkında", expanded=False):
     st.markdown("""
-    Enflasyon, paranızın 'satın alma gücünün' erimesidir. Bu panel, senin tahminlerine göre 
-    **bugün 1.000 TL'ye alabildiğin bir pazar sepetinin yıl sonunda kaç TL olacağını** ve bu süreçte senin için en mantıklı korunma yönteminin ne olabileceğini analiz eder.
+    Bu uygulama, 2026 yılı sonu için yaptığın tahminlerin **cebindeki parayı nasıl erittiğini** bilimsel verilerle gösterir. 
+    Ayrıca seçtiğin senaryonun resmi hedeflerden ne kadar saptığını analiz eder.
     """)
 
 m1, m2, m3, m4 = st.columns(4)
@@ -38,18 +39,29 @@ m4.metric("🏦 Mevduat Faizi", f"%{MEVCUT_FAIZ}")
 
 st.divider()
 
-# --- ⚙️ GİRİŞ ---
+# --- ⚙️ GİRİŞ VE HAZIR SENARYOLAR ---
 col_in, col_out = st.columns([1, 2])
+
 with col_in:
-    st.subheader("⚙️ Senin Senaryon")
-    u_name = st.text_input("Analist Takma Adı:", "Analist_001")
+    st.subheader("⚙️ Senaryo Modelleme")
+    u_name = st.text_input("Analist Adı:", "Analist_01")
     u_prof = st.selectbox("Harcama Sepeti:", ["Öğrenci", "Emekli", "Çalışan", "Kamu Personeli", "Esnaf"])
+    
     st.write("---")
-    d_a = st.slider("💵 Dolar Kuru Artışı (%)", 0, 100, 15)
-    g_a = st.slider("🛒 Gıda ve Market (%)", 0, 100, 25)
-    k_a = st.slider("🏠 Kira ve Barınma (%)", 0, 100, 35)
-    u_a = st.slider("🚗 Ulaşım ve Akaryakıt (%)", 0, 100, 20)
-    risk_f = st.radio("⚠️ En Çok Korktuğunuz Risk:", ["Doların Birden Fırlaması", "Fiyatların Durdurulamadan Artması", "Lojistik ve Nakliye Zamları", "Hizmet/Dışarıda Yemek Zamları"])
+    # 🟢 HIZLI SENARYO BUTONLARI (Yeni Özellik)
+    st.write("**🚀 Hızlı Ayarlar:**")
+    s_col1, s_col2, s_col3 = st.columns(3)
+    if s_col1.button("🌸 İyimser"): d_val, g_val, k_val, u_val = 5, 10, 15, 10
+    elif s_col2.button("📊 Piyasa"): d_val, g_val, k_val, u_val = 15, 25, 30, 20
+    elif s_col3.button("🌋 Kriz"): d_val, g_val, k_val, u_val = 50, 70, 90, 60
+    else: d_val, g_val, k_val, u_val = 15, 25, 35, 20
+
+    d_a = st.slider("💵 Dolar Artışı (%)", 0, 100, d_val)
+    g_a = st.slider("🛒 Gıda Artışı (%)", 0, 100, g_val)
+    k_a = st.slider("🏠 Kira Artışı (%)", 0, 100, k_val)
+    u_a = st.slider("🚗 Ulaşım Artışı (%)", 0, 100, u_val)
+    
+    risk_f = st.radio("⚠️ Temel Risk:", ["Doların Fırlaması", "Fiyat Artışları", "Lojistik Zamları", "Hizmet Zamları"])
 
 # --- 🧮 HESAPLAMA ---
 weights = {"Öğrenci": [0.2, 0.25, 0.40, 0.15], "Emekli": [0.10, 0.50, 0.30, 0.10], "Çalışan": [0.20, 0.30, 0.30, 0.20], "Kamu Personeli": [0.20, 0.30, 0.30, 0.20], "Esnaf": [0.35, 0.25, 0.20, 0.20]}
@@ -62,20 +74,21 @@ bin_tl_kalan = 1000 * (1 / (1 + res_total/100))
 
 # --- 🏁 SONUÇLAR ---
 with col_out:
-    st.subheader("🏁 Analiz Çıktıları")
+    st.subheader("🏁 Analiz ve Gelecek Projeksiyonu")
     r1, r2, r3 = st.columns(3)
-    r1.metric("📈 Yıl Sonu Toplam Enf.", f"%{res_total:.2f}")
+    r1.metric("📈 Yıl Sonu Enflasyon", f"%{res_total:.2f}")
     r2.metric("📉 Alım Gücü Kaybı", f"%{alim_kaybi:.1f}")
-    r3.metric("🎯 Beklenti Sapması", f"{res_total - TCMB_HEDEF:.1f} Puan", delta="Hedefin Üzerinde", delta_color="inverse")
+    r3.metric("🎯 Beklenti Sapması", f"{res_total - TCMB_HEDEF:.1f} Puan", delta="Hedef Üstü", delta_color="inverse")
 
     st.write("---")
     c1, c2 = st.columns(2)
     with c1:
-        st.write("### 📉 1.000 TL'nin Yıl Sonu Değeri")
+        st.write("### 📉 1.000 TL'nin Yolculuğu")
         st.title(f"{bin_tl_kalan:.2f} TL")
-        # 🛒 SEPET KARŞILAŞTIRMASI
-        st.write("**🛒 Sembolik Market Sepeti Tahmini:**")
-        st.write(f"- Bugün **1.000 TL** olan sepet yıl sonunda **{1000 * (1 + res_total/100):.0f} TL** olur.")
+        # 🟢 ZAMAN MAKİNESİ (Yeni Özellik)
+        st.write("**🕰️ Zaman Makinesi:**")
+        st.caption(f"Bugünkü 1.000 TL'lik bu sepet, 2022 yılında sadece **185 TL** civarındaydı.")
+        st.write(f"🚀 Yıl sonunda ise **{1000 * (1 + res_total/100):.0f} TL** olacak.")
     with c2:
         gauge = go.Figure(go.Indicator(mode = "gauge+number", value = alim_kaybi, title = {'text': "Paranın Değer Kaybı (%)"}, gauge = {'axis': {'range': [0, 100]}, 'bar': {'color': "#e74c3c"}}))
         gauge.update_layout(height=230, margin=dict(l=20, r=20, t=50, b=20))
@@ -83,16 +96,20 @@ with col_out:
 
 st.divider()
 
-# --- 💡 STRATEJİK TAVSİYE PANELİ ---
-st.subheader("💡 Kişiselleştirilmiş Ekonomik Strateji")
-if res_total > MEVCUT_FAIZ:
-    st.error(f"📍 **Dikkat {u_name}:** Tahminine göre enflasyon faizden yüksek. Paran bankada beklerse erir! Tüketimini öne çekmek veya varlıklarını korumak mantıklı olabilir.")
-else:
-    st.success(f"📍 **Analiz {u_name}:** Beklentin faizden düşük. Bu durumda paranı mevduatta tutmak sana 'Reel Getiri' sağlayabilir.")
+# --- 💡 STRATEJİ PANELİ ---
+st.subheader("💡 {u_name} İçin Stratejik Tavsiye")
+st_col1, st_col2 = st.columns([2, 1])
 
-if st.button("💾 ANALİZİ KAYDET", type="primary"):
-    save_data(u_name, u_prof, res_9ay, res_total, tahmini_kur_tl, risk_f, alim_kaybi, bin_tl_kalan)
-    st.balloons()
+with st_col1:
+    if res_total > MEVCUT_FAIZ:
+        st.error(f"📍 **Negatif Reel Getiri:** Tahminin %{MEVCUT_FAIZ} olan banka faizinden yüksek. Paran bankada bekledikçe değer kaybediyor.")
+    else:
+        st.success(f"📍 **Pozitif Reel Getiri:** Beklentin banka faizinin altında. Paran mevduatta değerini koruyabilir.")
+
+with st_col2:
+    if st.button("💾 ANALİZİ KAYDET", type="primary", use_container_width=True):
+        save_data(u_name, u_prof, res_9ay, res_total, tahmini_kur_tl, risk_f, alim_kaybi, bin_tl_kalan)
+        st.balloons()
 
 # --- 🛡️ ADMIN ---
 st.sidebar.markdown("---")
@@ -101,4 +118,3 @@ if admin_key == "alper2026":
     if os.path.exists(DB_FILE):
         df = pd.read_csv(DB_FILE)
         st.dataframe(df, use_container_width=True)
-        st.plotly_chart(px.scatter(df, x="Dolar_Beklentisi", y="Yıl_Sonu_Toplam", size="Değer_Kaybı_Yüzde", color="Profil", title="Kur/Enflasyon Korelasyonu"))
