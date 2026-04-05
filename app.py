@@ -122,4 +122,12 @@ with col_out:
         st.plotly_chart(gauge, use_container_width=True)
 
     fig_radar = go.Figure()
-    fig_radar.add_trace(go.Scatterpolar(r=[d_a, g_a, k_a, u_a], theta=['Dolar','Gıda','K
+    fig_radar.add_trace(go.Scatterpolar(r=[d_a, g_a, k_a, u_a], theta=['Dolar','Gıda','Kira','Ulaşım'], fill='toself', line_color='#2ecc71'))
+    fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 100])), height=300)
+    st.plotly_chart(fig_radar, use_container_width=True)
+
+st.divider()
+
+if st.button("💾 ANALİZİ KAYDET", type="primary", use_container_width=True):
+    save_data(u_name, u_prof, res_9ay, res_total, tahmini_kur_tl, risk_f, alim_kaybi, bin_tl_kalan)
+    st.balloons()
