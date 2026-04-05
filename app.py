@@ -19,7 +19,7 @@ GERCEKLESEN_3_AYLIK = 14.40
 TCMB_HEDEF = 22.0
 MEVCUT_FAIZ = 37.0 
 
-st.set_page_config(page_title="MacroVision v13.1 Elite", layout="wide")
+st.set_page_config(page_title="MacroVision v13.2 Elite", layout="wide")
 
 # --- 🧠 OTURUM HAFIZASI ---
 if 'd_val' not in st.session_state: st.session_state.d_val = 15
@@ -28,7 +28,7 @@ if 'k_val' not in st.session_state: st.session_state.k_val = 35
 if 'u_val' not in st.session_state: st.session_state.u_val = 20
 
 # --- 🔭 ÜST PANEL ---
-st.title("🛰️ MacroVision v13.1: Stratejik Karar Destek Sistemi")
+st.title("🛰️ MacroVision v13.2: Stratejik Karar Destek Sistemi")
 
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("💵 Dolar (Spot)", f"{GUNCEL_DOLAR} TL")
@@ -63,6 +63,10 @@ with col_in:
     k_a = st.slider("🏠 Kira Artışı (%)", 0, 100, key='k_val')
     u_a = st.slider("🚗 Ulaşım Artışı (%)", 0, 100, key='u_val')
 
+    # 🟢 YENİ: Dinamik Senaryo İpucu
+    if d_a > 20:
+        st.info(f"💡 Doları %{(d_a-10)} seviyesine çekersen alım gücün yaklaşık %3 daha korunur.")
+
     risk_f = st.radio("⚠️ Temel Risk:", ["Doların Fırlaması", "Fiyat Artışları", "Lojistik Zamları", "Hizmet Zamları"])
 
 # --- 🧮 HESAPLAMA ---
@@ -87,16 +91,24 @@ with col_out:
     with c1:
         st.write("### 📉 1.000 TL'nin Yolculuğu")
         st.title(f"{bin_tl_kalan:.2f} TL")
+        
+        # 🟢 YENİ: Isı Haritası (Progress Bar)
+        bar_color = "green" if res_total < 30 else ("orange" if res_total < 55 else "red")
+        st.markdown(f"**Ekonomik Ateş Ölçer:**")
+        st.markdown(f'<div style="background-color: lightgrey; border-radius: 5px;"><div style="background-color: {bar_color}; width: {min(res_total, 100)}%; height: 20px; border-radius: 5px;"></div></div>', unsafe_allow_html=True)
+        
         st.write("**🕰️ Zaman Makinesi:**")
         st.markdown(f"* 2020: 75 TL | 2022: 185 TL | 2024: 680 TL\n* **2026 SONU: {1000 * (1 + res_total/100):.0f} TL** 🔴")
-
-        den = res_9ay if res_9ay > 0 else 1
-        st.info(f"💡 **Katkı Analizi:** Dolar: %{(d_a*w[0]/den)*100:.1f} | Gıda: %{(g_a*w[1]/den)*100:.1f} | Kira: %{(k_a*w[2]/den)*100:.1f}")
 
     with c2:
         gauge = go.Figure(go.Indicator(mode = "gauge+number", value = alim_kaybi, title = {'text': "Değer Kaybı (%)"}, gauge = {'axis': {'range': [0, 100]}, 'bar': {'color': "#e74c3c"}}))
         gauge.update_layout(height=230, margin=dict(l=20, r=20, t=50, b=20))
         st.plotly_chart(gauge, use_container_width=True)
+
+    fig_radar = go.Figure()
+    fig_radar.add_trace(go.Scatterpolar(r=[d_a, g_a, k_a, u_a], theta=['Dolar','Gıda','Kira','Ulaşım'], fill='toself', line_color='#2ecc71'))
+    fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 100])), height=300)
+    st.plotly_chart(fig_radar, use_container_width=True)
 
 st.divider()
 
@@ -109,11 +121,7 @@ if st.button("💾 ANALİZİ KAYDET VE KIYASLA", type="primary", use_container_w
         df_hist = pd.read_csv(DB_FILE)
         avg_total = df_hist['Yıl_Sonu_Toplam'].mean()
         fark = res_total - avg_total
-        
-        if fark > 0:
-            st.warning(f"✅ Analizin kaydedildi! Diğer katılımcıların ortalama beklentisinden (%{avg_total:.1f}) daha **karamsarsın** (Fark: {fark:.1f} puan).")
-        else:
-            st.success(f"✅ Analizin kaydedildi! Diğer katılımcıların ortalama beklentisinden (%{avg_total:.1f}) daha **iyimsersin** (Fark: {abs(fark):.1f} puan).")
+        st.warning(f"✅ Analizin kaydedildi! Diğer katılımcıların ortalama beklentisi %{avg_total:.1f}. Fark: {fark:.1f} puan.")
 
 # --- 🛡️ ADMIN ---
 st.sidebar.markdown("---")
