@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 
 # --- 📁 VERİ YÖNETİMİ ---
-DB_FILE = 'macrovision_v12_final.csv'
+DB_FILE = 'macrovision_v15_final.csv'
 
 def save_data(isim, profil, beklenti_9ay, toplam, dolar, risk, alim_kaybi, erime):
     cols = ['Tarih', 'Katılımcı', 'Profil', '9_Ay_Enf', 'Yıl_Sonu_Toplam', 'Dolar_Beklentisi', 'Ana_Risk', 'Değer_Kaybı_Yüzde', 'Bin_TL_Kalan']
@@ -14,13 +14,13 @@ def save_data(isim, profil, beklenti_9ay, toplam, dolar, risk, alim_kaybi, erime
     if not os.path.isfile(DB_FILE): data.to_csv(DB_FILE, index=False)
     else: data.to_csv(DB_FILE, mode='a', index=False, header=False)
 
-# --- 📊 2026 GÜNCEL VERİLER ---
+# --- 📊 6 NİSAN 2026 GÜNCEL VERİLER ---
 GUNCEL_DOLAR = 44.92
 GERCEKLESEN_3_AYLIK = 14.40 
 TCMB_HEDEF = 22.0
 MEVCUT_FAIZ = 37.0 
 
-st.set_page_config(page_title="MacroVision v14.2 Ultimate", layout="wide")
+st.set_page_config(page_title="MacroVision v15.0 Visionary", layout="wide")
 
 # --- 🧠 OTURUM HAFIZASI ---
 if 'd_val' not in st.session_state: st.session_state.d_val = 15
@@ -29,7 +29,7 @@ if 'k_val' not in st.session_state: st.session_state.k_val = 35
 if 'u_val' not in st.session_state: st.session_state.u_val = 20
 
 # --- 🔭 ÜST PANEL ---
-st.title("🛰️ MacroVision v14.2: Ultimate Ekonomik Simülasyon")
+st.title("🛰️ MacroVision v15.0: Stratejik Simülasyon & Analiz")
 
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("💵 Dolar (Spot)", f"{GUNCEL_DOLAR} TL")
@@ -43,9 +43,13 @@ st.divider()
 col_in, col_out = st.columns([1, 2])
 
 with col_in:
-    st.subheader("⚙️ Senaryo Modelleme")
+    st.subheader("⚙️ Senaryo ve Maaş Modelleme")
     u_name = st.text_input("Analist Adı:", "Analist_01")
-    u_prof = st.selectbox("Harcama Sepeti Profili:", ["Öğrenci", "Emekli", "Çalışan", "Kamu Personeli", "Esnaf", "Özel (Kendi Ağırlığım)"])
+    
+    # 🟢 FİKİR 2: Maaş Simülatörü Girişi
+    u_salary = st.number_input("Güncel Aylık Maaşın (TL):", min_value=17002, value=35000, step=500)
+    
+    u_prof = st.selectbox("Harcama Sepeti Profili:", ["Öğrenci", "Emekli", "Çalışan", "Kamu Personeli", "Esnaf", "Özel"])
     
     st.write("**🚀 Hızlı Ayarlar:**")
     s_col1, s_col2, s_col3 = st.columns(3)
@@ -67,14 +71,7 @@ with col_in:
     risk_f = st.radio("⚠️ Temel Risk Odağı:", ["Doların Fırlaması", "Fiyat Artışları", "Lojistik Zamları", "Hizmet Zamları"])
 
 # --- 🧮 HESAPLAMA MOTORU ---
-weights = {
-    "Öğrenci": [0.2, 0.25, 0.40, 0.15], 
-    "Emekli": [0.10, 0.50, 0.30, 0.10], 
-    "Çalışan": [0.20, 0.30, 0.30, 0.20], 
-    "Kamu Personeli": [0.20, 0.30, 0.30, 0.20], 
-    "Esnaf": [0.35, 0.25, 0.20, 0.20],
-    "Özel (Kendi Ağırlığım)": [0.25, 0.25, 0.25, 0.25]
-}
+weights = {"Öğrenci": [0.2, 0.25, 0.40, 0.15], "Emekli": [0.10, 0.50, 0.30, 0.10], "Çalışan": [0.20, 0.30, 0.30, 0.20], "Kamu Personeli": [0.20, 0.30, 0.30, 0.20], "Esnaf": [0.35, 0.25, 0.20, 0.20], "Özel": [0.25, 0.25, 0.25, 0.25]}
 w = weights[u_prof]
 
 katki_dolar = d_a * w[0]
@@ -84,54 +81,68 @@ katki_ulasim = u_a * w[3]
 
 res_9ay = katki_dolar + katki_gida + katki_kira + katki_ulasim
 res_total = GERCEKLESEN_3_AYLIK + res_9ay
-tahmini_kur_tl = GUNCEL_DOLAR * (1 + d_a/100)
 alim_kaybi = (1 - (1 / (1 + res_total/100))) * 100
 bin_tl_kalan = 1000 * (1 / (1 + res_total/100))
 
+# 🟢 Maaş Kaybı Hesabı
+reel_maas = u_salary * (1 / (1 + res_total/100))
+maas_erimesi = u_salary - reel_maas
+
 # --- 🏁 SONUÇLAR ---
 with col_out:
-    st.subheader("🏁 Analiz Çıktıları")
+    # 🟢 FİKİR 1: Dinamik Atmosfer (Enflasyona göre renk)
+    bg_color = "#d4edda" if res_total < 30 else ("#fff3cd" if res_total < 55 else "#f8d7da")
+    st.markdown(f'<div style="background-color: {bg_color}; padding: 15px; border-radius: 10px; border: 1px solid #ddd;">'
+                f'<h3 style="margin:0;">🏁 Analiz Özeti: %{res_total:.2f} Enflasyon</h3></div>', unsafe_allow_html=True)
+    
+    st.write("")
     r1, r2, r3 = st.columns(3)
-    r1.metric("📈 Yıl Sonu Enflasyon", f"%{res_total:.2f}")
-    r2.metric("📉 Alım Gücü Kaybı", f"%{alim_kaybi:.1f}")
-    r3.metric("🎯 Hedef Sapması", f"{res_total - TCMB_HEDEF:.1f} Puan", delta_color="inverse")
+    r1.metric("📉 Alım Gücü Kaybı", f"%{alim_kaybi:.1f}")
+    r2.metric("🍞 Reel Maaş Değeri", f"{reel_maas:.0f} TL", delta=f"-{maas_erimesi:.0f} TL")
+    
+    # 🟢 FİKİR 3: Dünya ile Kıyasla
+    world_status = "Arjantin Seviyesi" if res_total > 80 else ("Gelişmekte Olan" if res_total > 30 else "Global Ortalama")
+    r3.metric("🌍 Global Lig", world_status)
 
     st.divider()
     c1, c2 = st.columns(2)
     with c1:
-        st.write("### 📉 1.000 TL'nin Akıbeti")
-        st.title(f"{bin_tl_kalan:.2f} TL")
+        # 🟢 FİKİR 5: Görsel Zaman Tüneli (İkonik)
+        st.write("### 🕰️ Alım Gücü Dönüşümü (1.000 TL)")
+        st.markdown(f"""
+        * **2020:** 🧀🧀🧀🧀🧀🧀 (75 TL)
+        * **2022:** 🧀🧀🧀 (185 TL)
+        * **BUGÜN:** 🧀 (1.000 TL)
+        * **2026 SONU:** {bin_tl_kalan:.0f} TL Değerinde 🔴
+        """)
         
-        bar_color = "green" if res_total < 30 else ("orange" if res_total < 55 else "red")
-        st.markdown(f"**Ekonomik Ateş Ölçer:**")
-        st.markdown(f'<div style="background-color: lightgrey; border-radius: 5px;"><div style="background-color: {bar_color}; width: {min(res_total, 100)}%; height: 20px; border-radius: 5px;"></div></div>', unsafe_allow_html=True)
-        
-        katkilar = {"Dolar Kuru": katki_dolar, "Gıda": katki_gida, "Kira": katki_kira, "Ulaşım": katki_ulasim}
-        max_katki_ad = max(katkilar, key=katkilar.get)
-        max_katki_pay = (katkilar[max_katki_ad] / (res_9ay if res_9ay > 0 else 1)) * 100
-        
-        st.info(f"💡 **Rehber:** Bütçeni en çok **%{max_katki_pay:.1f}** pay ile **'{max_katki_ad}'** etkiliyor. Bu alana dikkat!")
+        # 🟢 FİKİR 4: Tüketim Stratejisti
+        if res_total > MEVCUT_FAIZ:
+            st.error(f"💡 **Strateji:** Enflasyon faizden yüksek. İhtiyaçlarını öteleme, önden yüklemeli tüketim mantıklı.")
+        else:
+            st.success(f"💡 **Strateji:** Beklentin faizin altında. TL mevduat değerini koruyabilir.")
 
     with c2:
         gauge = go.Figure(go.Indicator(mode = "gauge+number", value = alim_kaybi, title = {'text': "Değer Kaybı (%)"}, gauge = {'axis': {'range': [0, 100]}, 'bar': {'color': "#e74c3c"}}))
-        gauge.update_layout(height=230, margin=dict(l=20, r=20, t=50, b=20))
+        gauge.update_layout(height=230, margin=dict(l=20, r=20, t=30, b=20))
         st.plotly_chart(gauge, use_container_width=True)
 
 st.divider()
 
 # --- 🕰️ ZAMAN TÜNELİ GRAFİĞİ ---
-st.subheader("🕰️ Zaman Tüneli: 1.000 TL'nin Erimeden Önceki Hali")
-history_data = {
-    "Yıl": ["2020", "2021", "2022", "2023", "2024", "2025", "BUGÜN", "2026 SONU"],
-    "Sepet Değeri (TL)": [75, 95, 185, 350, 680, 890, 1000, 1000 * (1 + res_total/100)]
-}
-# 🛠️ HATA BURADA DÜZELTİLDİ: Parantez kapatıldı
-df_line = pd.DataFrame(history_data)
-fig_line = px.line(df_line, x="Yıl", y="Sepet Değeri (TL)", text="Sepet Değeri (TL)", markers=True)
-fig_line.update_traces(textposition="top center", line_color="#e74c3c")
-st.plotly_chart(fig_line, use_container_width=True)
+st.subheader("📊 Fiyat Merdiveni: Sepetin 2020'den 2026'ya Tırmanışı")
+history_data = {"Yıl": ["2020", "2021", "2022", "2023", "2024", "2025", "BUGÜN", "2026 SONU"],
+                "Sepet (TL)": [75, 95, 185, 350, 680, 890, 1000, 1000 * (1 + res_total/100)]}
+st.plotly_chart(px.line(pd.DataFrame(history_data), x="Yıl", y="Sepet (TL)", text="Sepet (TL)", markers=True).update_traces(line_color="#e74c3c"), use_container_width=True)
+
+# 🟢 FİKİR 6: Isı Haritalı Anket (Özet)
+if os.path.exists(DB_FILE):
+    st.sidebar.subheader("🌍 Toplumsal Beklenti Dağılımı")
+    df_db = pd.read_csv(DB_FILE)
+    st.sidebar.write(f"Ortalama Tahmin: %{df_db['Yıl_Sonu_Toplam'].mean():.1f}")
+    st.sidebar.bar_chart(df_db.groupby('Profil')['Yıl_Sonu_Toplam'].mean())
 
 # --- 💾 KAYIT ---
 if st.button("💾 ANALİZİ KAYDET VE KIYASLA", type="primary", use_container_width=True):
-    save_data(u_name, u_prof, res_9ay, res_total, tahmini_kur_tl, risk_f, alim_kaybi, bin_tl_kalan)
+    save_data(u_name, u_prof, res_9ay, res_total, GUNCEL_DOLAR*(1+d_a/100), risk_f, alim_kaybi, bin_tl_kalan)
     st.balloons()
