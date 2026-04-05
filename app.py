@@ -20,12 +20,20 @@ GERCEKLESEN_3_AYLIK = 14.40
 TCMB_HEDEF = 22.0
 MEVCUT_FAIZ = 37.0 
 
-st.set_page_config(page_title="MacroVision v12 Elite", layout="wide")
+st.set_page_config(page_title="MacroVision v12.1 Elite", layout="wide")
+
+# --- 🧠 OTURUM HAFIZASI (SESSION STATE) ---
+# Eğer hafızada değer yoksa varsayılanları ata
+if 'd_val' not in st.session_state:
+    st.session_state.d_val = 15
+    st.session_state.g_val = 25
+    st.session_state.k_val = 35
+    st.session_state.u_val = 20
 
 # --- 🔭 ÜST PANEL ---
-st.title("🛰️ MacroVision v12: Stratejik Beklenti & Zaman Makinesi")
+st.title("🛰️ MacroVision v12.1: İnteraktif Beklenti Paneli")
 
-with st.expander("🤔 Enflasyon ve Alım Gücü Hakkında", expanded=False):
+with st.expander("🤔 Enflasyon ve Alım Gücü Hakkında"):
     st.markdown("""
     Bu uygulama, 2026 yılı sonu için yaptığın tahminlerin **cebindeki parayı nasıl erittiğini** bilimsel verilerle gösterir. 
     Ayrıca seçtiğin senaryonun resmi hedeflerden ne kadar saptığını analiz eder.
@@ -39,7 +47,7 @@ m4.metric("🏦 Mevduat Faizi", f"%{MEVCUT_FAIZ}")
 
 st.divider()
 
-# --- ⚙️ GİRİŞ VE HAZIR SENARYOLAR ---
+# --- ⚙️ GİRİŞ VE HIZLI SENARYOLAR ---
 col_in, col_out = st.columns([1, 2])
 
 with col_in:
@@ -48,19 +56,32 @@ with col_in:
     u_prof = st.selectbox("Harcama Sepeti:", ["Öğrenci", "Emekli", "Çalışan", "Kamu Personeli", "Esnaf"])
     
     st.write("---")
-    # 🟢 HIZLI SENARYO BUTONLARI (Yeni Özellik)
     st.write("**🚀 Hızlı Ayarlar:**")
     s_col1, s_col2, s_col3 = st.columns(3)
-    if s_col1.button("🌸 İyimser"): d_val, g_val, k_val, u_val = 5, 10, 15, 10
-    elif s_col2.button("📊 Piyasa"): d_val, g_val, k_val, u_val = 15, 25, 30, 20
-    elif s_col3.button("🌋 Kriz"): d_val, g_val, k_val, u_val = 50, 70, 90, 60
-    else: d_val, g_val, k_val, u_val = 15, 25, 35, 20
-
-    d_a = st.slider("💵 Dolar Artışı (%)", 0, 100, d_val)
-    g_a = st.slider("🛒 Gıda Artışı (%)", 0, 100, g_val)
-    k_a = st.slider("🏠 Kira Artışı (%)", 0, 100, k_val)
-    u_a = st.slider("🚗 Ulaşım Artışı (%)", 0, 100, u_val)
     
+    # Butonlara basıldığında hafızadaki değerleri güncelle
+    if s_col1.button("🌸 İyimser"):
+        st.session_state.d_val, st.session_state.g_val, st.session_state.k_val, st.session_state.u_val = 5, 10, 15, 10
+        st.rerun()
+    if s_col2.button("📊 Piyasa"):
+        st.session_state.d_val, st.session_state.g_val, st.session_state.k_val, st.session_state.u_val = 15, 25, 30, 20
+        st.rerun()
+    if s_col3.button("🌋 Kriz"):
+        st.session_state.d_val, st.session_state.g_val, st.session_state.k_val, st.session_state.u_val = 50, 70, 90, 60
+        st.rerun()
+
+    # Sliderlar değerlerini hafızadan (session_state) alır
+    d_a = st.slider("💵 Dolar Artışı (%)", 0, 100, st.session_state.d_val, key='d_slider')
+    g_a = st.slider("🛒 Gıda Artışı (%)", 0, 100, st.session_state.g_val, key='g_slider')
+    k_a = st.slider("🏠 Kira Artışı (%)", 0, 100, st.session_state.k_val, key='k_slider')
+    u_a = st.slider("🚗 Ulaşım Artışı (%)", 0, 100, st.session_state.u_val, key='u_slider')
+    
+    # Slider elle oynatıldığında hafızayı güncelle ki butonlar bozulmasın
+    st.session_state.d_val = d_a
+    st.session_state.g_val = g_a
+    st.session_state.k_val = k_a
+    st.session_state.u_val = u_a
+
     risk_f = st.radio("⚠️ Temel Risk:", ["Doların Fırlaması", "Fiyat Artışları", "Lojistik Zamları", "Hizmet Zamları"])
 
 # --- 🧮 HESAPLAMA ---
@@ -85,7 +106,6 @@ with col_out:
     with c1:
         st.write("### 📉 1.000 TL'nin Yolculuğu")
         st.title(f"{bin_tl_kalan:.2f} TL")
-        # 🟢 ZAMAN MAKİNESİ (Yeni Özellik)
         st.write("**🕰️ Zaman Makinesi:**")
         st.caption(f"Bugünkü 1.000 TL'lik bu sepet, 2022 yılında sadece **185 TL** civarındaydı.")
         st.write(f"🚀 Yıl sonunda ise **{1000 * (1 + res_total/100):.0f} TL** olacak.")
@@ -97,7 +117,7 @@ with col_out:
 st.divider()
 
 # --- 💡 STRATEJİ PANELİ ---
-st.subheader("💡 {u_name} İçin Stratejik Tavsiye")
+st.subheader(f"💡 {u_name} İçin Stratejik Tavsiye")
 st_col1, st_col2 = st.columns([2, 1])
 
 with st_col1:
