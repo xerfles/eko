@@ -20,21 +20,21 @@ GERCEKLESEN_3_AYLIK = 14.40
 TCMB_HEDEF = 22.0
 MEVCUT_FAIZ = 37.0 
 
-st.set_page_config(page_title="MacroVision v12.2 Elite", layout="wide")
+st.set_page_config(page_title="MacroVision v12.4 Elite", layout="wide")
 
-# --- 🧠 OTURUM HAFIZASI (SESSION STATE) ---
+# --- 🧠 OTURUM HAFIZASI ---
 if 'd_val' not in st.session_state: st.session_state.d_val = 15
 if 'g_val' not in st.session_state: st.session_state.g_val = 25
 if 'k_val' not in st.session_state: st.session_state.k_val = 35
 if 'u_val' not in st.session_state: st.session_state.u_val = 20
 
 # --- 🔭 ÜST PANEL ---
-st.title("🛰️ MacroVision v12.2: Akıcı Beklenti Paneli")
+st.title("🛰️ MacroVision v12.4: Stratejik Karar Destek Sistemi")
 
-with st.expander("🤔 Enflasyon ve Alım Gücü Hakkında"):
+with st.expander("🤔 Enflasyon ve Alım Gücü Analizi Hakkında"):
     st.markdown("""
-    Bu uygulama, 2026 yılı sonu için yaptığın tahminlerin **cebindeki parayı nasıl erittiğini** bilimsel verilerle gösterir. 
-    Ayrıca seçtiğin senaryonun resmi hedeflerden ne kadar saptığını analiz eder.
+    Bu platform, 2026 yılı sonu için yaptığınız tahminlerin **reel satın alma gücü** üzerindeki etkisini bilimsel olarak ölçer. 
+    Seçtiğiniz profilin (Öğrenci, Esnaf vb.) harcama alışkanlıklarına göre sepetinizdeki erimeyi analiz eder.
     """)
 
 m1, m2, m3, m4 = st.columns(4)
@@ -45,7 +45,7 @@ m4.metric("🏦 Mevduat Faizi", f"%{MEVCUT_FAIZ}")
 
 st.divider()
 
-# --- ⚙️ GİRİŞ VE HIZLI SENARYOLAR ---
+# --- ⚙️ GİRİŞ ---
 col_in, col_out = st.columns([1, 2])
 
 with col_in:
@@ -56,7 +56,6 @@ with col_in:
     st.write("---")
     st.write("**🚀 Hızlı Ayarlar:**")
     s_col1, s_col2, s_col3 = st.columns(3)
-    
     if s_col1.button("🌸 İyimser"):
         st.session_state.d_val, st.session_state.g_val, st.session_state.k_val, st.session_state.u_val = 5, 10, 15, 10
         st.rerun()
@@ -67,7 +66,6 @@ with col_in:
         st.session_state.d_val, st.session_state.g_val, st.session_state.k_val, st.session_state.u_val = 50, 70, 90, 60
         st.rerun()
 
-    # Sliderlar (Session state ile bağlı ve akıcı)
     d_a = st.slider("💵 Dolar Artışı (%)", 0, 100, key='d_val')
     g_a = st.slider("🛒 Gıda Artışı (%)", 0, 100, key='g_val')
     k_a = st.slider("🏠 Kira Artışı (%)", 0, 100, key='k_val')
@@ -86,7 +84,7 @@ bin_tl_kalan = 1000 * (1 / (1 + res_total/100))
 
 # --- 🏁 SONUÇLAR ---
 with col_out:
-    st.subheader("🏁 Analiz ve Gelecek Projeksiyonu")
+    st.subheader("🏁 Analiz Çıktıları")
     r1, r2, r3 = st.columns(3)
     r1.metric("📈 Yıl Sonu Enflasyon", f"%{res_total:.2f}")
     r2.metric("📉 Alım Gücü Kaybı", f"%{alim_kaybi:.1f}")
@@ -95,13 +93,15 @@ with col_out:
     st.write("---")
     c1, c2 = st.columns(2)
     with c1:
-        st.write("### 📉 1.000 TL'nin Yolculuğu")
+        st.write("### 📉 1.000 TL'nin Akıbeti")
         st.title(f"{bin_tl_kalan:.2f} TL")
+        # 🟢 Küçücük bir Bilimsel Not (Yeni)
+        kur_etkisi = (d_a * w[0]) / (res_total if res_total > 0 else 1) * 100
+        st.caption(f"💡 Tahminindeki enflasyonun **%{kur_etkisi:.1f}** kadarı doğrudan dolar artışından kaynaklanıyor.")
         st.write("**🕰️ Zaman Makinesi:**")
-        st.caption(f"Bugünkü 1.000 TL'lik bu sepet, 2022 yılında sadece **185 TL** civarındaydı.")
-        st.write(f"🚀 Yıl sonunda ise **{1000 * (1 + res_total/100):.0f} TL** olacak.")
+        st.caption(f"2022'de bu sepet yaklaşık **185 TL** idi.")
     with c2:
-        gauge = go.Figure(go.Indicator(mode = "gauge+number", value = alim_kaybi, title = {'text': "Paranın Değer Kaybı (%)"}, gauge = {'axis': {'range': [0, 100]}, 'bar': {'color': "#e74c3c"}}))
+        gauge = go.Figure(go.Indicator(mode = "gauge+number", value = alim_kaybi, title = {'text': "Değer Kaybı (%)"}, gauge = {'axis': {'range': [0, 100]}, 'bar': {'color': "#e74c3c"}}))
         gauge.update_layout(height=230, margin=dict(l=20, r=20, t=50, b=20))
         st.plotly_chart(gauge, use_container_width=True)
 
@@ -113,16 +113,24 @@ with col_out:
 st.divider()
 
 # --- 💡 STRATEJİ PANELİ ---
-st.subheader(f"💡 {u_name} İçin Stratejik Tavsiye")
+st.subheader(f"💡 {u_name} İçin Karar Destek")
 st_col1, st_col2 = st.columns([2, 1])
 
 with st_col1:
     if res_total > MEVCUT_FAIZ:
-        st.error(f"📍 **Negatif Reel Getiri:** Tahminin %{MEVCUT_FAIZ} olan banka faizinden yüksek. Paran bankada bekledikçe değer kaybediyor.")
+        st.error(f"📍 **Negatif Reel Getiri:** Tahminin mevduat faizinin üzerinde. Paran bankada eriyor olabilir.")
     else:
-        st.success(f"📍 **Pozitif Reel Getiri:** Beklentin banka faizinin altında. Paran mevduatta değerini koruyabilir.")
+        st.success(f"📍 **Pozitif Reel Getiri:** Beklentin faizden düşük. Bu senaryoda TL mevduat kazançlı duruyor.")
 
 with st_col2:
     if st.button("💾 ANALİZİ KAYDET", type="primary", use_container_width=True):
         save_data(u_name, u_prof, res_9ay, res_total, tahmini_kur_tl, risk_f, alim_kaybi, bin_tl_kalan)
         st.balloons()
+
+# --- 🛡️ ADMIN ---
+st.sidebar.markdown("---")
+admin_key = st.sidebar.text_input("🔐 Admin", type="password")
+if admin_key == "alper2026":
+    if os.path.exists(DB_FILE):
+        df = pd.read_csv(DB_FILE)
+        st.dataframe(df, use_container_width=True)
