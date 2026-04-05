@@ -19,7 +19,7 @@ GERCEKLESEN_3_AYLIK = 14.40
 TCMB_HEDEF = 22.0
 MEVCUT_FAIZ = 37.0 
 
-st.set_page_config(page_title="MacroVision v13.3 Elite", layout="wide")
+st.set_page_config(page_title="MacroVision v13.4 Elite", layout="wide")
 
 # --- 🧠 OTURUM HAFIZASI ---
 if 'd_val' not in st.session_state: st.session_state.d_val = 15
@@ -28,7 +28,7 @@ if 'k_val' not in st.session_state: st.session_state.k_val = 35
 if 'u_val' not in st.session_state: st.session_state.u_val = 20
 
 # --- 🔭 ÜST PANEL ---
-st.title("🛰️ MacroVision v13.3: Stratejik Karar Destek Sistemi")
+st.title("🛰️ MacroVision v13.4: Stratejik Karar Destek Sistemi")
 
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("💵 Dolar (Spot)", f"{GUNCEL_DOLAR} TL")
@@ -88,12 +88,12 @@ with col_out:
         st.write("### 📉 1.000 TL'nin Yolculuğu")
         st.title(f"{bin_tl_kalan:.2f} TL")
         
-        # 🟢 Ateş Ölçer (Mevcut v13.2'den)
+        # 🟢 Ateş Ölçer (Hata burada düzeltildi: unsafe_allow_html=True)
         bar_color = "green" if res_total < 30 else ("orange" if res_total < 55 else "red")
         st.markdown(f"**Ekonomik Ateş Ölçer:**")
-        st.markdown(f'<div style="background-color: lightgrey; border-radius: 5px;"><div style="background-color: {bar_color}; width: {min(res_total, 100)}%; height: 20px; border-radius: 5px;"></div></div>', unsafe_allow_True=True)
+        st.markdown(f'<div style="background-color: lightgrey; border-radius: 5px;"><div style="background-color: {bar_color}; width: {min(res_total, 100)}%; height: 20px; border-radius: 5px;"></div></div>', unsafe_allow_html=True)
         
-        # 🟢 Zaman Makinesi (Tam Liste)
+        # 🟢 Zaman Makinesi
         st.write("**🕰️ Zaman Makinesi (Sepet Fiyatı):**")
         st.markdown(f"""
         * **2020:** 75 TL | **2021:** 95 TL | **2022:** 185 TL
@@ -101,7 +101,6 @@ with col_out:
         * **BUGÜN:** 1.000 TL | **2026 SONU: {1000 * (1 + res_total/100):.0f} TL** 🔴
         """)
 
-        # 🟢 Katkı Analizi (Detaylı)
         den = res_9ay if res_9ay > 0 else 1
         st.info(f"💡 **Katkı:** Dolar %{(d_a*w[0]/den)*100:.1f} | Gıda %{(g_a*w[1]/den)*100:.1f} | Kira %{(k_a*w[2]/den)*100:.1f}")
 
