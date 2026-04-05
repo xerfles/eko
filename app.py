@@ -1,5 +1,4 @@
 import streamlit as st
-import pd
 import pandas as pd
 import plotly.graph_objects as go
 import os
@@ -20,7 +19,7 @@ GERCEKLESEN_3_AYLIK = 14.40
 TCMB_HEDEF = 22.0
 MEVCUT_FAIZ = 37.0 
 
-st.set_page_config(page_title="MacroVision v13.0 Elite", layout="wide")
+st.set_page_config(page_title="MacroVision v13.1 Elite", layout="wide")
 
 # --- 🧠 OTURUM HAFIZASI ---
 if 'd_val' not in st.session_state: st.session_state.d_val = 15
@@ -29,7 +28,7 @@ if 'k_val' not in st.session_state: st.session_state.k_val = 35
 if 'u_val' not in st.session_state: st.session_state.u_val = 20
 
 # --- 🔭 ÜST PANEL ---
-st.title("🛰️ MacroVision v13.0: Stratejik Karar Destek Sistemi")
+st.title("🛰️ MacroVision v13.1: Stratejik Karar Destek Sistemi")
 
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("💵 Dolar (Spot)", f"{GUNCEL_DOLAR} TL")
@@ -81,7 +80,6 @@ with col_out:
     r1, r2, r3 = st.columns(3)
     r1.metric("📈 Yıl Sonu Enflasyon", f"%{res_total:.2f}")
     r2.metric("📉 Alım Gücü Kaybı", f"%{alim_kaybi:.1f}")
-    # Üstten grup ortalamasını kaldırdık, TCMB sapmasına döndük
     r3.metric("🎯 Hedef Sapması", f"{res_total - TCMB_HEDEF:.1f} Puan", delta_color="inverse")
 
     st.divider()
@@ -107,7 +105,6 @@ if st.button("💾 ANALİZİ KAYDET VE KIYASLA", type="primary", use_container_w
     save_data(u_name, u_prof, res_9ay, res_total, tahmini_kur_tl, risk_f, alim_kaybi, bin_tl_kalan)
     st.balloons()
     
-    # Kolektif Kıyaslama Mesajı (Butona basıldıktan sonra ortaya çıkar)
     if os.path.exists(DB_FILE):
         df_hist = pd.read_csv(DB_FILE)
         avg_total = df_hist['Yıl_Sonu_Toplam'].mean()
