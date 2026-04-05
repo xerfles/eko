@@ -26,10 +26,21 @@ TCMB_HEDEF = 22.0
 MEVCUT_FAIZ = 37.0 
 
 # --- ⚙️ SAYFA AYARLARI ---
-st.set_page_config(page_title="MacroVision Ultimate v10.5", layout="wide")
+st.set_page_config(page_title="MacroVision Ultimate v10.6", layout="wide")
 
-st.title("🔭 MacroVision Ultimate: Kur ve Alım Gücü Analiz Merkezi")
-st.caption(f"Veri Seti: 2026/Q2 | Analiz Tarihi: {datetime.now().strftime('%d.%m.%Y')}")
+# --- 📖 ENFLASYON NEDİR? (İnsanların Anlayacağı Dil) ---
+st.title("🔭 MacroVision Ultimate: Enflasyon Analiz Portalı")
+
+with st.expander("🤔 Enflasyon Nedir? Herkes İçin En Basit Anlatım", expanded=True):
+    st.markdown("""
+    Enflasyon, en kısa özetiyle **paranızı yiyen sessiz bir canavardır.** Diyelim ki bugün cebinizde **100 TL** var ve markette bir ekmek **10 TL**. Bugün o parayla **10 tane** ekmek alabiliyorsunuz. 
+    Eğer enflasyon **%50** olursa; sene sonunda o ekmek **15 TL** olur. Sizin 100 liranız hala 100 liradır ama artık sadece **6 adet** ekmek alabilir hale gelirsiniz.
+    
+    **İşte Enflasyon Budur:** Paran miktar olarak değişmez ama o paranın alabildiği eşyalar azalır. Fiyatlar yukarı çıkar, paranın gücü aşağı iner. 
+    Bu site, senin harcama alışkanlıklarına göre (kira, gıda, ulaşım) paranın yıl sonunda ne kadar güç kaybedeceğini hesaplar.
+    """)
+
+st.divider()
 
 # Üst Metrikler
 m1, m2, m3, m4 = st.columns(4)
@@ -49,11 +60,10 @@ with col_in:
     user_prof = st.selectbox("Harcama Sepeti:", ["Öğrenci", "Emekli", "Çalışan", "Kamu Personeli", "Esnaf"])
     
     st.write("---")
-    st.write("**📈 Gelecek 9 Ay Artış Beklentiniz (%)**")
+    st.write("**📈 Nisan-Aralık Artış Beklentiniz (%)**")
     d_a = st.slider("💵 Dolar Kuru Artışı (%)", 0, 100, 15)
     
-    tahmini_kur_tl = GUNCEL_DOLAR * (1 + d_a/100)
-    st.info(f"💡 Seçtiğiniz %{d_a} artış ile Dolar: **{tahmini_kur_tl:.2f} TL** olur.")
+    # 🟢 TEKRAR EDEN DOLAR BİLGİSİ KALDIRILDI
     
     g_a = st.slider("🛒 Gıda ve Market (%)", 0, 100, 25)
     k_a = st.slider("🏠 Kira ve Barınma (%)", 0, 100, 35)
@@ -66,6 +76,7 @@ weights = {"Öğrenci": [0.2, 0.25, 0.40, 0.15], "Emekli": [0.10, 0.50, 0.30, 0.
 w = weights[user_prof]
 res_9ay = (d_a * w[0] + g_a * w[1] + k_a * w[2] + u_a * w[3])
 res_total = GERCEKLESEN_3_AYLIK + res_9ay
+tahmini_kur_tl = GUNCEL_DOLAR * (1 + d_a/100)
 
 alim_kaybi = (1 - (1 / (1 + res_total/100))) * 100
 bin_tl_kalan = 1000 * (1 / (1 + res_total/100))
@@ -80,12 +91,11 @@ with col_out:
     r3.metric("📉 Alım Gücü Kaybı", f"%{alim_kaybi:.1f}")
 
     st.write("---")
-    # 📉 ALIM GÜCÜ VURGUSU
     c1, c2 = st.columns(2)
     with c1:
         st.write("### 📉 1.000 TL'nin Yıl Sonu Değeri")
         st.title(f"{bin_tl_kalan:.2f} TL")
-        st.caption(f"Yıl sonundaki bu para, bugünün {bin_tl_kalan:.2f} TL'si ile aynı malı alabilecek.")
+        st.caption(f"Yıl sonundaki bu miktar, bugünün satın alma gücüne göre hesaplanmıştır.")
     with c2:
         gauge = go.Figure(go.Indicator(
             mode = "gauge+number", value = alim_kaybi,
@@ -101,23 +111,7 @@ with col_out:
 
 st.divider()
 
-# --- 💹 KUR ŞOKU DUYARLILIK ANALİZİ (İnsanların Anlayacağı Sürüm) ---
-st.subheader("🔍 Olası Dolar Artışlarının Enflasyon Üzerindeki Etkisi")
-st.write("Gıda ve kira gibi diğer tüm artış beklentilerin sabit kalsa bile, doların artması durumunda enflasyonun ve alım gücünün nasıl etkileneceğini incele:")
-
-prices = [45, 48, 52, 55, 60, 70]
-matrix_data = []
-for p in prices:
-    temp_d_a = ((p / GUNCEL_DOLAR) - 1) * 100
-    temp_total = GERCEKLESEN_3_AYLIK + (temp_d_a * w[0] + g_a * w[1] + k_a * w[2] + u_a * w[3])
-    temp_alim_gucu = 1000 / (1 + temp_total/100)
-    matrix_data.append({
-        "Dolar Kuru Senaryosu": f"{p} TL", 
-        "Dolar Artış Oranı": f"%{temp_d_a:.1f}",
-        "Tahmini Yıl Sonu Enflasyon": f"%{temp_total:.2f}", 
-        "1.000 TL'nin Kalan Gücü": f"{temp_alim_gucu:.0f} TL"
-    })
-st.table(pd.DataFrame(matrix_data))
+# 🟢 "OLASI DOLAR ARTIŞLARININ ETKİSİ" TABLOSU TAMAMEN KALDIRILDI
 
 if st.button("💾 ANALİZİ KAYDET", type="primary"):
     save_data(user_name, user_prof, res_9ay, res_total, tahmini_kur_tl, risk_f, alim_kaybi, bin_tl_kalan)
