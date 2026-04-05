@@ -26,9 +26,9 @@ TCMB_HEDEF = 22.0
 MEVCUT_FAIZ = 37.0 
 
 # --- ⚙️ SAYFA AYARLARI ---
-st.set_page_config(page_title="MacroVision Ultimate v10.6", layout="wide")
+st.set_page_config(page_title="MacroVision Ultimate v10.7", layout="wide")
 
-# --- 📖 ENFLASYON NEDİR? (İnsanların Anlayacağı Dil) ---
+# --- 📖 ENFLASYON NEDİR? ---
 st.title("🔭 MacroVision Ultimate: Enflasyon Analiz Portalı")
 
 with st.expander("🤔 Enflasyon Nedir? Herkes İçin En Basit Anlatım", expanded=True):
@@ -37,7 +37,6 @@ with st.expander("🤔 Enflasyon Nedir? Herkes İçin En Basit Anlatım", expand
     Eğer enflasyon **%50** olursa; sene sonunda o ekmek **15 TL** olur. Sizin 100 liranız hala 100 liradır ama artık sadece **6 adet** ekmek alabilir hale gelirsiniz.
     
     **İşte Enflasyon Budur:** Paran miktar olarak değişmez ama o paranın alabildiği eşyalar azalır. Fiyatlar yukarı çıkar, paranın gücü aşağı iner. 
-    Bu site, senin harcama alışkanlıklarına göre (kira, gıda, ulaşım) paranın yıl sonunda ne kadar güç kaybedeceğini hesaplar.
     """)
 
 st.divider()
@@ -62,14 +61,17 @@ with col_in:
     st.write("---")
     st.write("**📈 Nisan-Aralık Artış Beklentiniz (%)**")
     d_a = st.slider("💵 Dolar Kuru Artışı (%)", 0, 100, 15)
-    
-    # 🟢 TEKRAR EDEN DOLAR BİLGİSİ KALDIRILDI
-    
     g_a = st.slider("🛒 Gıda ve Market (%)", 0, 100, 25)
     k_a = st.slider("🏠 Kira ve Barınma (%)", 0, 100, 35)
     u_a = st.slider("🚗 Ulaşım ve Akaryakıt (%)", 0, 100, 20)
     
-    risk_f = st.radio("⚠️ Temel Risk Odağı:", ["Kur Geçişkenliği", "Talep Enflasyonu", "Maliyet Baskısı", "Hizmet Katılığı"])
+    # 🟢 SADECE BU KISIM DEĞİŞTİ: Halkın anlayacağı riskler
+    risk_f = st.radio("⚠️ En Çok Korktuğunuz Risk:", [
+        "Doların Birden Fırlaması", 
+        "Fiyatların Durdurulamadan Artması", 
+        "Lojistik ve Nakliye Zamları", 
+        "Dışarıda Yemek/Hizmet Fiyatlarının Şişmesi"
+    ])
 
 # --- 🧮 HESAPLAMA MOTORU ---
 weights = {"Öğrenci": [0.2, 0.25, 0.40, 0.15], "Emekli": [0.10, 0.50, 0.30, 0.10], "Çalışan": [0.20, 0.30, 0.30, 0.20], "Kamu Personeli": [0.20, 0.30, 0.30, 0.20], "Esnaf": [0.35, 0.25, 0.20, 0.20]}
@@ -110,8 +112,6 @@ with col_out:
     st.plotly_chart(fig_radar, use_container_width=True)
 
 st.divider()
-
-# 🟢 "OLASI DOLAR ARTIŞLARININ ETKİSİ" TABLOSU TAMAMEN KALDIRILDI
 
 if st.button("💾 ANALİZİ KAYDET", type="primary"):
     save_data(user_name, user_prof, res_9ay, res_total, tahmini_kur_tl, risk_f, alim_kaybi, bin_tl_kalan)
