@@ -20,7 +20,7 @@ GERCEKLESEN_3_AYLIK = 14.40
 TCMB_HEDEF = 22.0
 MEVCUT_FAIZ = 37.0 
 
-st.set_page_config(page_title="MacroVision v12.6 Elite", layout="wide")
+st.set_page_config(page_title="MacroVision v12.7 Elite", layout="wide")
 
 # --- 🧠 OTURUM HAFIZASI ---
 if 'd_val' not in st.session_state: st.session_state.d_val = 15
@@ -29,12 +29,12 @@ if 'k_val' not in st.session_state: st.session_state.k_val = 35
 if 'u_val' not in st.session_state: st.session_state.u_val = 20
 
 # --- 🔭 ÜST PANEL ---
-st.title("🛰️ MacroVision v12.6: Stratejik Karar Destek Sistemi")
+st.title("🛰️ MacroVision v12.7: Stratejik Karar Destek Sistemi")
 
 with st.expander("🤔 Enflasyon ve Alım Gücü Analizi Hakkında"):
     st.markdown("""
     Bu platform, 2026 yılı sonu için yaptığınız tahminlerin **reel satın alma gücü** üzerindeki etkisini bilimsel olarak ölçer. 
-    Seçtiğiniz profilin (Öğrenci, Esnaf vb.) harcama alışkanlıklarına göre sepetinizdeki erimeyi analiz eder.
+    Seçtiğiniz profilin harcama alışkanlıklarına göre sepetinizdeki erimeyi analiz eder.
     """)
 
 m1, m2, m3, m4 = st.columns(4)
@@ -96,26 +96,30 @@ with col_out:
         st.write("### 📉 1.000 TL'nin Yolculuğu")
         st.title(f"{bin_tl_kalan:.2f} TL")
         
-        # 🟢 GÜNCELLENEN KATKI ANALİZİ (Tüm kalemler eklendi)
+        # 🟢 GENİŞLETİLMİŞ ZAMAN MAKİNESİ (Tam Liste)
+        st.write("**🕰️ Zaman Makinesi (Sepet Fiyatı):**")
+        st.markdown(f"""
+        * **2020:** 75 TL 🟢
+        * **2021:** 95 TL
+        * **2022:** 185 TL
+        * **2023:** 350 TL
+        * **2024:** 680 TL
+        * **2025:** 890 TL
+        * **BUGÜN:** 1.000 TL 🔵
+        * **2026 SONU:** {1000 * (1 + res_total/100):.0f} TL 🔴
+        """)
+
         den = res_9ay if res_9ay > 0 else 1
         st.info(f"""
-        **💡 Enflasyonuna Kim Ne Kadar Yük Getirdi?**
-        * Dolar Etkisi: **%{ (d_a * w[0] / den) * 100:.1f}**
-        * Gıda Etkisi: **%{ (g_a * w[1] / den) * 100:.1f}**
-        * Kira Etkisi: **%{ (k_a * w[2] / den) * 100:.1f}**
-        * Ulaşım Etkisi: **%{ (u_a * w[3] / den) * 100:.1f}**
+        **💡 Enflasyon Katkı Analizi:**
+        * Dolar: %{ (d_a * w[0] / den) * 100:.1f} | Gıda: %{ (g_a * w[1] / den) * 100:.1f}
+        * Kira: %{ (k_a * w[2] / den) * 100:.1f} | Ulaşım: %{ (u_a * w[3] / den) * 100:.1f}
         """)
-        
-        st.write("**🕰️ Zaman Makinesi:**")
-        st.markdown(f"* 2020: 75 TL | 2022: 185 TL | **2026 Sonu: {1000 * (1 + res_total/100):.0f} TL**")
 
     with c2:
         gauge = go.Figure(go.Indicator(mode = "gauge+number", value = alim_kaybi, title = {'text': "Değer Kaybı (%)"}, gauge = {'axis': {'range': [0, 100]}, 'bar': {'color': "#e74c3c"}}))
         gauge.update_layout(height=230, margin=dict(l=20, r=20, t=50, b=20))
         st.plotly_chart(gauge, use_container_width=True)
 
-st.divider()
-
-if st.button("💾 ANALİZİ KAYDET", type="primary", use_container_width=True):
-    save_data(u_name, u_prof, res_9ay, res_total, tahmini_kur_tl, risk_f, alim_kaybi, bin_tl_kalan)
-    st.balloons()
+    fig_radar = go.Figure()
+    fig_radar.add_trace(go.Scatterpolar(r=[d_a, g_a, k_a, u_a], theta=['Dolar','Gıda','K
