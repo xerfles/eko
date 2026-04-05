@@ -1,7 +1,7 @@
 import streamlit as st
+import pd
 import pandas as pd
 import plotly.graph_objects as go
-import plotly.express as px
 import os
 from datetime import datetime
 
@@ -20,22 +20,16 @@ GERCEKLESEN_3_AYLIK = 14.40
 TCMB_HEDEF = 22.0
 MEVCUT_FAIZ = 37.0 
 
-st.set_page_config(page_title="MacroVision v12.9 Elite", layout="wide")
+st.set_page_config(page_title="MacroVision v13.0 Elite", layout="wide")
 
-# --- 🧠 OTURUM HAFIZASI (SESSION STATE) ---
+# --- 🧠 OTURUM HAFIZASI ---
 if 'd_val' not in st.session_state: st.session_state.d_val = 15
 if 'g_val' not in st.session_state: st.session_state.g_val = 25
 if 'k_val' not in st.session_state: st.session_state.k_val = 35
 if 'u_val' not in st.session_state: st.session_state.u_val = 20
 
 # --- 🔭 ÜST PANEL ---
-st.title("🛰️ MacroVision v12.9: Stratejik Karar Destek Sistemi")
-
-with st.expander("🤔 Enflasyon ve Alım Gücü Analizi Hakkında"):
-    st.markdown("""
-    Bu platform, 2026 yılı sonu için yaptığınız tahminlerin **reel satın alma gücü** üzerindeki etkisini bilimsel olarak ölçer. 
-    Seçtiğiniz profilin harcama alışkanlıklarına göre sepetinizdeki erimeyi analiz eder.
-    """)
+st.title("🛰️ MacroVision v13.0: Stratejik Karar Destek Sistemi")
 
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("💵 Dolar (Spot)", f"{GUNCEL_DOLAR} TL")
@@ -53,7 +47,6 @@ with col_in:
     u_name = st.text_input("Analist Adı:", "Analist_01")
     u_prof = st.selectbox("Harcama Sepeti:", ["Öğrenci", "Emekli", "Çalışan", "Kamu Personeli", "Esnaf"])
     
-    st.write("---")
     st.write("**🚀 Hızlı Ayarlar:**")
     s_col1, s_col2, s_col3 = st.columns(3)
     if s_col1.button("🌸 İyimser"):
@@ -66,7 +59,6 @@ with col_in:
         st.session_state.d_val, st.session_state.g_val, st.session_state.k_val, st.session_state.u_val = 50, 70, 90, 60
         st.rerun()
 
-    # Sliderlar (Session state ile bağlı ve akıcı)
     d_a = st.slider("💵 Dolar Artışı (%)", 0, 100, key='d_val')
     g_a = st.slider("🛒 Gıda Artışı (%)", 0, 100, key='g_val')
     k_a = st.slider("🏠 Kira Artışı (%)", 0, 100, key='k_val')
@@ -89,56 +81,42 @@ with col_out:
     r1, r2, r3 = st.columns(3)
     r1.metric("📈 Yıl Sonu Enflasyon", f"%{res_total:.2f}")
     r2.metric("📉 Alım Gücü Kaybı", f"%{alim_kaybi:.1f}")
-    
-    # 🟢 EKLEME: Kolektif Kıyaslama (Mevcut yapı bozulmadan eklendi)
-    if os.path.exists(DB_FILE):
-        df_history = pd.read_csv(DB_FILE)
-        avg_total = df_history['Yıl_Sonu_Toplam'].mean()
-        r3.metric("👥 Grup Ortalaması", f"%{avg_total:.1f}", delta=f"{res_total - avg_total:.1f} Puan")
-    else:
-        r3.metric("🎯 Beklenti Sapması", f"{res_total - TCMB_HEDEF:.1f} Puan")
+    # Üstten grup ortalamasını kaldırdık, TCMB sapmasına döndük
+    r3.metric("🎯 Hedef Sapması", f"{res_total - TCMB_HEDEF:.1f} Puan", delta_color="inverse")
 
     st.divider()
     c1, c2 = st.columns(2)
     with c1:
         st.write("### 📉 1.000 TL'nin Yolculuğu")
         st.title(f"{bin_tl_kalan:.2f} TL")
-        
-        # 🟢 ZAMAN MAKİNESİ (v12.7'deki gibi tam liste)
-        st.write("**🕰️ Zaman Makinesi (Sepet Fiyatı):**")
-        st.markdown(f"""
-        * **2020:** 75 TL 🟢
-        * **2021:** 95 TL
-        * **2022:** 185 TL
-        * **2023:** 350 TL
-        * **2024:** 680 TL
-        * **2025:** 890 TL
-        * **BUGÜN:** 1.000 TL 🔵
-        * **2026 SONU:** {1000 * (1 + res_total/100):.0f} TL 🔴
-        """)
+        st.write("**🕰️ Zaman Makinesi:**")
+        st.markdown(f"* 2020: 75 TL | 2022: 185 TL | 2024: 680 TL\n* **2026 SONU: {1000 * (1 + res_total/100):.0f} TL** 🔴")
 
         den = res_9ay if res_9ay > 0 else 1
-        st.info(f"""
-        **💡 Enflasyon Katkı Analizi:**
-        * Dolar: %{ (d_a * w[0] / den) * 100:.1f} | Gıda: %{ (g_a * w[1] / den) * 100:.1f}
-        * Kira: %{ (k_a * w[2] / den) * 100:.1f} | Ulaşım: %{ (u_a * w[3] / den) * 100:.1f}
-        """)
+        st.info(f"💡 **Katkı Analizi:** Dolar: %{(d_a*w[0]/den)*100:.1f} | Gıda: %{(g_a*w[1]/den)*100:.1f} | Kira: %{(k_a*w[2]/den)*100:.1f}")
 
     with c2:
         gauge = go.Figure(go.Indicator(mode = "gauge+number", value = alim_kaybi, title = {'text': "Değer Kaybı (%)"}, gauge = {'axis': {'range': [0, 100]}, 'bar': {'color': "#e74c3c"}}))
         gauge.update_layout(height=230, margin=dict(l=20, r=20, t=50, b=20))
         st.plotly_chart(gauge, use_container_width=True)
 
-    fig_radar = go.Figure()
-    fig_radar.add_trace(go.Scatterpolar(r=[d_a, g_a, k_a, u_a], theta=['Dolar','Gıda','Kira','Ulaşım'], fill='toself', line_color='#2ecc71'))
-    fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 100])), height=300)
-    st.plotly_chart(fig_radar, use_container_width=True)
-
 st.divider()
 
-if st.button("💾 ANALİZİ KAYDET", type="primary", use_container_width=True):
+# --- 💾 KAYDET VE SONRADAN GÖSTER ---
+if st.button("💾 ANALİZİ KAYDET VE KIYASLA", type="primary", use_container_width=True):
     save_data(u_name, u_prof, res_9ay, res_total, tahmini_kur_tl, risk_f, alim_kaybi, bin_tl_kalan)
     st.balloons()
+    
+    # Kolektif Kıyaslama Mesajı (Butona basıldıktan sonra ortaya çıkar)
+    if os.path.exists(DB_FILE):
+        df_hist = pd.read_csv(DB_FILE)
+        avg_total = df_hist['Yıl_Sonu_Toplam'].mean()
+        fark = res_total - avg_total
+        
+        if fark > 0:
+            st.warning(f"✅ Analizin kaydedildi! Diğer katılımcıların ortalama beklentisinden (%{avg_total:.1f}) daha **karamsarsın** (Fark: {fark:.1f} puan).")
+        else:
+            st.success(f"✅ Analizin kaydedildi! Diğer katılımcıların ortalama beklentisinden (%{avg_total:.1f}) daha **iyimsersin** (Fark: {abs(fark):.1f} puan).")
 
 # --- 🛡️ ADMIN ---
 st.sidebar.markdown("---")
