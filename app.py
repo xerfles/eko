@@ -20,7 +20,7 @@ GERCEKLESEN_3_AYLIK = 14.40
 TCMB_HEDEF = 22.0
 MEVCUT_FAIZ = 37.0 
 
-st.set_page_config(page_title="MacroVision v12.5 Elite", layout="wide")
+st.set_page_config(page_title="MacroVision v12.6 Elite", layout="wide")
 
 # --- 🧠 OTURUM HAFIZASI ---
 if 'd_val' not in st.session_state: st.session_state.d_val = 15
@@ -29,7 +29,7 @@ if 'k_val' not in st.session_state: st.session_state.k_val = 35
 if 'u_val' not in st.session_state: st.session_state.u_val = 20
 
 # --- 🔭 ÜST PANEL ---
-st.title("🛰️ MacroVision v12.5: Stratejik Karar Destek Sistemi")
+st.title("🛰️ MacroVision v12.6: Stratejik Karar Destek Sistemi")
 
 with st.expander("🤔 Enflasyon ve Alım Gücü Analizi Hakkında"):
     st.markdown("""
@@ -90,59 +90,32 @@ with col_out:
     r2.metric("📉 Alım Gücü Kaybı", f"%{alim_kaybi:.1f}")
     r3.metric("🎯 Beklenti Sapması", f"{res_total - TCMB_HEDEF:.1f} Puan", delta="Hedef Üstü", delta_color="inverse")
 
-    st.write("---")
+    st.divider()
     c1, c2 = st.columns(2)
     with c1:
         st.write("### 📉 1.000 TL'nin Yolculuğu")
         st.title(f"{bin_tl_kalan:.2f} TL")
         
-        # 🟢 GENİŞLETİLMİŞ ZAMAN MAKİNESİ (2020 - 2026)
-        st.write("**🕰️ Zaman Makinesi (Sepet Fiyatı):**")
-        st.markdown(f"""
-        * **2020:** 75 TL 🟢
-        * **2021:** 95 TL
-        * **2022:** 185 TL
-        * **2023:** 350 TL
-        * **2024:** 680 TL
-        * **2025:** 890 TL
-        * **BUGÜN:** 1.000 TL 🔵
-        * **2026 SONU:** {1000 * (1 + res_total/100):.0f} TL 🔴
+        # 🟢 GÜNCELLENEN KATKI ANALİZİ (Tüm kalemler eklendi)
+        den = res_9ay if res_9ay > 0 else 1
+        st.info(f"""
+        **💡 Enflasyonuna Kim Ne Kadar Yük Getirdi?**
+        * Dolar Etkisi: **%{ (d_a * w[0] / den) * 100:.1f}**
+        * Gıda Etkisi: **%{ (g_a * w[1] / den) * 100:.1f}**
+        * Kira Etkisi: **%{ (k_a * w[2] / den) * 100:.1f}**
+        * Ulaşım Etkisi: **%{ (u_a * w[3] / den) * 100:.1f}**
         """)
         
-        kur_etkisi = (d_a * w[0]) / (res_total if res_total > 0 else 1) * 100
-        st.caption(f"💡 Tahminindeki enflasyonun %{kur_etkisi:.1f}'i dolardan geliyor.")
+        st.write("**🕰️ Zaman Makinesi:**")
+        st.markdown(f"* 2020: 75 TL | 2022: 185 TL | **2026 Sonu: {1000 * (1 + res_total/100):.0f} TL**")
 
     with c2:
         gauge = go.Figure(go.Indicator(mode = "gauge+number", value = alim_kaybi, title = {'text': "Değer Kaybı (%)"}, gauge = {'axis': {'range': [0, 100]}, 'bar': {'color': "#e74c3c"}}))
         gauge.update_layout(height=230, margin=dict(l=20, r=20, t=50, b=20))
         st.plotly_chart(gauge, use_container_width=True)
 
-    fig_radar = go.Figure()
-    fig_radar.add_trace(go.Scatterpolar(r=[d_a, g_a, k_a, u_a], theta=['Dolar','Gıda','Kira','Ulaşım'], fill='toself', line_color='#2ecc71'))
-    fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 100])), height=300)
-    st.plotly_chart(fig_radar, use_container_width=True)
-
 st.divider()
 
-# --- 💡 STRATEJİ PANELİ ---
-st.subheader(f"💡 {u_name} İçin Karar Destek")
-st_col1, st_col2 = st.columns([2, 1])
-
-with st_col1:
-    if res_total > MEVCUT_FAIZ:
-        st.error(f"📍 **Negatif Reel Getiri:** Tahminin mevduat faizinin üzerinde. Paran bankada eriyor.")
-    else:
-        st.success(f"📍 **Pozitif Reel Getiri:** Beklentin faizden düşük. TL mevduat kazançlı duruyor.")
-
-with st_col2:
-    if st.button("💾 ANALİZİ KAYDET", type="primary", use_container_width=True):
-        save_data(u_name, u_prof, res_9ay, res_total, tahmini_kur_tl, risk_f, alim_kaybi, bin_tl_kalan)
-        st.balloons()
-
-# --- 🛡️ ADMIN ---
-st.sidebar.markdown("---")
-admin_key = st.sidebar.text_input("🔐 Admin", type="password")
-if admin_key == "alper2026":
-    if os.path.exists(DB_FILE):
-        df = pd.read_csv(DB_FILE)
-        st.dataframe(df, use_container_width=True)
+if st.button("💾 ANALİZİ KAYDET", type="primary", use_container_width=True):
+    save_data(u_name, u_prof, res_9ay, res_total, tahmini_kur_tl, risk_f, alim_kaybi, bin_tl_kalan)
+    st.balloons()
