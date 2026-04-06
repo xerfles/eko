@@ -21,21 +21,21 @@ def save_data(isim, profil, sehir, beklenti_9ay, toplam, dolar, risk, alim_kaybi
     if not os.path.isfile(DB_FILE): data.to_csv(DB_FILE, index=False)
     else: data.to_csv(DB_FILE, mode='a', index=False, header=False)
 
-# --- 📊 GÜNCEL VERİLER (6 Nisan 2026) ---
+# --- 📊 GÜNCEL PİYASA VERİLERİ (6 Nisan 2026) ---
 GUNCEL_DOLAR, Q1_ENF, TCMB_FAIZ, TCMB_2026_HEDEF = 44.92, 14.40, 37.0, 22.0
 
-# 💎 SABİT PİYASA FİYATLARI (Attığın linklere göre güncellendi)
-P_PS5_GUNCEL = 27999      # Vatan Bilgisayar PS5 Slim Digital
-P_IPHONE_GUNCEL = 94500   # Apple Store iPhone 17 Pro Tahmini (2026 Nisan)
-P_CAR_GUNCEL = 1450000    # Renault Binek Ortalama (Clio/Megane)
+# 🔥 GÜNCEL "TOKAT" FİYATLAR (Yeni Güncellendi)
+P_PS5_GUNCEL = 42999      # PS5 Slim Güncel
+P_IPHONE_GUNCEL = 77999   # iPhone 17 Güncel
+P_CAR_GUNCEL = 1795000    # Renault Clio Güncel
 
-st.set_page_config(page_title="LiraPulse: Real Pricing", layout="wide")
+st.set_page_config(page_title="LiraPulse: Hyper-Real", layout="wide")
 
 # --- 🎨 CSS ---
 st.markdown("""
     <style>
     .stMetric { background-color: #161b22; padding: 15px; border-radius: 10px; border-left: 5px solid #00d4ff; }
-    .bugun-etiket { color: #888; font-size: 13px; text-align: center; margin-top: -15px; }
+    .bugun-etiket { color: #ffbd45; font-size: 13px; text-align: center; margin-top: -15px; font-weight: bold; }
     .cert-card { background: linear-gradient(135deg, #00d4ff 0%, #0055ff 100%); color: white; padding: 25px; border-radius: 15px; text-align: center; border: 3px solid #fff; margin-bottom: 20px; }
     .receipt-box { background-color: #fff; color: #333; padding: 20px; border-radius: 5px; font-family: 'Courier New'; border: 2px dashed #333; margin-top: 20px; }
     .ozet-panel { background-color: #1e1e26; padding: 20px; border-radius: 10px; border: 1px solid #30363d; text-align: center; }
@@ -45,14 +45,14 @@ st.markdown("""
 if 'd_val' not in st.session_state: 
     st.session_state.update({'d_val': 15, 'g_val': 25, 'k_val': 35, 'u_val': 20})
 
-st.title("🛰️ LiraPulse Intelligence v21.2")
+st.title("🛰️ LiraPulse Intelligence v21.3")
 
 # --- 📊 ÜST DASHBOARD ---
 top1, top2, top3, top4 = st.columns(4)
 top1.metric("💵 Güncel Dolar", f"{GUNCEL_DOLAR} TL")
-top2.metric("📊 2026 Q1 Enflasyon", f"%{Q1_ENF}")
-top3.metric("🏦 TCMB Faiz Oranı", f"%{TCMB_FAIZ}")
-top4.metric("🎯 TCMB 2026 Hedefi", f"%{TCMB_2026_HEDEF}")
+top2.metric("📊 Q1 Enflasyon", f"%{Q1_ENF}")
+top3.metric("🏦 TCMB Faiz", f"%{TCMB_FAIZ}")
+top4.metric("🎯 TCMB Hedef", f"%{TCMB_2026_HEDEF}")
 
 st.divider()
 
@@ -81,10 +81,10 @@ w = weights[u_prof]
 res_total = Q1_ENF + (d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3])
 alim_kaybi, tahmini_kur = (1 - (1 / (1 + res_total/100))) * 100, GUNCEL_DOLAR * (1 + d_a/100)
 
-# Tahminler (Anlık slider verisine göre)
-f_ps5 = P_PS5_GUNCEL * (1 + res_total/90)
-f_iphone = P_IPHONE_GUNCEL * (1 + (d_a*0.8 + res_total*0.2)/100)
-f_car = P_CAR_GUNCEL * (1 + (d_a*0.6 + res_total*0.4)/100)
+# Hayal Tahminleri (Güncel Fiyatlara Göre)
+f_ps5 = P_PS5_GUNCEL * (1 + res_total/85)
+f_iphone = P_IPHONE_GUNCEL * (1 + (d_a*0.85 + res_total*0.15)/100)
+f_car = P_CAR_GUNCEL * (1 + (d_a*0.7 + res_total*0.3)/100)
 
 with col_out:
     st.markdown(f'<div class="ozet-panel"><small>Senin Enflasyonun</small><br><b style="font-size:32px; color:#ff4b4b;">%{res_total:.1f}</b><br><small>Tahmini Kur: {tahmini_kur:.2f} TL</small></div>', unsafe_allow_html=True)
@@ -92,13 +92,13 @@ with col_out:
     
     h_col1, h_col2, h_col3 = st.columns(3)
     with h_col1:
-        st.metric("🎮 2026 PS5 Slim", f"{f_ps5:,.0f} TL")
+        st.metric("🎮 2026 Sonu PS5", f"{f_ps5:,.0f} TL")
         st.markdown(f'<p class="bugun-etiket">Bugün: {P_PS5_GUNCEL:,.0f} TL</p>', unsafe_allow_html=True)
     with h_col2:
-        st.metric("📱 2026 iPhone", f"{f_iphone:,.0f} TL")
+        st.metric("📱 2026 Sonu iPhone", f"{f_iphone:,.0f} TL")
         st.markdown(f'<p class="bugun-etiket">Bugün: {P_IPHONE_GUNCEL:,.0f} TL</p>', unsafe_allow_html=True)
     with h_col3:
-        st.metric("🚗 2026 Renault", f"{f_car:,.0f} TL")
+        st.metric("🚗 2026 Sonu Clio", f"{f_car:,.0f} TL")
         st.markdown(f'<p class="bugun-etiket">Bugün: {P_CAR_GUNCEL:,.0f} TL</p>', unsafe_allow_html=True)
 
     st.divider()
@@ -125,5 +125,5 @@ st.divider()
 if st.button("💾 ANALİZİ KAYDET VE 2026 ADİSYONUNU AL", use_container_width=True):
     save_data(u_name, u_prof, u_city, res_total-Q1_ENF, res_total, tahmini_kur, "Genel", alim_kaybi, 1000/(1+res_total/100))
     st.balloons()
-    food_2026 = 980 * (1 + res_total/100)
+    food_2026 = 1150 * (1 + res_total/100) # Enflasyonla yemek fiyatı da güncellendi
     st.markdown(f'<div class="receipt-box"><center>🧾 <b>LiraPulse Intelligence ADİSYON</b></center><hr>31.12.2026 | GELECEK FATURASI<br>--------------------------------<br>1x Akşam Yemeği (2 Kişi) : {food_2026:.0f} TL<br>--------------------------------<br><b>TOPLAM (SENİN SENARYON) : {food_2026:.0f} TL</b><br><center><i>Veri kaydedildi. Gelecek yaklaşıyor.</i></center></div>', unsafe_allow_html=True)
