@@ -6,8 +6,10 @@ import os
 import urllib.parse
 from datetime import datetime
 
-# --- 📁 VERİ YÖNETİMİ (Hata Korumalı) ---
+# --- 📁 VERİ YÖNETİMİ (Sütun İsimleri Standartlaştırıldı) ---
 DB_FILE = 'lirapulse_v15_data.csv'
+# Sütun listesini sabitledik ki okuma ve yazma şaşmasın
+COL_LIST = ['Tarih', 'Katilimci', 'Cinsiyet', 'Maas', 'Profil', 'Sehir', 'IP', 'Nisan_Aralik_Tahmin', 'Yil_Sonu_Toplam', 'Dolar_Beklentisi', 'Alim_Gucu_Kaybi', 'Reel_Kalan_TL']
 
 def save_data(isim, cinsiyet, maas, profil, sehir, beklenti_9ay, toplam, dolar, alim_kaybi, erime):
     user_ip = "127.0.0.1"
@@ -17,24 +19,18 @@ def save_data(isim, cinsiyet, maas, profil, sehir, beklenti_9ay, toplam, dolar, 
         if headers: user_ip = headers.get("X-Forwarded-For", "127.0.0.1").split(",")[0]
     except: pass
     
-    cols = ['Tarih', 'Katılımcı', 'Cinsiyet', 'Maaş', 'Profil', 'Şehir', 'IP', 'Nisan_Aralik_Tahmin', 'Yil_Sonu_Toplam', 'Dolar_Beklentisi', 'Alim_Gucu_Kaybı', 'Reel_Kalan_TL']
-    data = pd.DataFrame([[datetime.now().strftime("%Y-%m-%d %H:%M"), isim, cinsiyet, maas, profil, sehir, user_ip, beklenti_9ay, toplam, dolar, alim_kaybi, erime]], columns=cols)
+    data = pd.DataFrame([[datetime.now().strftime("%Y-%m-%d %H:%M"), isim, cinsiyet, maas, profil, sehir, user_ip, beklenti_9ay, toplam, dolar, alim_kaybi, erime]], columns=COL_LIST)
     
-    # Dosya yoksa oluştur, varsa ekle ama sütun yapısı bozuksa sıfırla
     if not os.path.isfile(DB_FILE):
-        data.to_csv(DB_FILE, index=False)
+        data.to_csv(DB_FILE, index=False, encoding='utf-8')
     else:
-        try:
-            data.to_csv(DB_FILE, mode='a', index=False, header=False)
-        except:
-            # Eğer yazarken bile hata verirse (dosya kilitli vs) yeni dosya aç
-            data.to_csv(DB_FILE.replace('.csv', '_new.csv'), index=False)
+        data.to_csv(DB_FILE, mode='a', index=False, header=False, encoding='utf-8')
 
-# --- 📊 GÜNCEL PİYASA VERİLERİ (6 Nisan 2026) ---
+# --- 📊 GÜNCEL PİYASA VERİLERİ ---
 GUNCEL_DOLAR, Q1_ENF, TCMB_FAIZ, TCMB_2026_HEDEF = 44.92, 14.40, 37.0, 22.0
 P_PS5_GUNCEL, P_IPHONE_GUNCEL, P_CAR_GUNCEL = 42999, 77999, 1795000
 
-st.set_page_config(page_title="LiraPulse: Fix Edition", layout="wide")
+st.set_page_config(page_title="LiraPulse: Column Master", layout="wide")
 
 # --- 🎨 CSS ---
 st.markdown("""
@@ -120,28 +116,40 @@ if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_wi
     food_2026 = 1150 * (1 + res_total/100)
     st.markdown(f'<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr>31.12.2026 | GELECEK FATURASI<br>--------------------------------<br>Müşteri: {u_name}<br>Cinsiyet: {u_gender}<br>--------------------------------<br><b>TOPLAM (SENARYON) : {food_2026:.0f} TL</b><br><center><i>Gelecek kaydedildi.</i></center></div>', unsafe_allow_html=True)
 
-# --- 🔐 YÖNETİCİ PANELİ (HATA KORUMALI) ---
+# --- 🔐 YÖNETİCİ PANELİ (FİLTRELİ VE KORUMALI) ---
 st.write("")
 with st.expander("🔐 LiraPulse Intelligence Admin Control Center"):
     admin_pass = st.text_input("Yönetici Şifresi:", type="password")
     if admin_pass == "alper2026":
-        st.markdown('<div class="admin-card"><h4>📈 Sokağın Nabzı & Kullanıcı Verileri</h4>', unsafe_allow_html=True)
         if os.path.exists(DB_FILE):
             try:
-                # on_bad_lines='skip' sayesinde bozuk satırlar olsa bile tabloyu patlatmaz
+                # Dosyayı oku, sütun isimlerini zorla ata (eski dosyalarla çakışmaması için)
                 df_admin = pd.read_csv(DB_FILE, on_bad_lines='skip')
+                # Eğer dosyadaki sütunlar COL_LIST ile uyuşmuyorsa, sütunları yeniden adlandır veya sadece mevcutları göster
+                if len(df_admin.columns) == len(COL_LIST):
+                    df_admin.columns = COL_LIST
+                
+                st.markdown('<div class="admin-card"><h4>📈 Sokağın Nabzı</h4>', unsafe_allow_html=True)
                 stat1, stat2, stat3 = st.columns(3)
                 stat1.metric("Toplam Katılım", f"{len(df_admin)} Kişi")
-                stat2.metric("Ort. Enflasyon", f"%{df_admin['Yil_Sonu_Toplam'].mean():.1f}")
-                stat3.metric("Ort. Dolar", f"{df_admin['Dolar_Beklentisi'].mean():.2f} TL")
-                st.divider()
+                
+                # Sütun ismi kontrolü yaparak istatistik hesapla
+                enf_col = 'Yil_Sonu_Toplam' if 'Yil_Sonu_Toplam' in df_admin.columns else df_admin.columns[-4]
+                usd_col = 'Dolar_Beklentisi' if 'Dolar_Beklentisi' in df_admin.columns else df_admin.columns[-3]
+                
+                stat2.metric("Ort. Enflasyon", f"%{pd.to_numeric(df_admin[enf_col], errors='coerce').mean():.1f}")
+                stat3.metric("Ort. Dolar", f"{pd.to_numeric(df_admin[usd_col], errors='coerce').mean():.2f} TL")
+                
                 st.write("📂 **Ham Veri Kayıtları**")
-                st.dataframe(df_admin.sort_values(by='Tarih', ascending=False), use_container_width=True)
+                st.dataframe(df_admin.sort_values(by=df_admin.columns[0], ascending=False), use_container_width=True)
+                
+                if st.button("🔴 Bozuk Veritabanını Sıfırla"):
+                    os.remove(DB_FILE)
+                    st.rerun()
             except Exception as e:
-                st.error(f"Veri okunurken hata oluştu. Muhtemelen dosya yapısı değişti. Hata: {e}")
-                if st.button("Veritabanını Sıfırla (DİKKAT!)"):
+                st.error(f"Kritik Hata: {e}")
+                if st.button("Veritabanını Yeniden Oluştur (Sıfırla)"):
                     os.remove(DB_FILE)
                     st.rerun()
         else:
             st.warning("Henüz kaydedilmiş veri bulunmuyor.")
-        st.markdown('</div>', unsafe_allow_html=True)
