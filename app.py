@@ -155,55 +155,48 @@ if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_wi
 with st.expander("🔐 LiraPulse Intelligence Admin Control Center"):
     admin_pass = st.text_input("Yönetici Şifresi:", type="password", key="adm_auth")
     if admin_pass == "alper2026":
+       if admin_pass == "alper2026":
         if os.path.exists(DB_FILE):
-            try: # --- 📈 YÖNETİCİ İSTATİSTİKLERİ VE GRAFİKLER (GERİ GELDİ) ---
-                st.markdown('<div style="background-color: #0d1117; padding: 20px; border-radius: 15px; border: 1px solid #00d4ff;">', unsafe_allow_html=True)
-                st.write("### 📊 Sokağın Nabzı & Analitik")
-                
-                # Üst Metrikler (Sayısal Özeti)
-                stat_col1, stat_col2, stat_col3 = st.columns(3)
-                stat_col1.metric("Toplam Katılım", f"{len(df)} Kişi")
-                stat_col2.metric("Ort. Maaş", f"{pd.to_numeric(df['Maas'], errors='coerce').mean():,.0f} TL")
-                stat_col3.metric("Ort. Enflasyon", f"%{pd.to_numeric(df['Yil_Sonu_Toplam'], errors='coerce').mean():.1f}")
-                
-                st.write("---")
-                # Pasta Grafikleri (Cinsiyet ve Sepet)
-                gr_col1, gr_col2 = st.columns(2)
-                with gr_col1:
-                    st.write("**👤 Cinsiyet Dağılımı**")
-                    st.plotly_chart(px.pie(df, names='Cinsiyet', hole=0.4, color_discrete_sequence=px.colors.sequential.Blues_r), use_container_width=True)
-                
-                with gr_col2:
-                    st.write("**🛒 En Çok Analiz Yapan Sepetler**")
-                    st.plotly_chart(px.pie(df, names='Profil', hole=0.4, color_discrete_sequence=px.colors.sequential.Reds_r), use_container_width=True)
-                
-                # Şehir ve Trend Grafikleri
-                st.write("**📍 Şehirlere Göre Katılım Yoğunluğu**")
-                st.plotly_chart(px.bar(df['Sehir'].value_counts().reset_index(), x='Sehir', y='count', color='count', color_continuous_scale='Viridis'), use_container_width=True)
-                
-                st.write("**💰 Maaş vs Beklenen Enflasyon (Trend)**")
-                st.plotly_chart(px.scatter(df, x='Maas', y='Yil_Sonu_Toplam', color='Profil', hover_name='Katilimci', size_max=60), use_container_width=True)
-                st.markdown('</div>', unsafe_allow_html=True)
-                st.divider()
-                
-                # --- ALT KISIMDA TROL TEMİZLEME TABLOSU DEVAM EDER ---
+            try:
+                # 1. VERİYİ OKU (Hata almamak için df burada tanımlanmalı)
                 df = pd.read_csv(DB_FILE, on_bad_lines='skip')
+                
                 if len(df.columns) == len(COL_LIST):
                     df.columns = COL_LIST
-                    st.write("### 📊 Sokağın Nabzı")
+                    
+                    # --- 📊 BURASI SENİN İSTEDİĞİN GRAFİK BÖLÜMÜ ---
+                    st.write("### 📈 Sokağın Röntgenti (İstatistikler)")
                     s1, s2, s3 = st.columns(3)
-                    s1.metric("Toplam Kişi", f"{len(df)}")
-                    s2.metric("Ort. Enflasyon", f"%{pd.to_numeric(df['Yil_Sonu_Toplam'], errors='coerce').mean():.1f}")
-                    s3.metric("Ort. Maaş", f"{pd.to_numeric(df['Maas'], errors='coerce').mean():,.0f} TL")
+                    s1.metric("Toplam Katılım", f"{len(df)} Kişi")
+                    s2.metric("Ort. Maaş", f"{pd.to_numeric(df['Maas'], errors='coerce').mean():,.0f} TL")
+                    s3.metric("Ort. Enflasyon", f"%{pd.to_numeric(df['Yil_Sonu_Toplam'], errors='coerce').mean():.1f}")
+                    
+                    st.write("---")
+                    gr1, gr2 = st.columns(2)
+                    with gr1:
+                        st.write("**👤 Cinsiyet Dağılımı**")
+                        st.plotly_chart(px.pie(df, names='Cinsiyet', hole=0.4, color_discrete_sequence=px.colors.sequential.Blues_r), use_container_width=True)
+                    with gr2:
+                        st.write("**🛒 Harcama Sepeti Tercihleri**")
+                        st.plotly_chart(px.pie(df, names='Profil', hole=0.4, color_discrete_sequence=px.colors.sequential.Reds_r), use_container_width=True)
+
+                    st.write("**📍 Şehirlere Göre Katılım**")
+                    st.plotly_chart(px.bar(df['Sehir'].value_counts().reset_index(), x='Sehir', y='count', color='count', color_continuous_scale='Viridis'), use_container_width=True)
+                    # --- GRAFİK BÖLÜMÜ BİTTİ ---
+
                     st.divider()
                     st.write("### 🧹 Trol Temizliği")
                     df_c = df.reset_index(drop=True)
                     df_c.index = range(len(df_c))
                     df_c.insert(0, "Seç", False)
-                    edited = st.data_editor(df_c, column_config={"Seç": st.column_config.CheckboxColumn("Sil?", default=False)}, disabled=COL_LIST, use_container_width=True, key="adm_clean_final")
-                    if st.button("🗑️ SEÇİLENLERİ SİL", key="btn_del_final"):
+                    edited = st.data_editor(df_c, column_config={"Seç": st.column_config.CheckboxColumn("Sil?", default=False)}, disabled=COL_LIST, use_container_width=True, key="adm_edit_v24_2")
+                    if st.button("🗑️ SEÇİLENLERİ SİL", key="btn_del_v24_2"):
                         df_f = edited[edited["Seç"] == False].drop(columns=["Seç"])
                         df_f.to_csv(DB_FILE, index=False); st.rerun()
-                else: st.error("Dosya yapısı uyumsuz! Veritabanını sıfırla.")
-            except Exception as e: st.error(f"Hata: {e}")
-            if st.button("🔴 VERİTABANINI SIFIRLA", key="btn_rst_final"): os.remove(DB_FILE); st.rerun()
+                else: 
+                    st.error("Veritabanı yapısı uyumsuz! Lütfen sıfırla.")
+            except Exception as e: 
+                st.error(f"Hata: {e}")
+            
+            if st.button("🔴 VERİTABANINI SIFIRLA", key="btn_rst_v24_2"): 
+                os.remove(DB_FILE); st.rerun()
