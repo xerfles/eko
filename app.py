@@ -21,10 +21,10 @@ def save_data(isim, profil, sehir, beklenti_9ay, toplam, dolar, risk, alim_kaybi
     if not os.path.isfile(DB_FILE): data.to_csv(DB_FILE, index=False)
     else: data.to_csv(DB_FILE, mode='a', index=False, header=False)
 
-# --- 📊 PİYASA VERİLERİ ---
+# --- 📊 PİYASA VERİLERİ (6 Nisan 2026) ---
 GUNCEL_DOLAR, GERCEKLESEN_3_AYLIK, TCMB_HEDEF, MEVCUT_FAIZ = 44.92, 14.40, 22.0, 37.0 
 
-st.set_page_config(page_title="LiraPulse Pro: Big Data Analytics", layout="wide")
+st.set_page_config(page_title="LiraPulse Pro: Asset Master", layout="wide")
 
 # --- 🎨 CSS ---
 st.markdown("""
@@ -36,11 +36,12 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
+# --- 🧠 OTURUM HAFIZASI ---
 for key, val in [('d_val', 15), ('g_val', 25), ('k_val', 35), ('u_val', 20)]:
     if key not in st.session_state: st.session_state[key] = val
 
-st.title("🛰️ LiraPulse Big Data v17.2")
-st.markdown("🔍 *Tarihsel Veri Setleri ve Gelecek Projeksiyonu*")
+st.title("🛰️ LiraPulse Asset Master v17.3")
+st.markdown("🔍 *Varlık Grupları vs Enflasyon: Kim Galip Çıktı?*")
 
 # --- 🌐 TOPLUMSAL NABIZ ---
 if os.path.exists(DB_FILE):
@@ -56,10 +57,10 @@ col_in, col_out = st.columns([1, 2])
 with col_in:
     st.subheader("🕵️ Analist Girişi")
     u_name = st.text_input("Rumuz:", "Analist_01")
-    u_salary = st.number_input("Gelir (TL):", min_value=0, value=45000)
-    u_prof = st.selectbox("Profil:", ["Öğrenci", "Emekli", "Çalışan", "Kamu", "Esnaf", "Özel"])
+    u_salary = st.number_input("Aylık Gelir (TL):", min_value=0, value=45000)
+    u_prof = st.selectbox("Harcama Profili:", ["Öğrenci", "Emekli", "Çalışan", "Kamu", "Esnaf", "Özel"])
     
-    st.write("**🚀 Senaryo Seç:**")
+    st.write("**🚀 Senaryolar:**")
     sc1, sc2, sc3 = st.columns(3)
     if sc1.button("🌸 İyimser"):
         st.session_state.d_val, st.session_state.g_val, st.session_state.k_val, st.session_state.u_val = 8, 12, 15, 10
@@ -91,16 +92,18 @@ with col_out:
     r2.metric("🍞 Reel Maaş", f"{reel_maas:.0f} TL")
     r3.metric("📈 Yıl Sonu Enf.", f"%{res_total:.2f}")
 
-    # --- 🛡️ 5 YILLIK SAVAŞ TABLOSU (AYRINTILI) ---
-    st.subheader("⚔️ Enflasyon vs Yatırım Savaşları (2021-2025)")
+    # --- ⚔️ GENİŞLETİLMİŞ VARLIK SAVAŞI TABLOSU ---
+    st.subheader("⚔️ Enflasyon vs Varlık Savaşları (Tarihsel)")
     war_data = {
         "Yıl": ["2021", "2022", "2023", "2024", "2025"],
-        "Resmi Enflasyon": ["%36.1", "%64.3", "%64.8", "%44.8", "%28.5 (Tahm.)"],
-        "Altın Getirisi": ["%72.3 ✅", "%40.2 ❌", "%78.5 ✅", "%61.2 ✅", "%35.0 ✅"],
-        "Dolar Getirisi": ["%79.5 ✅", "%39.8 ❌", "%57.4 ❌", "%21.0 ❌", "%18.0 ❌"]
+        "TÜİK Enflasyon": ["%36", "%64", "%65", "%45", "%28"],
+        "Altın (%)": ["+72 ✅", "+40 ❌", "+78 ✅", "+61 ✅", "+35 ✅"],
+        "BIST 100 (%)": ["+26 ❌", "+196 ✅", "+35 ❌", "+48 ✅", "+40 ✅"],
+        "Konut (%)": ["+60 ✅", "+189 ✅", "+84 ✅", "+30 ❌", "+25 ❌"],
+        "Mevduat (%)": ["+18 ❌", "+15 ❌", "+25 ❌", "+50 ✅", "+45 ✅"]
     }
     st.table(pd.DataFrame(war_data))
-    st.caption("✅: Enflasyonu yendi | ❌: Enflasyona yenildi. (Yıllık bazda kıyaslanmıştır)")
+    st.caption("✅: Enflasyonu yendi | ❌: Enflasyona yenildi. (Yıllık getiri karşılaştırmasıdır)")
 
 st.divider()
 
@@ -113,9 +116,9 @@ with c_g1:
     st.plotly_chart(px.bar(pd.DataFrame(gold_history), x="Yıl", y="Gram Altın", color="Gram Altın", color_continuous_scale='RdYlGn_r').update_layout(showlegend=False), use_container_width=True)
 
 with c_g2:
-    advice = "Paranı korumak için reel varlıklara (altın, hisse) odaklanmalısın."
-    if res_total > MEVCUT_FAIZ: advice = f"⚠️ DİKKAT: Tahminin (%{res_total:.1f}) banka faizinden (%{MEVCUT_FAIZ}) yüksek! Faizde kalırsan paran erir."
-    st.markdown(f'<div class="advisor-box"><b>🛡️ LiraPulse Advisor:</b><br>{advice}</div>', unsafe_allow_html=True)
+    advice = "Geçmiş veriler gösteriyor ki; yüksek enflasyon döneminde Konut ve Altın koruyucu olmuş."
+    if res_total > MEVCUT_FAIZ: advice = f"⚠️ KRİTİK: Tahminine göre mevduat faizi (%{MEVCUT_FAIZ}) seni korumuyor. Reel kayıp: %{res_total - MEVCUT_FAIZ:.1f}"
+    st.markdown(f'<div class="advisor-box"><b>🛡️ LiraPulse Stratejisi:</b><br>{advice}</div>', unsafe_allow_html=True)
     st.divider()
     st.write(f"📱 **iPhone 17 Pro Max:** ~{85000 * (1 + (d_a*0.7 + res_total*0.3)/100):,.0f} TL")
 
@@ -129,7 +132,7 @@ with btn_col1:
         st.balloons()
 
 with btn_col2:
-    tweet_text = f"LiraPulse Sefalet Puanım: {sefalet_puanı}/100! 🌋 2021-2025 Enflasyon Savaşları verilerini gördün mü? Senin puanın kaç? Hesapla: https://huspevhztwxasrstrhne7z.streamlit.app"
+    tweet_text = f"LiraPulse Sefalet Puanım: {sefalet_puanı}/100! 🌋 BIST 100 ve Konut verilerini gördün mü? Senin puanın kaç? Hesapla: https://huspevhztwxasrstrhne7z.streamlit.app"
     encoded_tweet = urllib.parse.quote(tweet_text)
     st.markdown(f'<a href="https://twitter.com/intent/tweet?text={encoded_tweet}" target="_blank"><button style="width:100%; height:45px; background-color:#1DA1F2; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold; font-size:16px;">🐦 PUANINI PAYLAŞ & MEYDAN OKU</button></a>', unsafe_allow_html=True)
 
