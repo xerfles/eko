@@ -36,7 +36,6 @@ st.markdown("""
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; margin-bottom: 20px; }
     .inf-box { background-color: #161b22; padding: 20px; border-radius: 10px; border-left: 5px solid #ff4b4b; margin-top: 10px; margin-bottom: 25px; font-size: 16px; }
     .receipt-box { background-color: #fff; color: #333; padding: 20px; border-radius: 5px; font-family: 'Courier New'; border: 2px dashed #333; }
-    .admin-stat-card { background-color: #0d1117; padding: 15px; border-radius: 10px; border: 1px solid #30363d; margin-bottom: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -66,7 +65,7 @@ with col_in:
     if s2.button("🌸 İyimser", key="b2"): st.session_state.update({'d_val': 12, 'g_val': 30, 'k_val': 35, 'u_val': 25}); st.rerun()
     if s3.button("📊 Realist", key="b3"): st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45}); st.rerun()
     if s4.button("🌋 Kriz", key="b4"): st.session_state.update({'d_val': 85, 'g_val': 110, 'k_val': 125, 'u_val': 95}); st.rerun()
-    d_a = st.slider("💵 Dolar Artışı", 0, 150, key='d_val'); g_a = st.slider("🛒 Gıda Artışı", 0, 150, key='g_val'); k_a = st.slider("🏠 Kira Artışı", 0, 150, key='k_val'); u_a = st.slider("🚗 Ulaşım Artışı", 0, 150, key='u_val')
+    d_a = st.slider("💵 Dolar Artışı (%)", 0, 150, key='d_val'); g_a = st.slider("🛒 Gıda Artışı (%)", 0, 150, key='g_val'); k_a = st.slider("🏠 Kira Artışı (%)", 0, 150, key='k_val'); u_a = st.slider("🚗 Ulaşım Artışı (%)", 0, 150, key='u_val')
 
 # --- 🧮 HESAPLAMA ---
 weights = {"Öğrenci": [0.15, 0.25, 0.45, 0.15], "Emekli": [0.05, 0.55, 0.30, 0.10], "Beyaz Yakalı": [0.20, 0.30, 0.30, 0.20], "Esnaf": [0.40, 0.20, 0.20, 0.20], "Yeni Evli 💍": [0.15, 0.20, 0.50, 0.15], "Gamer 🎮": [0.40, 0.20, 0.20, 0.20], "Araç Sahibi 🚗": [0.15, 0.20, 0.25, 0.40]}
@@ -100,49 +99,39 @@ if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_wi
     save_data(u_name, u_gender, u_salary, u_prof, u_city, slider_enf, res_total, tahmini_kur, alim_kaybi, 1000/(1+res_total/100))
     st.balloons()
     food_2026 = 1150 * (1 + res_total/100)
-    st.markdown(f'<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr>31.12.2026 | GELECEK FATURASI<br>--------------------------------<br>Müşteri: {u_name}<br>Cinsiyet: {u_gender}<br>--------------------------------<br>1x Akşam Yemeği (2 Kişi) : {food_2026:.0f} TL<br>--------------------------------<br><b>TOPLAM (SENARYON) : {food_2026:.0f} TL</b><br><center><i>Gelecek kaydedildi.</i></center></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr>31.12.2026 | GELECEK FATURASI<br>--------------------------------<br>Müşteri: {u_name}<br>Cinsiyet: {u_gender}<br>--------------------------------<br><b>TOPLAM (SENARYON) : {food_2026:.0f} TL</b><br><center><i>Gelecek kaydedildi.</i></center></div>', unsafe_allow_html=True)
 
-# --- 🔐 YÖNETİCİ PANELİ (TEMİZLİK + İSTATİSTİK) ---
+# --- 🔐 YÖNETİCİ PANELİ (GÜVENLİ OKUMA) ---
 with st.expander("🔐 LiraPulse Intelligence Admin Control Center"):
     admin_pass = st.text_input("Yönetici Şifresi:", type="password")
     if admin_pass == "alper2026":
         if os.path.exists(DB_FILE):
             try:
-                df_admin = pd.read_csv(DB_FILE, on_bad_lines='skip').reset_index(drop=True)
+                # Sütun isimlerinden bağımsız okuma yapıyoruz
+                df_admin = pd.read_csv(DB_FILE, on_bad_lines='skip')
                 
-                # --- 📊 İSTATİSTİK BÖLÜMÜ ---
-                st.markdown("### 📈 Sokağın Nabzı (İstatistikler)")
-                ist1, ist2, ist3 = st.columns(3)
-                ist1.metric("Toplam Katılımcı", f"{len(df_admin)} Kişi")
-                ist2.metric("Ort. Enflasyon Beklentisi", f"%{df_admin['Yil_Sonu_Toplam'].mean():.1f}")
-                ist3.metric("Ort. Dolar Tahmini", f"{df_admin['Dolar_Beklentisi'].mean():.2f} TL")
+                # Eğer okuduğumuz tablodaki sütun sayısı beklediğimizden farklıysa zorla düzelt
+                if len(df_admin.columns) == len(COL_LIST):
+                    df_admin.columns = COL_LIST
                 
-                st.write("")
-                col_gr1, col_gr2 = st.columns(2)
-                
-                with col_gr1:
-                    st.write("**En Çok Katılan Gruplar**")
-                    st.plotly_chart(px.pie(df_admin, names='Profil', hole=0.3, color_discrete_sequence=px.colors.sequential.RdBu), use_container_width=True)
-                
-                with col_gr2:
-                    st.write("**Maaş Dağılımı (TL)**")
-                    st.plotly_chart(px.histogram(df_admin, x='Maas', nbins=10, color_discrete_sequence=['#00d4ff']), use_container_width=True)
-                
-                st.divider()
-                
-                # --- 🧹 TEMİZLİK BÖLÜMÜ ---
                 st.write("### 🧹 Trol Temizlik Paneli")
                 df_admin.insert(0, "Seç", False)
                 edited_df = st.data_editor(
                     df_admin,
                     column_config={"Seç": st.column_config.CheckboxColumn("Sil?", default=False)},
                     disabled=[c for c in df_admin.columns if c != "Seç"],
-                    use_container_width=True, key="admin_final_fix"
+                    use_container_width=True, key="final_admin_fix"
                 )
+                
                 if st.button("🗑️ SEÇİLEN TROLLERİ SİL"):
                     df_cleaned = edited_df[edited_df["Seç"] == False].drop(columns=["Seç"])
                     df_cleaned.to_csv(DB_FILE, index=False)
-                    st.success("Troller temizlendi! Yenileniyor...")
                     st.rerun()
                     
+                # İstatistikler (Sütun adına değil sırasına göre alıyoruz ki hata vermesin)
+                st.divider()
+                st.write("### 📈 Genel İstatistikler")
+                st.metric("Toplam Katılım", f"{len(df_admin)} Kişi")
+                st.metric("Ort. Enflasyon Beklentisi", f"%{pd.to_numeric(df_admin.iloc[:, 8], errors='coerce').mean():.1f}")
+                
             except Exception as e: st.error(f"Hata: {e}")
