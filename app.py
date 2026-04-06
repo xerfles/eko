@@ -25,15 +25,15 @@ def save_data(isim, cinsiyet, maas, profil, sehir, beklenti_9ay, toplam, dolar, 
 GUNCEL_DOLAR, Q1_ENF, TCMB_FAIZ, TCMB_2026_HEDEF = 44.92, 14.40, 37.0, 22.0
 P_PS5_GUNCEL, P_IPHONE_GUNCEL, P_CAR_GUNCEL = 42999, 77999, 1795000
 
-st.set_page_config(page_title="LiraPulse: Gelecek Beklentisi", layout="wide")
+st.set_page_config(page_title="LiraPulse: Beklenti Analizi", layout="wide")
 
-# --- 🎨 CSS (Güzelleştirme) ---
+# --- 🎨 CSS ---
 st.markdown("""
     <style>
-    .stMetric { background-color: #161b22; padding: 20px; border-radius: 15px; border-left: 5px solid #00d4ff; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+    .stMetric { background-color: #161b22; padding: 20px; border-radius: 15px; border-left: 5px solid #00d4ff; }
     .bugun-etiket { color: #ffbd45; font-size: 14px; text-align: center; margin-top: -10px; font-weight: bold; }
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; margin-bottom: 20px; }
-    .inf-box { background-color: #0d1117; padding: 15px; border-radius: 10px; border-left: 4px solid #ff4b4b; margin-bottom: 10px; font-size: 14px; }
+    .inf-box { background-color: #161b22; padding: 20px; border-radius: 10px; border-left: 5px solid #ff4b4b; margin-top: 10px; margin-bottom: 25px; font-size: 16px; line-height: 1.6; }
     .receipt-box { background-color: #fff; color: #333; padding: 20px; border-radius: 5px; font-family: 'Courier New'; border: 2px dashed #333; }
     </style>
     """, unsafe_allow_html=True)
@@ -41,25 +41,24 @@ st.markdown("""
 if 'd_val' not in st.session_state: 
     st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
 
-# --- 🛰️ BAŞLIK (İsteğin Üzerine Güncellendi) ---
+# --- 🛰️ ÜST BAŞLIK VE TANIM (Yeri Değiştirildi) ---
 st.title("🛰️ LiraPulse: Enflasyon ve Gelecek Beklentisi")
-st.write("") # Biraz aşağıya indirildi
 
-# --- 📊 ÜST DASHBOARD ---
+# --- 🍞 ENFLASYON TANIMI (Başlığın Hemen Altına Alındı) ---
+st.markdown("""
+<div class="inf-box">
+    <b>💡 Enflasyon Nedir?</b><br>
+    Bugün 100 liraya aldığın 10 ekmeğin, seneye aynı parayla sadece 6 tanesini alabilmendir. 
+    Para aynı kalır ama içindeki güç buharlaşır. Aşağıdaki simülasyon, bu buharlaşmanın hızını tahmin etmen için tasarlandı.
+</div>
+""", unsafe_allow_html=True)
+
+# --- 📊 ÜST DASHBOARD METRİKLER ---
 top1, top2, top3, top4 = st.columns(4)
 top1.metric("💵 Güncel Dolar", f"{GUNCEL_DOLAR} TL")
 top2.metric("📊 Q1 Enflasyon", f"%{Q1_ENF}")
 top3.metric("🏦 TCMB Faiz", f"%{TCMB_FAIZ}")
 top4.metric("🎯 TCMB Hedef", f"%{TCMB_2026_HEDEF}")
-
-st.divider()
-
-# --- 🎭 4'LÜ GERÇEKÇİ BUTONLAR ---
-s_col1, s_col2, s_col3, s_col4 = st.columns(4)
-if s_col1.button("🏦 TCMB (Resmi)", use_container_width=True): st.session_state.update({'d_val': 15, 'g_val': 22, 'k_val': 22, 'u_val': 20}); st.rerun()
-if s_col2.button("🌸 İyimser (Umut)", use_container_width=True): st.session_state.update({'d_val': 12, 'g_val': 30, 'k_val': 35, 'u_val': 25}); st.rerun()
-if s_col3.button("📊 Realist (Sokak)", use_container_width=True): st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45}); st.rerun()
-if s_col4.button("🌋 Kriz (Kaos)", use_container_width=True): st.session_state.update({'d_val': 85, 'g_val': 110, 'k_val': 125, 'u_val': 95}); st.rerun()
 
 st.divider()
 
@@ -70,20 +69,21 @@ with col_in:
     u_name = st.text_input("Rumuz:", "Analist_01")
     c1, c2 = st.columns(2)
     u_gender = c1.selectbox("Cinsiyet:", ["Erkek", "Kadın", "Belirtmek İstemiyorum"])
-    u_salary = c2.number_input("Aylık Maaş (TL):", value=22102) # Asgari ücret default
+    u_salary = c2.number_input("Aylık Maaş (TL):", value=22102)
     u_city = st.selectbox("Şehir:", ["İstanbul", "Ankara", "İzmir", "Kırklareli", "Bursa", "Antalya", "Diğer"])
     u_prof = st.selectbox("Harcama Sepeti:", ["Öğrenci", "Emekli", "Beyaz Yakalı", "Esnaf", "Yeni Evli 💍", "Gamer 🎮", "Araç Sahibi 🚗"])
     
-    # --- 🍞 ENFLASYON TANIMI (Slider Üzerine) ---
-    st.markdown("""
-    <div class="inf-box">
-        <b>💡 Enflasyon Nedir?</b><br>
-        Bugün 100 liraya aldığın 10 ekmeğin, seneye aynı parayla sadece 6 tanesini alabilmendir. 
-        Para aynı kalır ama içindeki güç buharlaşır. Aşağıdaki sliderlar, bu buharlaşmanın hızını belirler.
-    </div>
-    """, unsafe_allow_html=True)
+    st.write("---")
     
-    st.write("🔧 **İnce Ayar (Beklenti Yüzdesi)**")
+    # --- 🎭 SENARYO BUTONLARI (Slider Üzerine Alındı) ---
+    st.write("🔮 **Hızlı Senaryo Seçimi**")
+    s_col1, s_col2, s_col3, s_col4 = st.columns(4)
+    if s_col1.button("🏦 TCMB", use_container_width=True): st.session_state.update({'d_val': 15, 'g_val': 22, 'k_val': 22, 'u_val': 20}); st.rerun()
+    if s_col2.button("🌸 İyimser", use_container_width=True): st.session_state.update({'d_val': 12, 'g_val': 30, 'k_val': 35, 'u_val': 25}); st.rerun()
+    if s_col3.button("📊 Realist", use_container_width=True): st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45}); st.rerun()
+    if s_col4.button("🌋 Kriz", use_container_width=True): st.session_state.update({'d_val': 85, 'g_val': 110, 'k_val': 125, 'u_val': 95}); st.rerun()
+
+    st.write("🔧 **İnce Ayar (Sliderlar)**")
     d_a = st.slider("💵 Dolar Artışı", 0, 150, key='d_val')
     g_a = st.slider("🛒 Gıda Artışı", 0, 150, key='g_val')
     k_a = st.slider("🏠 Kira Artışı", 0, 150, key='k_val')
@@ -93,7 +93,7 @@ with col_in:
 weights = {"Öğrenci": [0.15, 0.25, 0.45, 0.15], "Emekli": [0.05, 0.55, 0.30, 0.10], "Beyaz Yakalı": [0.20, 0.30, 0.30, 0.20], "Esnaf": [0.40, 0.20, 0.20, 0.20], "Yeni Evli 💍": [0.15, 0.20, 0.50, 0.15], "Gamer 🎮": [0.40, 0.20, 0.20, 0.20], "Araç Sahibi 🚗": [0.15, 0.20, 0.25, 0.40]}
 w = weights[u_prof]
 slider_enf = (d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3])
-res_total = Q1_ENF + slider_enf # Yıl sonu toplam tahmini
+res_total = Q1_ENF + slider_enf 
 alim_kaybi, tahmini_kur = (1 - (1 / (1 + res_total/100))) * 100, GUNCEL_DOLAR * (1 + d_a/100)
 
 f_ps5 = P_PS5_GUNCEL * (1 + res_total/85)
@@ -101,23 +101,23 @@ f_iphone = P_IPHONE_GUNCEL * (1 + (d_a*0.85 + res_total*0.15)/100)
 f_car = P_CAR_GUNCEL * (1 + (d_a*0.7 + res_total*0.3)/100)
 
 with col_out:
-    # --- 📊 GÜZELLEŞTİRİLMİŞ ÖZET PANEL ---
+    # --- 📊 GÜNCEL ÖZET PANEL (İsteğin Üzerine Güncellendi) ---
     st.markdown(f"""
     <div class="ozet-panel">
-        <h3 style="color:#888; margin-bottom:5px;">Senin Yıl Sonu Analizin</h3>
+        <h3 style="color:#888; margin-bottom:5px;">Yıl Sonu Beklenti Analizi</h3>
         <div style="display:flex; justify-content: space-around; align-items:center;">
             <div>
-                <small>Q1 Enflasyonu</small><br>
+                <small>Q1 Gerçekleşen</small><br>
                 <b style="font-size:24px; color:#00d4ff;">%{Q1_ENF}</b>
             </div>
             <div style="font-size:30px; color:#555;">+</div>
             <div>
-                <small>Slider Beklentin</small><br>
+                <small>Senin Nisan-Aralık Tahminin</small><br>
                 <b style="font-size:24px; color:#ffbd45;">%{slider_enf:.1f}</b>
             </div>
             <div style="font-size:30px; color:#555;">=</div>
             <div>
-                <small><b>Yıl Sonu Tahminin</b></small><br>
+                <small><b>Yıl Sonu Toplamı</b></small><br>
                 <b style="font-size:36px; color:#ff4b4b;">%{res_total:.1f}</b>
             </div>
         </div>
@@ -147,14 +147,11 @@ with col_out:
 
 st.divider()
 
-# --- 🕰️ ZAMAN MAKİNESİ (Yıl Yıl Sıralı - 2000'den Bugüne) ---
+# --- 🕰️ ZAMAN MAKİNESİ (Yıl Yıl Sıralı) ---
 st.subheader("🕰️ Zaman Makinesi: Asgari Ücretin Erimesi (2000-2025)")
-# Kanka burayı her yıl olacak şekilde jilet gibi dizdim
 yillar = [str(y) for y in range(2000, 2026)]
-# Örnekleştirilmiş tarihsel veriler (Gerçek verilere dayalı projeksiyon)
 altin_verisi = [24.5, 11.2, 12.5, 13.1, 17.8, 18.2, 15.1, 14.8, 14.1, 11.8, 10.5, 8.5, 8.0, 9.5, 10.5, 10.1, 10.4, 9.6, 7.5, 7.8, 5.1, 5.6, 5.3, 6.5, 6.8, 4.5]
 dolar_verisi = [126, 92, 115, 150, 222, 261, 265, 315, 385, 352, 395, 393, 410, 420, 406, 365, 430, 385, 330, 355, 330, 315, 330, 430, 520, 485]
-
 df_nost = pd.DataFrame({"Yıl": yillar, "Gram Altın": altin_verisi, "Dolar ($)": dolar_verisi})
 
 g1, g2 = st.columns(2)
@@ -167,4 +164,4 @@ if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_wi
     save_data(u_name, u_gender, u_salary, u_prof, u_city, slider_enf, res_total, tahmini_kur, alim_kaybi, 1000/(1+res_total/100))
     st.balloons()
     food_2026 = 1150 * (1 + res_total/100)
-    st.markdown(f'<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr>31.12.2026 | GELECEK FATURASI<br>--------------------------------<br>Müşteri: {u_name}<br>Cinsiyet: {u_gender}<br>--------------------------------<br>1x Akşam Yemeği (2 Kişi) : {food_2026:.0f} TL<br>--------------------------------<br><b>TOPLAM (SENARYON) : {food_2026:.0f} TL</b><br><center><i>Gelecek kaydedildi.</i></center></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr>31.12.2026 | GELECEK FATURASI<br>--------------------------------<br>Müşteri: {u_name}<br>Cinsiyet: {u_gender}<br>Maaş: {u_salary:.0f} TL<br>--------------------------------<br>1x Akşam Yemeği (2 Kişi) : {food_2026:.0f} TL<br>--------------------------------<br><b>TOPLAM (SENARYON) : {food_2026:.0f} TL</b><br><center><i>Gelecek kaydedildi.</i></center></div>', unsafe_allow_html=True)
