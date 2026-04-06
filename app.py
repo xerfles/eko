@@ -31,7 +31,7 @@ st.markdown("""
     <style>
     .stMetric { background-color: #161b22; padding: 15px; border-radius: 10px; border-left: 5px solid #00d4ff; }
     .stSlider > div [data-baseweb="slider"] { color: #00d4ff; }
-    .highlight { color: #00d4ff; font-weight: bold; }
+    .sefalet-box { background-color: #ff4b4b; color: white; padding: 15px; border-radius: 10px; text-align: center; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -39,7 +39,7 @@ st.markdown("""
 for key, val in [('d_val', 15), ('g_val', 25), ('k_val', 35), ('u_val', 20)]:
     if key not in st.session_state: st.session_state[key] = val
 
-st.title("🛰️ LiraPulse Pro v16.0")
+st.title("🛰️ LiraPulse Pro v16.1")
 st.markdown("### *Türkiye'nin Gerçek Zamanlı Beklenti Endeksi*")
 
 top_col1, top_col2, top_col3, top_col4 = st.columns(4)
@@ -55,7 +55,7 @@ col_in, col_out = st.columns([1, 2])
 with col_in:
     st.subheader("🕵️ Analist Girişi")
     u_name = st.text_input("Rumuz:", "Analist_01")
-    u_salary = st.number_input("Gelir (TL):", min_value=0, value=35000)
+    u_salary = st.number_input("Gelir (TL):", min_value=0, value=45000)
     u_prof = st.selectbox("Harcama Sepeti:", ["Öğrenci", "Emekli", "Çalışan", "Kamu Personeli", "Esnaf", "Özel"])
     
     st.write("**🚀 Hızlı Senaryolar:**")
@@ -83,34 +83,30 @@ res_total = GERCEKLESEN_3_AYLIK + res_9ay
 alim_kaybi = (1 - (1 / (1 + res_total/100))) * 100
 reel_maas = u_salary * (1 / (1 + res_total/100))
 
-# --- 🏆 ANALİST SKORU ---
-diff = abs(res_total - TCMB_HEDEF)
-if diff < 10: rank, r_emoji = "Merkez Bankası Başkanı", "🏦"
-elif diff < 25: rank, r_emoji = "Realist Ekonomist", "🧐"
-elif res_total > 60: rank, r_emoji = "Kaos Teorisyeni", "🌋"
-else: rank, r_emoji = "Piyasa Analisti", "📊"
+# --- 🏆 SEFALET PUANI & UNVAN ---
+sefalet_puanı = int((res_total * 0.6) + (alim_kaybi * 0.4))
+if res_total < 30: rank, r_emoji = "Merkez Bankası Başkanı", "🏦"
+elif res_total < 55: rank, r_emoji = "Piyasa Analisti", "📊"
+else: rank, r_emoji = "Ekonomik Survivor", "🌋"
 
 # --- 🏁 ANALİZ PANELİ ---
 with col_out:
-    st.subheader(f"🏆 Analist Unvanı: {r_emoji} {rank}")
+    # 🔴 YENİ: Sefalet Puanı Kutusu
+    st.markdown(f'<div class="sefalet-box">📉 SEFALET PUANIN: {sefalet_puanı}/100</div>', unsafe_allow_html=True)
+    st.write("")
     
     r1, r2, r3 = st.columns(3)
     r1.metric("📉 Alım Gücü Kaybı", f"%{alim_kaybi:.1f}")
-    r2.metric("🍞 Reel Karşılık", f"{reel_maas:.0f} TL")
-    r3.metric("📈 Yıl Sonu Enflasyon", f"%{res_total:.2f}")
+    r2.metric("🍞 Reel Maaş", f"{reel_maas:.0f} TL")
+    r3.metric("📈 Enflasyon", f"%{res_total:.2f}")
 
-    # 💎 YENİ: HAYAL KURMA ENDEKSİ
-    st.write("---")
-    st.subheader("💎 Hedef / Hayal Endeksi (2026 Sonu Tahmini)")
+    st.divider()
+    st.subheader("💎 Hedef / Hayal Endeksi (2026)")
     h1, h2 = st.columns(2)
-    
-    # iPhone ve Araba tahmini (Dolar ve Enflasyon ağırlıklı)
     iphone_tahmin = 85000 * (1 + (d_a*0.7 + res_total*0.3)/100)
     araba_tahmin = 1200000 * (1 + (d_a*0.5 + res_total*0.5)/100)
-    
     h1.metric("📱 iPhone 17 Pro Max", f"~{iphone_tahmin:,.0f} TL")
     h2.metric("🚗 Orta Segment Araba", f"~{araba_tahmin:,.0f} TL")
-    st.caption("Fiyatlar bugünkü baz fiyatlar üzerinden senin senaryona göre simüle edilmiştir.")
 
 st.divider()
 
@@ -139,9 +135,10 @@ with btn_col1:
         st.balloons()
 
 with btn_col2:
-    tweet_text = f"LiraPulse Analist Unvanım: {r_emoji} {rank}! 2026 sonunda iPhone fiyatı {iphone_tahmin:,.0f} TL olacakmış... 📉 Sen de hesapla: https://huspevhztwxasrstrhne7z.streamlit.app"
+    # 🟢 YENİ: Paylaşım Metni Güncellendi
+    tweet_text = f"LiraPulse Sefalet Puanım: {sefalet_puanı}/100! 🌋 Unvanım: {rank}. 2026'da iPhone {iphone_tahmin:,.0f} TL oluyor... Senin puanın kaç? Hesapla: https://huspevhztwxasrstrhne7z.streamlit.app"
     encoded_tweet = urllib.parse.quote(tweet_text)
-    st.markdown(f'<a href="https://twitter.com/intent/tweet?text={encoded_tweet}" target="_blank"><button style="width:100%; height:40px; background-color:#1DA1F2; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">🐦 SONUCU TWITTER\'DA PAYLAŞ</button></a>', unsafe_allow_html=True)
+    st.markdown(f'<a href="https://twitter.com/intent/tweet?text={encoded_tweet}" target="_blank"><button style="width:100%; height:40px; background-color:#1DA1F2; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">🐦 PUANINI PAYLAŞ & MEYDAN OKU</button></a>', unsafe_allow_html=True)
 
 # --- 🛡️ ADMIN ---
 st.sidebar.markdown("---")
