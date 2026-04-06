@@ -21,10 +21,10 @@ def save_data(isim, profil, sehir, beklenti_9ay, toplam, dolar, risk, alim_kaybi
     if not os.path.isfile(DB_FILE): data.to_csv(DB_FILE, index=False)
     else: data.to_csv(DB_FILE, mode='a', index=False, header=False)
 
-# --- 📊 PİYASA VERİLERİ ---
+# --- 📊 PİYASA VERİLERİ (6 Nisan 2026) ---
 GUNCEL_DOLAR, GERCEKLESEN_3_AYLIK, TCMB_HEDEF, MEVCUT_FAIZ = 44.92, 14.40, 22.0, 37.0 
 
-st.set_page_config(page_title="LiraPulse Pro: Historical Champs", layout="wide")
+st.set_page_config(page_title="LiraPulse Pro: History Champions", layout="wide")
 
 # --- 🎨 CSS ---
 st.markdown("""
@@ -96,8 +96,8 @@ with col_out:
     
     c_gauge, c_erime = st.columns(2)
     with c_gauge:
-        gauge = go.Figure(go.Indicator(mode = "gauge+number", value = alim_kaybi, title = {'text': "Değer Kaybı (%)"}, gauge = {'axis': {'range': [0, 100]}, 'bar': {'color': "#ff4b4b"}, 'steps': [{'range': [0, 30], 'color': "green"}, {'range': [30, 60], 'color': "orange"}, {'range': [60, 100], 'color': "red"}]}))
-        gauge.update_layout(height=230, margin=dict(l=20, r=20, t=50, b=20), paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"})
+        gauge = go.Figure(go.Indicator(mode = "gauge+number", value = alim_kaybi, title = {'text': "Paranın Değer Kaybı (%)"}, gauge = {'axis': {'range': [0, 100]}, 'bar': {'color': "#ff4b4b"}, 'steps': [{'range': [0, 30], 'color': "green"}, {'range': [30, 60], 'color': "orange"}, {'range': [60, 100], 'color': "red"}]}))
+        gauge.update_layout(height=250, margin=dict(l=20, r=20, t=50, b=20), paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"})
         st.plotly_chart(gauge, use_container_width=True)
 
     with c_erime:
@@ -105,17 +105,31 @@ with col_out:
         st.title(f"{bin_tl_kalan:.2f} TL")
         bar_color = "green" if res_total < 30 else ("orange" if res_total < 55 else "red")
         st.markdown(f'<div style="background-color: lightgrey; border-radius: 5px;"><div style="background-color: {bar_color}; width: {min(res_total, 100)}%; height: 25px; border-radius: 5px;"></div></div>', unsafe_allow_html=True)
+        st.caption(f"Yıl sonunda 1.000 TL'nin alım gücü karşılığı.")
 
-    # --- 🏆 YENİ: YILLARIN ENLERİ (2020-2025) ---
-    st.subheader("🏆 Yılların Enleri: Zirvedekiler ve Diptekiler")
-    champs_data = {
-        "Yıl": ["2020", "2021", "2022", "2023", "2024", "2025"],
-        "🚀 En Çok Artan (Şampiyon)": ["Altın (%56)", "Dolar (%80)", "Konut (%189)", "Gram Altın (%78)", "BIST 100 (%48)", "Altın (Tahmini)"],
-        "📉 En Az Artan (Mağlup)": ["Mevduat (%12)", "BIST 100 (%26)", "Mevduat (%15)", "Mevduat (%25)", "Dolar (%21)", "Dolar (Tahmini)"]
+    # --- ⚔️ VARLIK SAVAŞI VE YENİ: TARİHSEL ŞAMPİYONLAR ---
+    st.subheader("⚔️ Enflasyon Savaşları & Şampiyonlar")
+    war_data = {
+        "Yıl": ["2021", "2022", "2023", "2024", "2025"],
+        "TÜİK Enf.": ["%36", "%64", "%65", "%45", "%28"],
+        "Altın (%)": ["+72 ✅", "+40 ❌", "+78 ✅", "+61 ✅", "+35 ✅"],
+        "BIST 100": ["+26 ❌", "+196 ✅", "+35 ❌", "+48 ✅", "+40 ✅"],
+        "Konut (%)": ["+60 ✅", "+189 ✅", "+84 ✅", "+30 ❌", "+25 ❌"]
     }
-    st.table(pd.DataFrame(champs_data))
+    st.table(pd.DataFrame(war_data))
 
-    st.markdown(f"""<div class="mektup-box">📬 <b>LiraPulse Intelligence:</b> Bugün 1.000 TL'ye aldığın sepet, senin senaryonda 2026 sonunda <b>{(1000*(1+res_total/100)):.0f} TL</b> olacak.</div>""", unsafe_allow_html=True)
+    # 🏆 YENİ: YILLIK EN ÇOK ARTAN/DÜŞEN LİSTESİ
+    with st.expander("🚨 2020-2025: Yılın En Çok Artan ve Düşenleri"):
+        st.markdown("""
+        * **2020:** 📈 **En Çok:** Elektronik & Altın | 📉 **En Az:** Ulaşım (Pandemi)
+        * **2021:** 📈 **En Çok:** Dolar & İthal Ürünler | 📉 **En Az:** Haberleşme
+        * **2022:** 📈 **En Çok:** Konut & Gıda | 📉 **En Az:** Giyim
+        * **2023:** 📈 **En Çok:** Lokanta & Otel | 📉 **En Az:** Konut (Yavaşlama)
+        * **2024:** 📈 **En Çok:** Eğitim & Sağlık | 📉 **En Az:** Ulaştırma
+        * **2025:** 📈 **En Çok:** Hizmet Sektörü | 📉 **En Az:** Dayanıklı Tüketim Malları
+        """)
+
+    st.markdown(f"""<div class="mektup-box">📬 <b>LiraPulse Intelligence:</b> Bugün 1.000 TL'ye aldığın sepet, 2026 sonunda <b>{(1000*(1+res_total/100)):.0f} TL</b> olacak.</div>""", unsafe_allow_html=True)
 
 st.divider()
 
@@ -135,7 +149,7 @@ with btn_col1:
         save_data(u_name, u_prof, u_city, res_total-14.4, res_total, tahmini_dolar, "Genel", alim_kaybi, bin_tl_kalan)
         st.balloons()
 with btn_col2:
-    tweet_text = f"LiraPulse Intelligence: 2026'da 1000 TL'm sadece {bin_tl_kalan:.0f} TL kalıyor! 🌋 Yılların Enleri tablosunu gördün mü? Hesapla: https://huspevhztwxasrstrhne7z.streamlit.app"
+    tweet_text = f"LiraPulse Intelligence: 2026'da 1000 TL'm sadece {bin_tl_kalan:.0f} TL kalıyor! 🌋 Senin alım gücün ne kadar eridi? Hesapla: https://huspevhztwxasrstrhne7z.streamlit.app"
     encoded_tweet = urllib.parse.quote(tweet_text)
     st.markdown(f'<a href="https://twitter.com/intent/tweet?text={encoded_tweet}" target="_blank"><button style="width:100%; height:45px; background-color:#1DA1F2; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold;">🐦 SONUCU PAYLAŞ</button></a>', unsafe_allow_html=True)
 
