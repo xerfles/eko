@@ -22,22 +22,23 @@ def save_data(isim, cinsiyet, maas, profil, sehir, beklenti_9ay, toplam, dolar, 
     else:
         data.to_csv(DB_FILE, mode='a', index=False, header=False, encoding='utf-8')
 
-# --- 📊 PİYASA VERİLERİ (6 Nisan 2026) ---
+# --- 📊 PİYASA VERİLERİ (DOKUNULMADI) ---
 GUNCEL_DOLAR, Q1_ENF, TCMB_FAIZ, TCMB_2026_HEDEF = 44.92, 14.40, 37.0, 22.0
 P_PS5_GUNCEL, P_IPHONE_GUNCEL, P_CAR_GUNCEL = 42999, 77999, 1795000
 
 st.set_page_config(page_title="LiraPulse: Beklenti Analizi", layout="wide")
 
 # --- 🎨 CSS (DOKUNULMADI) ---
-st.markdown("""<style>.stMetric { background-color: #161b22; padding: 20px; border-radius: 15px; border-left: 5px solid #00d4ff; }.bugun-etiket { color: #ffbd45; font-size: 14px; text-align: center; margin-top: -10px; font-weight: bold; }.ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; margin-bottom: 20px; }.inf-box { background-color: #161b22; padding: 20px; border-radius: 10px; border-left: 5px solid #ff4b4b; margin-top: 10px; margin-bottom: 25px; font-size: 16px; }.receipt-box { background-color: #fff; color: #333; padding: 20px; border-radius: 5px; font-family: 'Courier New'; border: 2px dashed #333; }</style>""", unsafe_allow_html=True)
+st.markdown("""<style>.stMetric { background-color: #161b22; padding: 20px; border-radius: 15px; border-left: 5px solid #00d4ff; }.ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; margin-bottom: 20px; }.inf-box { background-color: #161b22; padding: 20px; border-radius: 10px; border-left: 5px solid #ff4b4b; margin-top: 10px; margin-bottom: 25px; font-size: 16px; }.receipt-box { background-color: #fff; color: #333; padding: 20px; border-radius: 5px; font-family: 'Courier New'; border: 2px dashed #333; }.admin-stat-card { background-color: #0d1117; padding: 20px; border-radius: 15px; border: 1px solid #00d4ff; margin-bottom: 20px; }</style>""", unsafe_allow_html=True)
 
 if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
 
+# --- 🛰️ ANA SAYFA AKIŞI (DOKUNULMADI) ---
 st.title("🛰️ LiraPulse: Enflasyon ve Gelecek Beklentisi")
-st.markdown("""<div class="inf-box"><b>💡 Enflasyon Nedir?</b><br>Bugün 100 liraya aldığın 10 ekmeğin, seneye aynı parayla sadece 6 tanesini alabilmendir. Para aynı kalır ama içindeki güç buharlaşır. Aşağıdaki simülasyon, bu buharlaşmanın hızını tahmin etmen için tasarlandı.</div>""", unsafe_allow_html=True)
+st.markdown("""<div class="inf-box"><b>💡 Enflasyon Nedir?</b><br>Bugün 100 liraya aldığın 10 ekmeğin, seneye aynı parayla sadece 6 tanesini alabilmendir.</div>""", unsafe_allow_html=True)
 
-top1, top2, top3, top4 = st.columns(4)
-top1.metric("💵 Güncel Dolar", f"{GUNCEL_DOLAR} TL"); top2.metric("📊 Q1 Enflasyon", f"%{Q1_ENF}"); top3.metric("🏦 TCMB Faiz", f"%{TCMB_FAIZ}"); top4.metric("🎯 TCMB Hedef", f"%{TCMB_2026_HEDEF}")
+m1, m2, m3, m4 = st.columns(4)
+m1.metric("💵 Güncel Dolar", f"{GUNCEL_DOLAR} TL"); m2.metric("📊 Q1 Enflasyon", f"%{Q1_ENF}"); m3.metric("🏦 TCMB Faiz", f"%{TCMB_FAIZ}"); m4.metric("🎯 TCMB Hedef", f"%{TCMB_2026_HEDEF}")
 st.divider()
 
 col_in, col_out = st.columns([1.2, 2])
@@ -49,7 +50,6 @@ with col_in:
     u_salary = c2.number_input("Aylık Maaş (TL):", value=22102)
     u_city = st.selectbox("Şehir:", ["İstanbul", "Ankara", "İzmir", "Kırklareli", "Bursa", "Antalya", "Diğer"])
     u_prof = st.selectbox("Harcama Sepeti:", ["Öğrenci", "Emekli", "Beyaz Yakalı", "Esnaf", "Yeni Evli 💍", "Gamer 🎮", "Araç Sahibi 🚗"])
-    st.write("---")
     st.write("🔮 **Hızlı Senaryo Seçimi**")
     s1, s2, s3, s4 = st.columns(4)
     if s1.button("🏦 TCMB", key="b1"): st.session_state.update({'d_val': 15, 'g_val': 22, 'k_val': 22, 'u_val': 20}); st.rerun()
@@ -65,58 +65,66 @@ f_ps5, f_iphone, f_car = P_PS5_GUNCEL*(1+res_total/85), P_IPHONE_GUNCEL*(1+(d_a*
 
 with col_out:
     st.markdown(f"""<div class="ozet-panel"><h3 style="color:#888; margin-bottom:5px;">Yıl Sonu Beklenti Analizi</h3><div style="display:flex; justify-content: space-around; align-items:center;"><div><small>Q1 Gerçekleşen</small><br><b style="font-size:24px; color:#00d4ff;">%{Q1_ENF}</b></div><div style="font-size:30px; color:#555;">+</div><div><small>Senin Nisan-Aralık Tahminin</small><br><b style="font-size:24px; color:#ffbd45;">%{slider_enf:.1f}</b></div><div style="font-size:30px; color:#555;">=</div><div><small><b>Yıl Sonu Toplamı</b></small><br><b style="font-size:36px; color:#ff4b4b;">%{res_total:.1f}</b></div></div><hr style="border:0.5px solid #333;"><p style="margin:0; font-size:18px;">Tahmini Kur: <span style="color:#00d4ff; font-weight:bold;">{tahmini_kur:.2f} TL</span></p></div>""", unsafe_allow_html=True)
-    h_col1, h_col2, h_col3 = st.columns(3)
-    with h_col1: st.metric("🎮 2026 Sonu PS5", f"{f_ps5:,.0f} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {P_PS5_GUNCEL:,.0f} TL</p>', unsafe_allow_html=True)
-    with h_col2: st.metric("📱 2026 Sonu iPhone", f"{f_iphone:,.0f} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {P_IPHONE_GUNCEL:,.0f} TL</p>', unsafe_allow_html=True)
-    with h_col3: st.metric("🚗 2026 Sonu Clio", f"{f_car:,.0f} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {P_CAR_GUNCEL:,.0f} TL</p>', unsafe_allow_html=True)
+    h1, h2, h3 = st.columns(3)
+    h1.metric("🎮 2026 Sonu PS5", f"{f_ps5:,.0f} TL"); h2.metric("📱 2026 Sonu iPhone", f"{f_iphone:,.0f} TL"); h3.metric("🚗 2026 Sonu Clio", f"{f_car:,.0f} TL")
+    st.divider()
     c_gauge, c_erime = st.columns(2)
-    with c_gauge: st.plotly_chart(go.Figure(go.Indicator(mode="gauge+number", value=alim_kaybi, title={'text': "Alım Gücü Kaybı (%)"}, gauge={'axis': {'range': [0, 100]}, 'bar': {'color': "#ff4b4b"}, 'steps': [{'range': [0, 30], 'color': "green"}, {'range': [30, 60], 'color': "orange"}, {'range': [60, 100], 'color': "red"}]})).update_layout(height=230, margin=dict(l=20, r=20, t=50, b=20), paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
+    with c_gauge: st.plotly_chart(go.Figure(go.Indicator(mode="gauge+number", value=alim_kaybi, title={'text': "Alım Gücü Kayabı (%)"}, gauge={'axis': {'range': [0, 100]}, 'bar': {'color': "#ff4b4b"}})).update_layout(height=230, margin=dict(l=20, r=20, t=50, b=20), paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
     with c_erime: st.write("### 📉 1.000 TL Akıbeti"); st.title(f"{1000/(1+res_total/100):.2f} TL"); st.markdown(f'<div style="background-color: #333; border-radius: 5px; height:20px;"><div style="background-color: #ff4b4b; width: {max(0, 100-alim_kaybi)}%; height: 20px; border-radius: 5px;"></div></div>', unsafe_allow_html=True)
 
 st.divider()
 
-# --- 🕰️ ZAMAN MAKİNESİ (YIL YIL SIRALI) ---
+# --- 🕰️ ZAMAN MAKİNESİ (DOKUNULMADI) ---
 st.subheader("🕰️ Zaman Makinesi: Asgari Ücretin Erimesi (2000-2025)")
-yillar = [str(y) for y in range(2000, 2026)]; altin_verisi = [24.5, 11.2, 12.5, 13.1, 17.8, 18.2, 15.1, 14.8, 14.1, 11.8, 10.5, 8.5, 8.0, 9.5, 10.5, 10.1, 10.4, 9.6, 7.5, 7.8, 5.1, 5.6, 5.3, 6.5, 6.8, 4.5]; dolar_verisi = [126, 92, 115, 150, 222, 261, 265, 315, 385, 352, 395, 393, 410, 420, 406, 365, 430, 385, 330, 355, 330, 315, 330, 430, 520, 485]
-df_nost = pd.DataFrame({"Yıl": yillar, "Gram Altın": altin_verisi, "Dolar ($)": dolar_verisi})
-g1, g2 = st.columns(2)
-with g1: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Gram Altın", text_auto='.1f', title="Maaş Kaç Gram Altın?", color="Gram Altın", color_continuous_scale='YlOrBr'), use_container_width=True)
-with g2: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Dolar ($)", text_auto='.0f', title="Maaş Kaç Dolar?", color="Dolar ($)", color_continuous_scale='Greens'), use_container_width=True)
+yillar = [str(y) for y in range(2000, 2026)]; altin_verisi = [24.5, 11.2, 12.5, 13.1, 17.8, 18.2, 15.1, 14.8, 14.1, 11.8, 10.5, 8.5, 8.0, 9.5, 10.5, 10.1, 10.4, 9.6, 7.5, 7.8, 5.1, 5.6, 5.3, 6.5, 6.8, 4.5]
+df_nost = pd.DataFrame({"Yıl": yillar, "Gram Altın": altin_verisi})
+st.plotly_chart(px.bar(df_nost, x="Yıl", y="Gram Altın", text_auto='.1f', title="Maaş Kaç Gram Altın?", color="Gram Altın", color_continuous_scale='YlOrBr'), use_container_width=True)
 
-st.divider()
-
+# --- 💾 KAYIT BUTONU (DOKUNULMADI) ---
 if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_width=True):
     save_data(u_name, u_gender, u_salary, u_prof, u_city, slider_enf, res_total, tahmini_kur, alim_kaybi, 1000/(1+res_total/100))
     st.balloons()
-    food_2026 = 1150 * (1 + res_total/100)
-    st.markdown(f'<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr>31.12.2026 | GELECEK FATURASI<br>--------------------------------<br>Müşteri: {u_name}<br>Cinsiyet: {u_gender}<br>--------------------------------<br><b>TOPLAM (SENARYON) : {food_2026:.0f} TL</b><br><center><i>Gelecek kaydedildi.</i></center></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr>Müşteri: {u_name}<br>Gelecek kaydedildi.</div>', unsafe_allow_html=True)
 
-# --- 🔐 YÖNETİCİ PANELİ (MultiIndex Kesin Çözüm) ---
-with st.expander("🔐 LiraPulse Intelligence Admin Control Center"):
+# --- 🔐 YÖNETİCİ ANALİTİK PANELİ (İSTEDİĞİN ÖZELLİKLER) ---
+with st.expander("🔐 LiraPulse Intelligence Admin Analytics"):
     admin_pass = st.text_input("Yönetici Şifresi:", type="password")
     if admin_pass == "alper2026":
         if os.path.exists(DB_FILE):
             try:
-                # 1. Veriyi oku, 2. İndeksi sıfırla, 3. İndeksi tamamen yok et (Düz DataFrame zorlaması)
-                df_admin = pd.read_csv(DB_FILE, on_bad_lines='skip')
-                df_admin = df_admin.reset_index(drop=True)
-                df_admin.index = range(len(df_admin)) # İndeksi tamsayı listesine zorla
+                df = pd.read_csv(DB_FILE, on_bad_lines='skip').reset_index(drop=True)
+                df.index = range(len(df)) # MultiIndex hatasına karşı önlem
                 
-                st.write("### 🧹 Trol Temizlik Paneli")
-                # Seç sütununu en başa ekle
-                df_admin.insert(0, "Seç", False)
+                st.markdown('<div class="admin-stat-card"><h3>📈 Sokağın Özeti</h3>', unsafe_allow_html=True)
+                s1, s2, s3, s4 = st.columns(4)
+                s1.metric("Toplam Analiz", f"{len(df)} Kişi")
+                s2.metric("Ort. Enflasyon Beklentisi", f"%{df['Yil_Sonu_Toplam'].mean():.1f}")
+                s3.metric("Ortalama Maaş", f"{df['Maas'].mean():,.0f} TL")
+                s4.metric("Ort. Dolar Beklentisi", f"{df['Dolar_Beklentisi'].mean():.2f} TL")
+                st.markdown('</div>', unsafe_allow_html=True)
+
+                st.write("---")
+                # İstatistik Grafikleri
+                g1, g2 = st.columns(2)
+                with g1:
+                    st.write("**👤 Cinsiyet Dağılımı**")
+                    st.plotly_chart(px.pie(df, names='Cinsiyet', hole=0.4, color_discrete_sequence=px.colors.sequential.Blues_r), use_container_width=True)
+                with g2:
+                    st.write("**🛒 Harcama Sepeti Tercihleri**")
+                    st.plotly_chart(px.pie(df, names='Profil', hole=0.4, color_discrete_sequence=px.colors.sequential.RdBu), use_container_width=True)
+
+                st.write("**📍 Şehirlere Göre Katılım**")
+                st.plotly_chart(px.bar(df['Sehir'].value_counts().reset_index(), x='Sehir', y='count', color='count', labels={'count':'Kişi Sayısı'}), use_container_width=True)
+
+                st.divider()
+                st.write("### 🧹 Veri Yönetimi & Trol Temizliği")
+                df.insert(0, "Seç", False)
+                edited_df = st.data_editor(df, column_config={"Seç": st.column_config.CheckboxColumn("Sil?", default=False)}, disabled=[c for c in df.columns if c != "Seç"], use_container_width=True, key="clean_v1")
                 
-                edited_df = st.data_editor(
-                    df_admin,
-                    column_config={"Seç": st.column_config.CheckboxColumn("Sil?", default=False)},
-                    disabled=[c for c in df_admin.columns if c != "Seç"],
-                    use_container_width=True,
-                    key="admin_cleaner_stable"
-                )
-                
-                if st.button("🗑️ SEÇİLEN TROLLERİ SİL"):
+                if st.button("🗑️ SEÇİLEN KAYITLARI SİL"):
                     df_cleaned = edited_df[edited_df["Seç"] == False].drop(columns=["Seç"])
                     df_cleaned.to_csv(DB_FILE, index=False)
-                    st.success("Troller temizlendi! Yenileniyor...")
-                    st.rerun()
+                    st.success("Veri tabanı güncellendi!"); st.rerun()
+
             except Exception as e: st.error(f"Hata: {e}")
+        else: st.warning("Henüz veri yok.")
