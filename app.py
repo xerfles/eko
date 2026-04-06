@@ -156,7 +156,37 @@ with st.expander("🔐 LiraPulse Intelligence Admin Control Center"):
     admin_pass = st.text_input("Yönetici Şifresi:", type="password", key="adm_auth")
     if admin_pass == "alper2026":
         if os.path.exists(DB_FILE):
-            try:
+            try:# --- 📈 YÖNETİCİ İSTATİSTİKLERİ VE GRAFİKLER (GERİ GELDİ) ---
+                st.markdown('<div style="background-color: #0d1117; padding: 20px; border-radius: 15px; border: 1px solid #00d4ff;">', unsafe_allow_html=True)
+                st.write("### 📊 Sokağın Nabzı & Analitik")
+                
+                # Üst Metrikler (Sayısal Özeti)
+                stat_col1, stat_col2, stat_col3 = st.columns(3)
+                stat_col1.metric("Toplam Katılım", f"{len(df)} Kişi")
+                stat_col2.metric("Ort. Maaş", f"{pd.to_numeric(df['Maas'], errors='coerce').mean():,.0f} TL")
+                stat_col3.metric("Ort. Enflasyon", f"%{pd.to_numeric(df['Yil_Sonu_Toplam'], errors='coerce').mean():.1f}")
+                
+                st.write("---")
+                # Pasta Grafikleri (Cinsiyet ve Sepet)
+                gr_col1, gr_col2 = st.columns(2)
+                with gr_col1:
+                    st.write("**👤 Cinsiyet Dağılımı**")
+                    st.plotly_chart(px.pie(df, names='Cinsiyet', hole=0.4, color_discrete_sequence=px.colors.sequential.Blues_r), use_container_width=True)
+                
+                with gr_col2:
+                    st.write("**🛒 En Çok Analiz Yapan Sepetler**")
+                    st.plotly_chart(px.pie(df, names='Profil', hole=0.4, color_discrete_sequence=px.colors.sequential.Reds_r), use_container_width=True)
+                
+                # Şehir ve Trend Grafikleri
+                st.write("**📍 Şehirlere Göre Katılım Yoğunluğu**")
+                st.plotly_chart(px.bar(df['Sehir'].value_counts().reset_index(), x='Sehir', y='count', color='count', color_continuous_scale='Viridis'), use_container_width=True)
+                
+                st.write("**💰 Maaş vs Beklenen Enflasyon (Trend)**")
+                st.plotly_chart(px.scatter(df, x='Maas', y='Yil_Sonu_Toplam', color='Profil', hover_name='Katilimci', size_max=60), use_container_width=True)
+                st.markdown('</div>', unsafe_allow_html=True)
+                st.divider()
+                
+                # --- ALT KISIMDA TROL TEMİZLEME TABLOSU DEVAM EDER ---
                 df = pd.read_csv(DB_FILE, on_bad_lines='skip')
                 if len(df.columns) == len(COL_LIST):
                     df.columns = COL_LIST
