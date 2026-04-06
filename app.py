@@ -69,9 +69,30 @@ w = weights[u_prof]; slider_enf = (d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3]); r
 alim_kaybi, tahmini_kur = (1 - (1 / (1 + res_total/100))) * 100, GUNCEL_DOLAR * (1 + d_a/100)
 f_ps5, f_iphone, f_car = P_PS5_GUNCEL*(1+res_total/85), P_IPHONE_GUNCEL*(1+(d_a*0.85+res_total*0.15)/100), P_CAR_GUNCEL*(1+(d_a*0.7+res_total*0.3)/100)
 
+# ... (Üstteki hesaplamalar bittikten sonra)
+
 with col_out:
-    st.markdown(f"""<div class="ozet-panel"><h3 style="color:#888; margin-bottom:5px;">Yıl Sonu Beklenti Analizi</h3><div style="display:flex; justify-content: space-around; align-items:center;"><div><small>Q1 Gerçekleşen</small><br><b style="font-size:24px; color:#00d4ff;">%{Q1_ENF}</b></div><div style="font-size:30px; color:#555;">+</div><div><small>Senin Nisan-Aralık Tahminin</small><br><b style="font-size:24px; color:#ffbd45;">%{slider_enf:.1f}</b></div><div style="font-size:30px; color:#555;">=</div><div><small><b>Yıl Sonu Toplamı</b></small><br><b style="font-size:36px; color:#ff4b4b;">%{res_total:.1f}</b></div></div><hr style="border:0.5px solid #333;"><p style="margin:0; font-size:18px;">Tahmini Kur: <span style="color:#00d4ff; font-weight:bold;">{tahmini_kur:.2f} TL</span></p></div>""", unsafe_allow_html=True)
+    # 1. Önce bu geniş özet paneli (Yıl Sonu Beklenti Analizi) gelir
+    st.markdown(f"""<div class="ozet-panel">...</div>""", unsafe_allow_html=True)
+    
+    # 2. İŞTE BURAYA YAPIŞTIRACAKSIN:
     h1, h2, h3 = st.columns(3)
+    
+    with h1: 
+        st.metric("🎮 2026 Sonu PS5", f"{f_ps5:,.0f} TL")
+        st.markdown(f'<p class="bugun-etiket">Bugün PS5 Slim: 42.999 TL</p>', unsafe_allow_html=True)
+        
+    with h2: 
+        st.metric("📱 2026 Sonu iPhone", f"{f_iphone:,.0f} TL")
+        st.markdown(f'<p class="bugun-etiket">Bugün iPhone 17: 77.999 TL</p>', unsafe_allow_html=True)
+        
+    with h3: 
+        st.metric("🚗 2026 Sonu Clio", f"{f_car:,.0f} TL")
+        st.markdown(f'<p class="bugun-etiket">Bugün Clio: 1.795.000 TL</p>', unsafe_allow_html=True)
+
+    # 3. Sonra divider ve gauge grafiği devam eder
+    st.divider()
+    # ... (Kodun geri kalanı: c_gauge, c_erime vs.)
     h1.metric("🎮 2026 Sonu PS5", f"{f_ps5:,.0f} TL"); h2.metric("📱 2026 Sonu iPhone", f"{f_iphone:,.0f} TL"); h3.metric("🚗 2026 Sonu Clio", f"{f_car:,.0f} TL")
     st.divider()
     c_gauge, c_erime = st.columns(2)
