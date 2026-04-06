@@ -24,7 +24,7 @@ def save_data(isim, profil, sehir, beklenti_9ay, toplam, dolar, risk, alim_kaybi
 # --- 📊 PİYASA VERİLERİ (6 Nisan 2026) ---
 GUNCEL_DOLAR, GERCEKLESEN_3_AYLIK, TCMB_HEDEF, MEVCUT_FAIZ = 44.92, 14.40, 22.0, 37.0 
 
-st.set_page_config(page_title="LiraPulse Pro: History Champions", layout="wide")
+st.set_page_config(page_title="LiraPulse Pro: Asset Master", layout="wide")
 
 # --- 🎨 CSS ---
 st.markdown("""
@@ -39,7 +39,7 @@ st.markdown("""
 for key, val in [('d_val', 15), ('g_val', 25), ('k_val', 35), ('u_val', 20)]:
     if key not in st.session_state: st.session_state[key] = val
 
-st.title("🛰️ LiraPulse Intelligence v18.3")
+st.title("🛰️ LiraPulse Intelligence v18.4")
 
 # --- 🌐 ŞEHİRLERİN NABZI ---
 if os.path.exists(DB_FILE):
@@ -107,7 +107,7 @@ with col_out:
         st.markdown(f'<div style="background-color: lightgrey; border-radius: 5px;"><div style="background-color: {bar_color}; width: {min(res_total, 100)}%; height: 25px; border-radius: 5px;"></div></div>', unsafe_allow_html=True)
         st.caption(f"Yıl sonunda 1.000 TL'nin alım gücü karşılığı.")
 
-    # --- ⚔️ VARLIK SAVAŞI VE YENİ: TARİHSEL ŞAMPİYONLAR ---
+    # --- ⚔️ VARLIK SAVAŞI VE YILLIK ŞAMPİYONLAR ---
     st.subheader("⚔️ Enflasyon Savaşları & Şampiyonlar")
     war_data = {
         "Yıl": ["2021", "2022", "2023", "2024", "2025"],
@@ -118,15 +118,15 @@ with col_out:
     }
     st.table(pd.DataFrame(war_data))
 
-    # 🏆 YENİ: YILLIK EN ÇOK ARTAN/DÜŞEN LİSTESİ
-    with st.expander("🚨 2020-2025: Yılın En Çok Artan ve Düşenleri"):
+    # 🏆 LİSTE BURADA GÜNCELLENDİ
+    with st.expander("🚨 2020-2025: Yılın En Çok Artan ve Düşen Maddeleri"):
         st.markdown("""
-        * **2020:** 📈 **En Çok:** Elektronik & Altın | 📉 **En Az:** Ulaşım (Pandemi)
-        * **2021:** 📈 **En Çok:** Dolar & İthal Ürünler | 📉 **En Az:** Haberleşme
-        * **2022:** 📈 **En Çok:** Konut & Gıda | 📉 **En Az:** Giyim
-        * **2023:** 📈 **En Çok:** Lokanta & Otel | 📉 **En Az:** Konut (Yavaşlama)
-        * **2024:** 📈 **En Çok:** Eğitim & Sağlık | 📉 **En Az:** Ulaştırma
-        * **2025:** 📈 **En Çok:** Hizmet Sektörü | 📉 **En Az:** Dayanıklı Tüketim Malları
+        * **2020:** 📈 **En Çok:** Yumurta (%102) | 📉 **En Az:** T-Shirt (%-12)
+        * **2021:** 📈 **En Çok:** Kömür (%185) | 📉 **En Az:** İnternet Ücreti (%4)
+        * **2022:** 📈 **En Çok:** Kuru Soğan (%314) | 📉 **En Az:** Elektrik Ücreti (%12)
+        * **2023:** 📈 **En Çok:** Dana Eti (%145) | 📉 **En Az:** Doğalgaz (%-2)
+        * **2024:** 📈 **En Çok:** Özel Üniversite (%160) | 📉 **En Az:** Akaryakıt (%22)
+        * **2025:** 📈 **En Çok:** Kuzu Eti (%110) | 📉 **En Az:** Mobilya (%15)
         """)
 
     st.markdown(f"""<div class="mektup-box">📬 <b>LiraPulse Intelligence:</b> Bugün 1.000 TL'ye aldığın sepet, 2026 sonunda <b>{(1000*(1+res_total/100)):.0f} TL</b> olacak.</div>""", unsafe_allow_html=True)
