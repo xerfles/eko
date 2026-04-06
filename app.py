@@ -31,6 +31,7 @@ st.markdown("""
     <style>
     .stMetric { background-color: #161b22; padding: 15px; border-radius: 10px; border-left: 5px solid #00d4ff; }
     .stSlider > div [data-baseweb="slider"] { color: #00d4ff; }
+    .stAlert { border-radius: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -95,6 +96,10 @@ with col_out:
     r2.metric("🍞 Reel Maaş", f"{reel_maas:.0f} TL")
     r3.metric("📈 Toplam Enflasyon", f"%{res_total:.2f}")
 
+    # 🚀 YENİ: ZAM DEDEKTÖRÜ (ŞOK ETKİSİ)
+    zam_gereksinimi = res_total * 1.1 # Refah payı eklenmiş hali
+    st.warning(f"🚨 **LiraPulse Uyarısı:** Alım gücünü koruman ve %10 refah payı için alman gereken minimum zam: **%{zam_gereksinimi:.1f}**")
+
     st.divider()
     c1, c2 = st.columns(2)
     with c1:
@@ -106,12 +111,30 @@ with col_out:
         radar.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 100])), height=230, margin=dict(l=40, r=40, t=20, b=20), paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"})
         st.plotly_chart(radar, use_container_width=True)
 
-# --- 🕰️ ZAMAN TÜNELİ ---
-st.subheader("📊 Fiyat Merdiveni: 2020-2026 Sepet Tırmanışı")
-history_data = {"Yıl": ["2020", "2021", "2022", "2023", "2024", "2025", "BUGÜN", "2026 SONU"],
-                "Sepet (TL)": [75, 95, 185, 350, 680, 890, 1000, 1000 * (1 + res_total/100)]}
-fig_line = px.line(pd.DataFrame(history_data), x="Yıl", y="Sepet (TL)", text="Sepet (TL)", markers=True, color_discrete_sequence=["#00d4ff"])
-st.plotly_chart(fig_line, use_container_width=True)
+st.divider()
+
+# --- 🕰️ ZAMAN TÜNELİ & PEYNİR ENDEKSİ ---
+col_graph, col_stats = st.columns([2, 1])
+
+with col_graph:
+    st.subheader("📊 Fiyat Merdiveni: 2020-2026 Sepet Tırmanışı")
+    history_data = {"Yıl": ["2020", "2021", "2022", "2023", "2024", "2025", "BUGÜN", "2026 SONU"],
+                    "Sepet (TL)": [75, 95, 185, 350, 680, 890, 1000, 1000 * (1 + res_total/100)]}
+    fig_line = px.line(pd.DataFrame(history_data), x="Yıl", y="Sepet (TL)", text="Sepet (TL)", markers=True, color_discrete_sequence=["#00d4ff"])
+    st.plotly_chart(fig_line, use_container_width=True)
+
+with col_stats:
+    st.subheader("🧀 Peynir Endeksi")
+    # 2020 peynir kg fiyatı ~30 TL, 2026 tahmini
+    kg_2020 = 1000 / 40
+    kg_bugun = 1000 / 350
+    kg_2026 = kg_bugun / (1 + res_total/100)
+    
+    st.write(f"1.000 TL ile kaç kg Peynir?")
+    st.write(f"**2020:** {kg_2020:.1f} kg 🧀")
+    st.write(f"**BUGÜN:** {kg_bugun:.1f} kg 🧀")
+    st.write(f"**2026 SONU:** {kg_2026:.1f} kg 🔴")
+    st.caption("Fiyatlar ortalama market verilerinden simüle edilmiştir.")
 
 st.divider()
 
@@ -125,7 +148,7 @@ with btn_col1:
         st.success("LiraPulse veritabanına kaydedildi!")
 
 with btn_col2:
-    tweet_text = f"LiraPulse ile 2026 sonu enflasyon beklentimi %{res_total:.2f} olarak hesapladım! 📉 Maaşım ne kadar eriyor? Hemen gör: https://huspevhztwxasrstrhne7z.streamlit.app"
+    tweet_text = f"LiraPulse ile 2026 enflasyon beklentimi %{res_total:.2f} olarak hesapladım! 📈 Maaşım {reel_maas:.0f} TL'ye düşüyor. Sen de hesapla: https://huspevhztwxasrstrhne7z.streamlit.app"
     encoded_tweet = urllib.parse.quote(tweet_text)
     twitter_url = f"https://twitter.com/intent/tweet?text={encoded_tweet}"
     st.markdown(f'<a href="{twitter_url}" target="_blank"><button style="width:100%; height:40px; background-color:#1DA1F2; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">🐦 SONUCU TWITTER\'DA PAYLAŞ</button></a>', unsafe_allow_html=True)
