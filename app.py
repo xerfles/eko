@@ -24,7 +24,7 @@ def save_data(isim, profil, sehir, beklenti_9ay, toplam, dolar, risk, alim_kaybi
 # --- 📊 PİYASA VERİLERİ ---
 GUNCEL_DOLAR, GERCEKLESEN_3_AYLIK, TCMB_HEDEF = 44.92, 14.40, 22.0
 
-st.set_page_config(page_title="LiraPulse Pro: Verified", layout="wide")
+st.set_page_config(page_title="LiraPulse Pro: Memory Keeper", layout="wide")
 
 # --- 🎨 CSS ---
 st.markdown("""
@@ -36,14 +36,12 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 🧠 OTURUM YÖNETİMİ (HATA DÜZELTİLDİ) ---
 if 'd_val' not in st.session_state: 
     st.session_state.update({'d_val': 15, 'g_val': 25, 'k_val': 35, 'u_val': 20})
 
-st.title("🛰️ LiraPulse Intelligence v20.3")
+st.title("🛰️ LiraPulse Intelligence v20.4")
 
 # --- 🎭 HIZLI SENARYOLAR ---
-st.subheader("🎭 Bir Evren Seç")
 s_col1, s_col2, s_col3 = st.columns(3)
 if s_col1.button("🌸 Pembe Rüya", use_container_width=True):
     st.session_state.d_val, st.session_state.g_val, st.session_state.k_val, st.session_state.u_val = 10, 15, 20, 12
@@ -68,7 +66,7 @@ with col_in:
     st.write("✨ **Hedef Fiyatlar (Bugün)**")
     p_ps5 = st.number_input("PS5 Bugün (TL):", value=24000)
     p_iphone = st.number_input("iPhone 17 Pro Bugün (TL):", value=85000)
-    p_car = st.number_input("Ortalama Araba Bugün (TL):", value=1200000)
+    p_car = st.number_input("Araba Bugün (TL):", value=1200000)
 
     d_a = st.slider("💵 Dolar Artışı (%)", 0, 150, key='d_val')
     g_a = st.slider("🛒 Gıda Artışı (%)", 0, 150, key='g_val')
@@ -80,47 +78,72 @@ weights = {"Öğrenci": [0.15, 0.25, 0.45, 0.15], "Emekli": [0.05, 0.55, 0.30, 0
 w = weights[u_prof]
 res_total = GERCEKLESEN_3_AYLIK + (d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3])
 alim_kaybi = (1 - (1 / (1 + res_total/100))) * 100
+bin_tl_kalan = 1000 * (1 / (1 + res_total/100))
+tahmini_kur = GUNCEL_DOLAR * (1 + d_a/100)
 
-# Hayallerin 2026 Fiyatı
 f_ps5 = p_ps5 * (1 + res_total/90)
 f_iphone = p_iphone * (1 + (d_a*0.8 + res_total*0.2)/100)
 f_car = p_car * (1 + (d_a*0.6 + res_total*0.4)/100)
 
-# --- 🏁 ANALİZ PANELİ ---
 with col_out:
+    # 📉 ALIM GÜCÜ GRAFİKLERİ (GERİ GELDİ)
+    c_gauge, c_erime = st.columns(2)
+    with c_gauge:
+        gauge = go.Figure(go.Indicator(mode = "gauge+number", value = alim_kaybi, title = {'text': "Değer Kaybı (%)"}, gauge = {'axis': {'range': [0, 100]}, 'bar': {'color': "#ff4b4b"}, 'steps': [{'range': [0, 30], 'color': "green"}, {'range': [30, 60], 'color': "orange"}, {'range': [60, 100], 'color': "red"}]}))
+        gauge.update_layout(height=230, margin=dict(l=20, r=20, t=50, b=20), paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"})
+        st.plotly_chart(gauge, use_container_width=True)
+    with c_erime:
+        st.write("### 📉 1.000 TL Yolculuğu")
+        st.title(f"{bin_tl_kalan:.2f} TL")
+        st.markdown(f'<div style="background-color: lightgrey; border-radius: 5px;"><div style="background-color: red; width: {min(res_total, 100)}%; height: 20px; border-radius: 5px;"></div></div>', unsafe_allow_html=True)
+        st.caption(f"🎯 Tahmini Kur: {tahmini_kur:.2f} TL")
+
     h_col1, h_col2, h_col3 = st.columns(3)
-    
-    with h_col1:
-        st.metric("🎮 2026 PS5", f"{f_ps5:,.0f} TL")
-        st.markdown(f'<p class="bugun-etiket">Bugün: {p_ps5:,.0f} TL</p>', unsafe_allow_html=True)
-        
-    with h_col2:
-        st.metric("📱 2026 iPhone", f"{f_iphone:,.0f} TL")
-        st.markdown(f'<p class="bugun-etiket">Bugün: {p_iphone:,.0f} TL</p>', unsafe_allow_html=True)
-        
-    with h_col3:
-        st.metric("🚗 2026 Araba", f"{f_car:,.0f} TL")
-        st.markdown(f'<p class="bugun-etiket">Bugün: {p_car:,.0f} TL</p>', unsafe_allow_html=True)
+    h_col1.metric("🎮 2026 PS5", f"{f_ps5:,.0f} TL")
+    h_col2.metric("📱 2026 iPhone", f"{f_iphone:,.0f} TL")
+    h_col3.metric("🚗 2026 Araba", f"{f_car:,.0f} TL")
 
-    # 📜 SERTİFİKA
     st.markdown(f"""<div class="cert-card"><h3>📜 LiraPulse Intelligence</h3><p>2026 ANALİST SERTİFİKASI: <b>{u_name.upper()}</b></p><p>Tahmini Enflasyon: <b>%{res_total:.1f}</b></p></div>""", unsafe_allow_html=True)
-
-    # 🧾 ADİSYON
-    food_2026 = 900 * (1 + res_total/100)
-    st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse Intelligence ADİSYON</b></center><hr>31.12.2026 | MASA: GELECEK<br>--------------------------------<br>1x Akşam Yemeği (2 Kişi) : {food_2026:.0f} TL<br>--------------------------------<br><b>TOPLAM (SENİN SENARYON) : {food_2026:.0f} TL</b><br><center><i>Fiyatlar Hayal Gücünle Sınırlıdır.</i></center></div>""", unsafe_allow_html=True)
-
-    # VARLIK SAVAŞLARI
-    st.subheader("⚔️ Enflasyon vs Varlık Savaşları (2021-2025)")
-    war_df = pd.DataFrame({"Yıl": ["2021", "2022", "2023", "2024", "2025"], "Enf.": ["%36", "%64", "%65", "%45", "%28"], "Altın": ["+72 ✅", "+40 ❌", "+78 ✅", "+61 ✅", "+35 ✅"], "BIST": ["+26 ❌", "+196 ✅", "+35 ❌", "+48 ✅", "+40 ✅"]})
-    st.table(war_df)
 
 st.divider()
 
-# --- 💾 PAYLAŞIM ---
-tweet_text = f"LiraPulse 2026 Tahminim: PS5 {f_ps5:,.0f} TL (Bugün {p_ps5:,.0f}!), Araba {f_car:,.0f} TL! 🌋 Adisyonumu gördün mü? Hesapla: https://huspevhztwxasrstrhne7z.streamlit.app"
-st.markdown(f'<a href="https://twitter.com/intent/tweet?text={urllib.parse.quote(tweet_text)}" target="_blank"><button style="width:100%; height:45px; background-color:#1DA1F2; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold;">🐦 ŞOKU PAYLAŞ</button></a>', unsafe_allow_html=True)
+# --- 🕰️ NOSTALJİ: 2000'DEN BUGÜNE (GERİ GELDİ & AYRILDI) ---
+st.subheader("🕰️ Zaman Makinesi: 2000'den Bugüne Asgari Ücret Gücü")
+nost_data = {
+    "Yıl": ["2000", "2005", "2010", "2015", "2020", "2024", "BUGÜN", "2026 T."],
+    "Gram Altın": [30.5, 18.5, 12.4, 9.8, 7.2, 5.8, 5.1, 5.1 / (1 + res_total/150)],
+    "Dolar ($)": [115, 260, 385, 410, 380, 520, 378, 17002 / tahmini_kur]
+}
+df_nost = pd.DataFrame(nost_data)
+
+g1, g2 = st.columns(2)
+with g1:
+    fig_gold = px.bar(df_nost, x="Yıl", y="Gram Altın", text_auto='.1f', title="Maaş Kaç Gram Altın?", color="Gram Altın", color_continuous_scale='YlOrBr')
+    st.plotly_chart(fig_gold, use_container_width=True)
+with g2:
+    fig_usd = px.bar(df_nost, x="Yıl", y="Dolar ($)", text_auto='.0f', title="Maaş Kaç Dolar?", color="Dolar ($)", color_continuous_scale='Greens')
+    st.plotly_chart(fig_usd, use_container_width=True)
+
+st.divider()
+
+# --- ⚔️ VARLIK SAVAŞLARI & ADİSYON ---
+c_war, c_receipt = st.columns([1.5, 1])
+with c_war:
+    st.subheader("⚔️ Enflasyon vs Varlık Savaşları")
+    war_df = pd.DataFrame({"Yıl": ["2021", "2022", "2023", "2024", "2025"], "Enf.": ["%36", "%64", "%65", "%45", "%28"], "Altın": ["+72 ✅", "+40 ❌", "+78 ✅", "+61 ✅", "+35 ✅"], "BIST": ["+26 ❌", "+196 ✅", "+35 ❌", "+48 ✅", "+40 ✅"]})
+    st.table(war_df)
+with c_receipt:
+    food_2026 = 950 * (1 + res_total/100)
+    st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse Intelligence ADİSYON</b></center><hr>31.12.2026 | GELECEK FATURASI<br>--------------------------------<br>1x Akşam Yemeği (2 Kişi) : {food_2026:.0f} TL<br>--------------------------------<br><b>TOPLAM (SENİN SENARYON) : {food_2026:.0f} TL</b><br>--------------------------------<br><center><i>Geleceği Görmek Cesaret İster.</i></center></div>""", unsafe_allow_html=True)
+
+# --- 💾 BUTONLAR ---
+if st.button("💾 ANALİZİ KAYDET", use_container_width=True):
+    save_data(u_name, u_prof, u_city, res_total-14.4, res_total, tahmini_kur, "Genel", alim_kaybi, bin_tl_kalan)
+    st.balloons()
+
+tweet_text = f"LiraPulse 2000-2026 Analizim: Maaşım {17002/tahmini_kur:.0f}$ seviyesine düşüyor! 🌋 Adisyonumu gördün mü? Hesapla: https://huspevhztwxasrstrhne7z.streamlit.app"
+st.markdown(f'<a href="https://twitter.com/intent/tweet?text={urllib.parse.quote(tweet_text)}" target="_blank"><button style="width:100%; height:45px; background-color:#1DA1F2; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold;">🐦 TWITTER\'DA PAYLAŞ</button></a>', unsafe_allow_html=True)
 
 # --- 🛡️ ADMIN ---
 if st.sidebar.text_input("🔐 Admin", type="password") == "alper2026":
     if os.path.exists(DB_FILE): st.dataframe(pd.read_csv(DB_FILE))
-    
