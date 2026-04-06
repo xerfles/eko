@@ -24,7 +24,7 @@ def save_data(isim, profil, sehir, beklenti_9ay, toplam, dolar, risk, alim_kaybi
 # --- 📊 PİYASA VERİLERİ (6 Nisan 2026) ---
 GUNCEL_DOLAR, GERCEKLESEN_3_AYLIK, TCMB_HEDEF, MEVCUT_FAIZ = 44.92, 14.40, 22.0, 37.0 
 
-st.set_page_config(page_title="LiraPulse Pro: Power View", layout="wide")
+st.set_page_config(page_title="LiraPulse Pro: Complete", layout="wide")
 
 # --- 🎨 CSS ---
 st.markdown("""
@@ -39,7 +39,7 @@ st.markdown("""
 for key, val in [('d_val', 15), ('g_val', 25), ('k_val', 35), ('u_val', 20)]:
     if key not in st.session_state: st.session_state[key] = val
 
-st.title("🛰️ LiraPulse Intelligence v18.1")
+st.title("🛰️ LiraPulse Intelligence v18.2")
 
 # --- 🌐 ŞEHİRLERİN NABZI ---
 if os.path.exists(DB_FILE):
@@ -85,7 +85,7 @@ reel_maas = u_salary * (1 / (1 + res_total/100))
 tahmini_dolar = GUNCEL_DOLAR * (1 + d_a/100)
 bin_tl_kalan = 1000 * (1 / (1 + res_total/100))
 
-# --- 🏁 ANALİZ PANELİ (GERİ GELEN GRAFİKLER) ---
+# --- 🏁 ANALİZ PANELİ ---
 with col_out:
     r1, r2, r3 = st.columns(3)
     r1.metric("📉 Alım Gücü Kaybı", f"%{alim_kaybi:.1f}")
@@ -96,25 +96,35 @@ with col_out:
     
     c_gauge, c_erime = st.columns(2)
     with c_gauge:
-        # 📈 GERİ GELDİ: DEĞER KAYBI GAUGE
         gauge = go.Figure(go.Indicator(mode = "gauge+number", value = alim_kaybi, title = {'text': "Paranın Değer Kaybı (%)"}, gauge = {'axis': {'range': [0, 100]}, 'bar': {'color': "#ff4b4b"}, 'steps': [{'range': [0, 30], 'color': "green"}, {'range': [30, 60], 'color': "orange"}, {'range': [60, 100], 'color': "red"}]}))
         gauge.update_layout(height=250, margin=dict(l=20, r=20, t=50, b=20), paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"})
         st.plotly_chart(gauge, use_container_width=True)
 
     with c_erime:
-        # 📉 GERİ GELDİ: 1.000 TL ATEŞ ÖLÇER
         st.write("### 📉 1.000 TL'nin Akıbeti")
         st.title(f"{bin_tl_kalan:.2f} TL")
         bar_color = "green" if res_total < 30 else ("orange" if res_total < 55 else "red")
         st.markdown(f'<div style="background-color: lightgrey; border-radius: 5px;"><div style="background-color: {bar_color}; width: {min(res_total, 100)}%; height: 25px; border-radius: 5px;"></div></div>', unsafe_allow_html=True)
-        st.caption(f"Yıl sonunda 1.000 TL'nin bugünkü alım gücü karşılığı.")
+        st.caption(f"Yıl sonunda 1.000 TL'nin alım gücü karşılığı.")
+
+    # --- ⚔️ GERİ GELDİ: VARLIK SAVAŞI TABLOSU ---
+    st.subheader("⚔️ Enflasyon vs Varlık Savaşları (Tarihsel)")
+    war_data = {
+        "Yıl": ["2021", "2022", "2023", "2024", "2025"],
+        "TÜİK Enf.": ["%36", "%64", "%65", "%45", "%28"],
+        "Altın (%)": ["+72 ✅", "+40 ❌", "+78 ✅", "+61 ✅", "+35 ✅"],
+        "BIST 100": ["+26 ❌", "+196 ✅", "+35 ❌", "+48 ✅", "+40 ✅"],
+        "Konut (%)": ["+60 ✅", "+189 ✅", "+84 ✅", "+30 ❌", "+25 ❌"],
+        "Mevduat": ["+18 ❌", "+15 ❌", "+25 ❌", "+50 ✅", "+45 ✅"]
+    }
+    st.table(pd.DataFrame(war_data))
 
     # ✉️ GELECEKTEN MEKTUP
-    st.markdown(f"""<div class="mektup-box">📬 <b>LiraPulse Intelligence:</b> Senin senaryona göre 2026 sonunda bugün 1.000 TL'ye aldığın sepet tam <b>{(1000*(1+res_total/100)):.0f} TL</b> olacak. Maaşının %{alim_kaybi:.1f}'i raflarda eridi bile.</div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="mektup-box">📬 <b>LiraPulse Intelligence:</b> Bugün 1.000 TL'ye aldığın sepet, senin senaryonda 2026 sonunda <b>{(1000*(1+res_total/100)):.0f} TL</b> olacak.</div>""", unsafe_allow_html=True)
 
 st.divider()
 
-# --- 🕰️ NOSTALJİ VE DİĞER GRAFİKLER ---
+# --- 🕰️ ZAMAN MAKİNESİ ---
 g1, g2 = st.columns(2)
 nost_data = {"Yıl": ["2010", "2015", "2020", "2024", "BUGÜN", "2026 Tahm."], "Gram Altın": [12.4, 9.8, 7.2, 5.8, 5.1, 5.1 / (1 + res_total/150)], "Dolar ($)": [385, 410, 380, 520, 378, 17002 / tahmini_dolar]}
 df_n = pd.DataFrame(nost_data)
