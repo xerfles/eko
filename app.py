@@ -24,7 +24,7 @@ def save_data(isim, profil, sehir, beklenti_9ay, toplam, dolar, risk, alim_kaybi
 # --- 📊 PİYASA VERİLERİ (6 Nisan 2026) ---
 GUNCEL_DOLAR, GERCEKLESEN_3_AYLIK, TCMB_HEDEF, MEVCUT_FAIZ = 44.92, 14.40, 22.0, 37.0 
 
-st.set_page_config(page_title="LiraPulse Pro: Future Receipt", layout="wide")
+st.set_page_config(page_title="LiraPulse Pro: Ultimate Edition", layout="wide")
 
 # --- 🎨 CSS ---
 st.markdown("""
@@ -39,7 +39,7 @@ st.markdown("""
 for key, val in [('d_val', 15), ('g_val', 25), ('k_val', 35), ('u_val', 20)]:
     if key not in st.session_state: st.session_state[key] = val
 
-st.title("🛰️ LiraPulse Intelligence v19.0")
+st.title("🛰️ LiraPulse Intelligence v19.1")
 
 # --- 🌐 ŞEHİRLERİN NABZI ---
 if os.path.exists(DB_FILE):
@@ -87,12 +87,11 @@ bin_tl_kalan = 1000 * (1 / (1 + res_total/100))
 
 # --- 🏁 ANALİZ PANELİ ---
 with col_out:
-    # 💎 1. SOSYAL KIYASLAMA
     if os.path.exists(DB_FILE):
         df_p = pd.read_csv(DB_FILE)
         prof_avg = df_p[df_p['Profil'] == u_prof]['Yıl_Sonu_Enf'].mean()
         if not pd.isna(prof_avg):
-            st.markdown(f'<div class="social-card">🤝 <b>Senin Sınıfın Ne Diyor?</b><br>Senin gibi "{u_prof}" olanların ortalama enflasyon beklentisi <b>%{prof_avg:.1f}</b>.</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="social-card">🤝 <b>Senin Sınıfın Ne Diyor?</b><br>Senin gibi "{u_prof}" olanların ortalama beklentisi <b>%{prof_avg:.1f}</b>.</div>', unsafe_allow_html=True)
 
     r1, r2, r3 = st.columns(3)
     r1.metric("📉 Alım Gücü Kaybı", f"%{alim_kaybi:.1f}")
@@ -101,7 +100,6 @@ with col_out:
 
     st.divider()
     
-    # 📉 ALIM GÜCÜ GRAFİKLERİ
     c_gauge, c_erime = st.columns(2)
     with c_gauge:
         gauge = go.Figure(go.Indicator(mode = "gauge+number", value = alim_kaybi, title = {'text': "Değer Kaybı (%)"}, gauge = {'axis': {'range': [0, 100]}, 'bar': {'color': "#ff4b4b"}, 'steps': [{'range': [0, 30], 'color': "green"}, {'range': [30, 60], 'color': "orange"}, {'range': [60, 100], 'color': "red"}]}))
@@ -111,21 +109,29 @@ with col_out:
         st.write("### 📉 1.000 TL Yolculuğu")
         st.title(f"{bin_tl_kalan:.2f} TL")
         st.markdown(f'<div style="background-color: lightgrey; border-radius: 5px;"><div style="background-color: red; width: {min(res_total, 100)}%; height: 20px; border-radius: 5px;"></div></div>', unsafe_allow_html=True)
-        # 💎 2. PİYASA VS SEN
         st.caption(f"🎯 TCMB Hedefi: %{TCMB_HEDEF} | 🕵️ Senin Farkın: +%{res_total-TCMB_HEDEF:.1f}")
 
-    # 💎 3. GELECEKTEN FATURA (ADİSYON)
-    food_2024 = 850
-    food_2026 = food_2024 * (1 + res_total/100)
+    # --- ⚔️ GERİ GELDİ: VARLIK SAVAŞLARI TABLOSU ---
+    st.subheader("⚔️ Enflasyon vs Varlık Savaşları (2021-2025)")
+    war_data = {
+        "Yıl": ["2021", "2022", "2023", "2024", "2025"],
+        "TÜİK Enf.": ["%36", "%64", "%65", "%45", "%28"],
+        "Altın (%)": ["+72 ✅", "+40 ❌", "+78 ✅", "+61 ✅", "+35 ✅"],
+        "BIST 100": ["+26 ❌", "+196 ✅", "+35 ❌", "+48 ✅", "+40 ✅"],
+        "Konut (%)": ["+60 ✅", "+189 ✅", "+84 ✅", "+30 ❌", "+25 ❌"],
+        "Mevduat": ["+18 ❌", "+15 ❌", "+25 ❌", "+50 ✅", "+45 ✅"]
+    }
+    st.table(pd.DataFrame(war_data))
+
+    # --- 🧾 GELECEKTEN FATURA (ADİSYON) ---
+    food_2026 = 850 * (1 + res_total/100)
     st.markdown(f"""
     <div class="receipt-box">
         <center>🧾 <b>LiraPulse Intelligence ADİSYON</b></center>
         <hr>
-        TARİH: 31.12.2026<br>
-        MASA: 2026 SONU<br>
+        TARİH: 31.12.2026 | MASA: 2026 SONU<br>
         --------------------------------<br>
-        2x Serpme Kahvaltı (Gerçekçi)   : {food_2026*0.4:.0f} TL<br>
-        1x Akşam Yemeği (2 Kişi)        : {food_2026*0.6:.0f} TL<br>
+        1x Akşam Yemeği Menüsü        : {food_2026:.0f} TL<br>
         --------------------------------<br>
         <b>TOPLAM (SENİN SENARYON)      : {food_2026:.0f} TL</b><br>
         --------------------------------<br>
@@ -133,7 +139,7 @@ with col_out:
     </div>
     """, unsafe_allow_html=True)
 
-# --- ⚔️ ŞAMPİYONLAR VE ÜRÜNLER ---
+# --- 🏆 ŞAMPİYON ÜRÜNLER LİSTESİ ---
 with st.expander("🚨 2020-2025: Yılın En Çok Artan ve Düşen Maddeleri"):
     st.markdown("""
     * **2020:** 📈 Yumurta (%102) | 📉 T-Shirt (%-12)
@@ -160,9 +166,9 @@ with btn_col1:
         save_data(u_name, u_prof, u_city, res_total-14.4, res_total, tahmini_dolar, "Genel", alim_kaybi, bin_tl_kalan)
         st.balloons()
 with btn_col2:
-    tweet_text = f"LiraPulse Intelligence: 2026'da akşam yemeği faturam {food_2026:.0f} TL oluyor! 🧾 Gelecekten adisyonunu gör: https://huspevhztwxasrstrhne7z.streamlit.app"
+    tweet_text = f"LiraPulse Intelligence: 2026'da 1000 TL'm sadece {bin_tl_kalan:.0f} TL kalıyor! 🌋 Senin alım gücün ne kadar eridi? Hesapla: https://huspevhztwxasrstrhne7z.streamlit.app"
     encoded_tweet = urllib.parse.quote(tweet_text)
-    st.markdown(f'<a href="https://twitter.com/intent/tweet?text={encoded_tweet}" target="_blank"><button style="width:100%; height:45px; background-color:#1DA1F2; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold;">🐦 ADİSYONU TWITTER\'DA PAYLAŞ</button></a>', unsafe_allow_html=True)
+    st.markdown(f'<a href="https://twitter.com/intent/tweet?text={encoded_tweet}" target="_blank"><button style="width:100%; height:45px; background-color:#1DA1F2; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold;">🐦 PUANINI TWITTER\'DA PAYLAŞ</button></a>', unsafe_allow_html=True)
 
 # --- 🛡️ ADMIN ---
 st.sidebar.markdown("---")
