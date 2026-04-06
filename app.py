@@ -24,7 +24,7 @@ def save_data(isim, profil, sehir, beklenti_9ay, toplam, dolar, risk, alim_kaybi
 # --- 📊 2026 GÜNCEL PİYASA ---
 GUNCEL_DOLAR, GERCEKLESEN_3_AYLIK, TCMB_HEDEF, MEVCUT_FAIZ = 44.92, 14.40, 22.0, 37.0 
 
-st.set_page_config(page_title="LiraPulse Pro: Intelligence Center", layout="wide")
+st.set_page_config(page_title="LiraPulse Pro: Investor Edition", layout="wide")
 
 # --- 🎨 CSS ---
 st.markdown("""
@@ -33,6 +33,8 @@ st.markdown("""
     .sefalet-box { background-color: #ff4b4b; color: white; padding: 20px; border-radius: 15px; text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 10px; }
     .advisor-box { background-color: #238636; color: white; padding: 15px; border-radius: 10px; border-left: 10px solid #ffffff; margin-top: 10px; }
     .nabiz-card { background: linear-gradient(90deg, #161b22 0%, #0d1117 100%); padding: 10px; border-radius: 8px; border: 1px solid #30363d; margin-top: 5px;}
+    .win-box { color: #2ecc71; font-weight: bold; }
+    .lose-box { color: #e74c3c; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -40,21 +42,15 @@ st.markdown("""
 for key, val in [('d_val', 15), ('g_val', 25), ('k_val', 35), ('u_val', 20)]:
     if key not in st.session_state: st.session_state[key] = val
 
-# --- 🔭 HEADER ---
-st.title("🛰️ LiraPulse Intelligence v17.0")
-st.markdown("🔍 *Kişisel Enflasyon Analizi ve Toplumsal Beklenti Endeksi*")
+st.title("🛰️ LiraPulse Investor Pro v17.1")
+st.markdown("🔍 *Kişisel Beklenti Endeksi ve Stratejik Yatırım Rehberi*")
 
-# --- 🌐 1. TOPLUMSAL NABIZ (CANLI) ---
+# --- 🌐 TOPLUMSAL NABIZ ---
 if os.path.exists(DB_FILE):
     df_history = pd.read_csv(DB_FILE)
     avg_enf = df_history['Yıl_Sonu_Enf'].mean()
     avg_usd = df_history['Dolar_Beklentisi'].mean()
-    count_user = len(df_history)
-    st.markdown(f"""
-    <div class="nabiz-card">
-        🌐 <b>Toplumsal Nabız:</b> {count_user} Analist ortalaması: Yıl sonu Enflasyon <b>%{avg_enf:.1f}</b> | Dolar <b>{avg_usd:.2f} TL</b>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f'<div class="nabiz-card">🌐 <b>Analist Ortalaması:</b> Enflasyon <b>%{avg_enf:.1f}</b> | Dolar <b>{avg_usd:.2f} TL</b></div>', unsafe_allow_html=True)
 
 st.divider()
 
@@ -66,7 +62,7 @@ with col_in:
     u_salary = st.number_input("Aylık Net Gelir (TL):", min_value=0, value=45000)
     u_prof = st.selectbox("Harcama Sepeti:", ["Öğrenci", "Emekli", "Çalışan", "Kamu Personeli", "Esnaf", "Özel"])
     
-    st.write("**🚀 Senaryo Kısayolları:**")
+    st.write("**🚀 Senaryolar:**")
     sc1, sc2, sc3 = st.columns(3)
     if sc1.button("🌸 İyimser"):
         st.session_state.d_val, st.session_state.g_val, st.session_state.k_val, st.session_state.u_val = 8, 12, 15, 10
@@ -86,49 +82,46 @@ with col_in:
 # --- 🧮 HESAPLAMA ---
 weights = {"Öğrenci": [0.2, 0.25, 0.40, 0.15], "Emekli": [0.10, 0.50, 0.30, 0.10], "Çalışan": [0.20, 0.30, 0.30, 0.20], "Kamu Personeli": [0.20, 0.30, 0.30, 0.20], "Esnaf": [0.35, 0.25, 0.20, 0.20], "Özel": [0.25, 0.25, 0.25, 0.25]}
 w = weights[u_prof]
-res_9ay = (d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3])
-res_total = GERCEKLESEN_3_AYLIK + res_9ay
+res_total = GERCEKLESEN_3_AYLIK + (d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3])
 alim_kaybi = (1 - (1 / (1 + res_total/100))) * 100
 reel_maas = u_salary * (1 / (1 + res_total/100))
-sefalet_puanı = int((res_total * 0.6) + (alim_kaybi * 0.4))
 
 # --- 🏁 ANALİZ PANELİ ---
 with col_out:
+    sefalet_puanı = int((res_total * 0.6) + (alim_kaybi * 0.4))
     st.markdown(f'<div class="sefalet-box">📉 SEFALET PUANIN: {sefalet_puanı}/100</div>', unsafe_allow_html=True)
     
     r1, r2, r3 = st.columns(3)
     r1.metric("📉 Alım Gücü Kaybı", f"%{alim_kaybi:.1f}")
-    r2.metric("🍞 Reel Maaşın", f"{reel_maas:.0f} TL")
-    r3.metric("📈 Kişisel Enflasyonun", f"%{res_total:.2f}")
+    r2.metric("🍞 Reel Maaş", f"{reel_maas:.0f} TL")
+    r3.metric("📈 Kişisel Enflasyon", f"%{res_total:.2f}")
 
-    # --- 🧠 2. SURVIVAL ADVISOR ---
-    advice = "Paranı korumak için sepetini çeşitlendir, nakitte kalmak riskli!"
-    if sefalet_puanı > 70: advice = "⚠️ ACİL DURUM: Senaryon bir kriz işaret ediyor. Borçlanmaktan kaçın, temel ihtiyaç stokla."
-    elif res_total < 25: advice = "✅ GÜVENLİ BÖLGE: Tahminlerin iyimser. Yatırımlarını büyütmeye odaklanabilirsin."
-    
-    st.markdown(f"""<div class="advisor-box"><b>🛡️ LiraPulse Advisor:</b><br>{advice}</div>""", unsafe_allow_html=True)
+    # --- 🏆 YATIRIM PERFORMANS TABLOSU (YENİ) ---
+    st.subheader("🛡️ Enflasyon Savaşçıları (Son 5 Yıl Karşılaştırması)")
+    perf_data = {
+        "Yatırım Aracı": ["Altın (Gram)", "BIST 100", "Bitcoin", "Dolar/TL", "Mevduat (Faiz)"],
+        "Reel Getiri": ["✅ Yüksek", "✅ Orta-Yüksek", "🚀 Volatil/Yüksek", "❌ Düşük/Negatif", "🔴 Negatif Reel Getiri"],
+        "Durum": ["WINNER", "WINNER", "RISKY WIN", "LOSER", "BIG LOSER"]
+    }
+    st.table(pd.DataFrame(perf_data))
+    st.caption("Son 5 yılda enflasyonu yenen yatırımlar 'WINNER' olarak işaretlenmiştir.")
 
 st.divider()
 
-# --- 📊 3. HÜZÜNLÜ NOSTALJİ (ALTIN ENDEKSİ) ---
+# --- 🕰️ NOSTALJİ VE ADVISOR ---
 c_g1, c_g2 = st.columns([2, 1])
 with c_g1:
-    st.subheader("🕰️ Nostalji: Asgari Ücretle Alınan Gram Altın (2005-2026)")
-    # Simüle edilmiş tarihsel veri (Maaş / Altın Fiyatı)
-    gold_history = {
-        "Yıl": ["2005", "2010", "2015", "2020", "2024", "BUGÜN", "2026 (Tahm.)"],
-        "Gram Altın Sayısı": [18.5, 12.4, 9.8, 7.2, 5.8, 5.1, 5.1 / (1 + res_total/150)] # Tahmini düşüş
-    }
-    st.plotly_chart(px.bar(pd.DataFrame(gold_history), x="Yıl", y="Gram Altın Sayısı", color="Gram Altın Sayısı", color_continuous_scale='Reds').update_layout(showlegend=False), use_container_width=True)
+    st.subheader("🕰️ Asgari Ücretle Gram Altın (2005-2026)")
+    gold_history = {"Yıl": ["2005", "2010", "2015", "2020", "2024", "BUGÜN", "2026 Tahm."],
+                    "Gram Altın": [18.5, 12.4, 9.8, 7.2, 5.8, 5.1, 5.1 / (1 + res_total/150)]}
+    st.plotly_chart(px.bar(pd.DataFrame(gold_history), x="Yıl", y="Gram Altın", color="Gram Altın", color_continuous_scale='RdYlGn_r').update_layout(showlegend=False), use_container_width=True)
 
 with c_g2:
-    st.subheader("📱 Hayal Endeksi")
-    iphone_tahmin = 85000 * (1 + (d_a*0.7 + res_total*0.3)/100)
-    araba_tahmin = 1200000 * (1 + (d_a*0.5 + res_total*0.5)/100)
-    st.write(f"**iPhone 17 Pro Max:** ~{iphone_tahmin:,.0f} TL")
-    st.write(f"**Orta Seg. Araba:** ~{araba_tahmin:,.0f} TL")
-    st.write("---")
-    st.caption("Peynir Endeksi: v17.0 ile yan panele taşındı.")
+    advice = "Paranı korumak için reel varlıklara (altın, hisse) odaklanmalısın."
+    if res_total > MEVCUT_FAIZ: advice = "⚠️ ALERT: Enflasyon tahminin faizden yüksek! Faizde kalırsan paran eriyecek."
+    st.markdown(f'<div class="advisor-box"><b>🛡️ LiraPulse Stratejisi:</b><br>{advice}</div>', unsafe_allow_html=True)
+    st.divider()
+    st.write(f"📱 **iPhone 17 Pro Max:** ~{85000 * (1 + (d_a*0.7 + res_total*0.3)/100):,.0f} TL")
 
 st.divider()
 
@@ -136,11 +129,11 @@ st.divider()
 btn_col1, btn_col2 = st.columns(2)
 with btn_col1:
     if st.button("💾 ANALİZİ KAYDET VE NABZA KATIL", use_container_width=True):
-        save_data(u_name, u_prof, "Genel", res_9ay, res_total, GUNCEL_DOLAR*(1+d_a/100), "Genel", alim_kaybi, 1000*(1-alim_kaybi/100))
+        save_data(u_name, u_prof, "Genel", res_total-14.4, res_total, GUNCEL_DOLAR*(1+d_a/100), "Genel", alim_kaybi, 1000*(1-alim_kaybi/100))
         st.balloons()
 
 with btn_col2:
-    tweet_text = f"LiraPulse Sefalet Puanım: {sefalet_puanı}/100! 🌋 Advisor notum: '{advice[:30]}...'. Senin puanın kaç? Hesapla: https://huspevhztwxasrstrhne7z.streamlit.app"
+    tweet_text = f"LiraPulse Sefalet Puanım: {sefalet_puanı}/100! 🌋 Yatırım stratejim: '{advice[:35]}...'. Senin puanın kaç? Hesapla: https://huspevhztwxasrstrhne7z.streamlit.app"
     encoded_tweet = urllib.parse.quote(tweet_text)
     st.markdown(f'<a href="https://twitter.com/intent/tweet?text={encoded_tweet}" target="_blank"><button style="width:100%; height:45px; background-color:#1DA1F2; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold; font-size:16px;">🐦 PUANINI PAYLAŞ & MEYDAN OKU</button></a>', unsafe_allow_html=True)
 
