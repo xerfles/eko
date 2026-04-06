@@ -90,10 +90,17 @@ with g2: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Dolar ($)", text_auto='.0f
 st.divider()
 
 # --- 💾 ADİSYON BUTONU VE UZUN ADİSYON (GERİ GELDİ) ---
+# --- 💾 ADİSYON BUTONU VE GÜNCELLENEN İÇERİK ---
 if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_width=True):
     save_data(u_name, u_gender, u_salary, u_prof, u_city, slider_enf, res_total, tahmini_kur, alim_kaybi, 1000/(1+res_total/100))
     st.balloons()
-    food_2026 = 1150 * (1 + res_total/100)
+    
+    # Hesaplamalar
+    bugun_yemek = 1000
+    gelecek_yemek = bugun_yemek * (1 + res_total/100)
+    fark = gelecek_yemek - bugun_yemek
+    bugun_tarih = datetime.now().strftime("%d.%m.%2026")
+    
     st.markdown(f"""
     <div class="receipt-box">
         <center>🧾 <b>LiraPulse Intelligence ADİSYON</b></center>
@@ -102,11 +109,12 @@ if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_wi
         --------------------------------<br>
         Müşteri: {u_name}<br>
         Cinsiyet: {u_gender}<br>
-        Mevcut Maaş: {u_salary:,.0f} TL<br>
         --------------------------------<br>
-        1x Akşam Yemeği (2 Kişi) : {food_2026:.0f} TL<br>
+        1x Akşam Yemeği (2 Kişi)<br>
+        ({bugun_tarih} fiyatı: {bugun_yemek:,.0f} TL) : {gelecek_yemek:,.0f} TL<br>
         --------------------------------<br>
-        <b>TOPLAM (SENİN SENARYON) : {food_2026:.0f} TL</b><br>
+        <b>TOPLAM (SENİN SENARYON) : {gelecek_yemek:,.0f} TL</b><br>
+        <span style="color:#ff4b4b; font-weight:bold;">Fazladan Ödeyeceğin: +{fark:,.0f} TL</span><br>
         --------------------------------<br>
         <center><i>Veri kaydedildi. Gelecek yaklaşıyor.</i></center>
     </div>
