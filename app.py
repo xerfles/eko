@@ -24,14 +24,15 @@ def save_data(isim, profil, sehir, beklenti_9ay, toplam, dolar, risk, alim_kaybi
 # --- 📊 2026 GÜNCEL PİYASA ---
 GUNCEL_DOLAR, GERCEKLESEN_3_AYLIK, TCMB_HEDEF, MEVCUT_FAIZ = 44.92, 14.40, 22.0, 37.0 
 
-st.set_page_config(page_title="LiraPulse Pro: Financial Intelligence", layout="wide")
+st.set_page_config(page_title="LiraPulse Pro: Hayatta Kalma Simülatörü", layout="wide")
 
-# --- 🎨 CSS ---
+# --- 🎨 CSS (Daha Vurgulu Renkler) ---
 st.markdown("""
     <style>
-    .stMetric { background-color: #161b22; padding: 15px; border-radius: 10px; border-left: 5px solid #00d4ff; }
+    .stMetric { background-color: #161b22; padding: 15px; border-radius: 10px; border-left: 5px solid #ff4b4b; }
     .stSlider > div [data-baseweb="slider"] { color: #00d4ff; }
-    .sefalet-box { background-color: #ff4b4b; color: white; padding: 15px; border-radius: 10px; text-align: center; font-weight: bold; }
+    .sefalet-box { background-color: #ff4b4b; color: white; padding: 20px; border-radius: 15px; text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 20px; box-shadow: 0px 4px 15px rgba(255, 75, 75, 0.3); }
+    .tokat-metin { color: #ffbd45; font-style: italic; font-size: 14px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -39,13 +40,14 @@ st.markdown("""
 for key, val in [('d_val', 15), ('g_val', 25), ('k_val', 35), ('u_val', 20)]:
     if key not in st.session_state: st.session_state[key] = val
 
-st.title("🛰️ LiraPulse Pro v16.1")
-st.markdown("### *Türkiye'nin Gerçek Zamanlı Beklenti Endeksi*")
+# --- 🔭 HEADER (Pazarlama Odaklı) ---
+st.title("🛰️ LiraPulse Pro: Ekonomik Survivor v16.2")
+st.markdown("🔍 *Resmi rakamları değil, kendi cüzdanını simüle et. Geleceği tahmin etme, hesapla.*")
 
 top_col1, top_col2, top_col3, top_col4 = st.columns(4)
 top_col1.metric("💵 Dolar/TL", f"{GUNCEL_DOLAR}")
-top_col2.metric("🎯 Hedef", f"%{TCMB_HEDEF}")
-top_col3.metric("📊 Q1 Gerçekleşen", f"%14.40")
+top_col2.metric("🎯 TCMB Hedefi", f"%{TCMB_HEDEF}")
+top_col3.metric("📊 Gerçekleşen (Q1)", f"%14.40")
 top_col4.metric("🏦 Politika Faizi", f"%{MEVCUT_FAIZ}")
 
 st.divider()
@@ -54,11 +56,11 @@ col_in, col_out = st.columns([1, 2])
 
 with col_in:
     st.subheader("🕵️ Analist Girişi")
-    u_name = st.text_input("Rumuz:", "Analist_01")
-    u_salary = st.number_input("Gelir (TL):", min_value=0, value=45000)
-    u_prof = st.selectbox("Harcama Sepeti:", ["Öğrenci", "Emekli", "Çalışan", "Kamu Personeli", "Esnaf", "Özel"])
+    u_name = st.text_input("Rumuz (Twitter'da görünecek):", "Analist_01")
+    u_salary = st.number_input("Aylık Net Gelir (TL):", min_value=0, value=45000)
+    u_prof = st.selectbox("Harcama Sepeti Profili:", ["Öğrenci", "Emekli", "Çalışan", "Kamu Personeli", "Esnaf", "Özel"])
     
-    st.write("**🚀 Hızlı Senaryolar:**")
+    st.write("**🚀 Senaryo Seçimi:**")
     sc1, sc2, sc3 = st.columns(3)
     if sc1.button("🌸 İyimser"):
         st.session_state.d_val, st.session_state.g_val, st.session_state.k_val, st.session_state.u_val = 8, 12, 15, 10
@@ -91,17 +93,17 @@ else: rank, r_emoji = "Ekonomik Survivor", "🌋"
 
 # --- 🏁 ANALİZ PANELİ ---
 with col_out:
-    # 🔴 YENİ: Sefalet Puanı Kutusu
     st.markdown(f'<div class="sefalet-box">📉 SEFALET PUANIN: {sefalet_puanı}/100</div>', unsafe_allow_html=True)
-    st.write("")
     
     r1, r2, r3 = st.columns(3)
     r1.metric("📉 Alım Gücü Kaybı", f"%{alim_kaybi:.1f}")
-    r2.metric("🍞 Reel Maaş", f"{reel_maas:.0f} TL")
-    r3.metric("📈 Enflasyon", f"%{res_total:.2f}")
+    r2.metric("🍞 Reel Maaşın", f"{reel_maas:.0f} TL")
+    r3.metric("📈 Kişisel Enflasyonun", f"%{res_total:.2f}")
+
+    st.markdown(f'<p class="tokat-metin">⚠️ Not: Senin senaryonda maaşının %{alim_kaybi:.1f}\'i buharlaşıyor. Gelecek zam görüşmesinde bu tabloyu göster!</p>', unsafe_allow_html=True)
 
     st.divider()
-    st.subheader("💎 Hedef / Hayal Endeksi (2026)")
+    st.subheader("💎 Hayallerin 2026 Fiyatı (Senin Tahminine Göre)")
     h1, h2 = st.columns(2)
     iphone_tahmin = 85000 * (1 + (d_a*0.7 + res_total*0.3)/100)
     araba_tahmin = 1200000 * (1 + (d_a*0.5 + res_total*0.5)/100)
@@ -110,35 +112,36 @@ with col_out:
 
 st.divider()
 
-# --- 📊 GRAFİKLER ---
+# --- 📊 NOSTALJİ VE ŞOK ---
 c_g1, c_g2 = st.columns([2, 1])
 with c_g1:
+    st.subheader("🕰️ Zaman Makinesi: 1.000 TL'nin Hazin Sonu")
     history_data = {"Yıl": ["2020", "2021", "2022", "2023", "2024", "2025", "BUGÜN", "2026 SONU"],
-                    "Sepet (TL)": [75, 95, 185, 350, 680, 890, 1000, 1000 * (1 + res_total/100)]}
-    st.plotly_chart(px.line(pd.DataFrame(history_data), x="Yıl", y="Sepet (TL)", text="Sepet (TL)", markers=True).update_traces(line_color="#00d4ff"), use_container_width=True)
+                    "1000 TL Sepeti": [75, 95, 185, 350, 680, 890, 1000, 1000 * (1 + res_total/100)]}
+    st.plotly_chart(px.line(pd.DataFrame(history_data), x="Yıl", y="1000 TL Sepeti", text="1000 TL Sepeti", markers=True).update_traces(line_color="#ff4b4b"), use_container_width=True)
 
 with c_g2:
-    st.subheader("🧀 Peynir Endeksi")
+    st.subheader("🧀 Nostalji Endeksi")
     kg_bugun = 1000 / 350
     kg_2026 = kg_bugun / (1 + res_total/100)
-    st.write(f"**2020:** 25.0 kg 🧀")
-    st.write(f"**BUGÜN:** {kg_bugun:.1f} kg 🧀")
-    st.write(f"**2026 SONU:** {kg_2026:.1f} kg 🔴")
+    st.write(f"**2020:** 25.0 kg Peynir 🧀")
+    st.write(f"**BUGÜN:** {kg_bugun:.1f} kg Peynir 🧀")
+    st.write(f"**2026 (Tahmin):** {kg_2026:.1f} kg Peynir 🔴")
+    st.markdown('<p style="font-size:12px; color:gray;">*2020 verileri ortalama market fiyatlarıdır.</p>', unsafe_allow_html=True)
 
 st.divider()
 
-# --- 💾 BUTONLAR ---
+# --- 💾 PAYLAŞIM VE KAYIT ---
 btn_col1, btn_col2 = st.columns(2)
 with btn_col1:
-    if st.button("💾 ANALİZİ KAYDET", use_container_width=True):
+    if st.button("💾 ANALİZİ RESMİ VERİYE EKLE", use_container_width=True):
         save_data(u_name, u_prof, "Genel", res_9ay, res_total, GUNCEL_DOLAR*(1+d_a/100), "Genel", alim_kaybi, 1000*(1-alim_kaybi/100))
         st.balloons()
 
 with btn_col2:
-    # 🟢 YENİ: Paylaşım Metni Güncellendi
-    tweet_text = f"LiraPulse Sefalet Puanım: {sefalet_puanı}/100! 🌋 Unvanım: {rank}. 2026'da iPhone {iphone_tahmin:,.0f} TL oluyor... Senin puanın kaç? Hesapla: https://huspevhztwxasrstrhne7z.streamlit.app"
+    tweet_text = f"LiraPulse Sefalet Puanım: {sefalet_puanı}/100! 🌋 Unvanım: {rank}. Maaşım {reel_maas:.0f} TL'ye düşüyor. Senin puanın kaç? Hesapla: https://huspevhztwxasrstrhne7z.streamlit.app"
     encoded_tweet = urllib.parse.quote(tweet_text)
-    st.markdown(f'<a href="https://twitter.com/intent/tweet?text={encoded_tweet}" target="_blank"><button style="width:100%; height:40px; background-color:#1DA1F2; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">🐦 PUANINI PAYLAŞ & MEYDAN OKU</button></a>', unsafe_allow_html=True)
+    st.markdown(f'<a href="https://twitter.com/intent/tweet?text={encoded_tweet}" target="_blank"><button style="width:100%; height:45px; background-color:#1DA1F2; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold; font-size:16px;">🐦 PUANINI PAYLAŞ & MEYDAN OKU</button></a>', unsafe_allow_html=True)
 
 # --- 🛡️ ADMIN ---
 st.sidebar.markdown("---")
