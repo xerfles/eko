@@ -156,7 +156,7 @@ with st.expander("🔐 LiraPulse Intelligence Admin Control Center"):
     admin_pass = st.text_input("Yönetici Şifresi:", type="password", key="adm_auth")
     if admin_pass == "alper2026":
         if os.path.exists(DB_FILE):
-            try:# --- 📈 YÖNETİCİ İSTATİSTİKLERİ VE GRAFİKLER (GERİ GELDİ) ---
+            try: # --- 📈 YÖNETİCİ İSTATİSTİKLERİ VE GRAFİKLER (GERİ GELDİ) ---
                 st.markdown('<div style="background-color: #0d1117; padding: 20px; border-radius: 15px; border: 1px solid #00d4ff;">', unsafe_allow_html=True)
                 st.write("### 📊 Sokağın Nabzı & Analitik")
                 
