@@ -16,130 +16,6 @@ def save_data(isim, cinsiyet, maas, profil, sehir, beklenti_9ay, toplam, dolar, 
         headers = _get_websocket_headers()
         if headers: user_ip = headers.get("X-Forwarded-For", "127.0.0.1").split(",")[0]
     except: pass
-    data = pd.DataFrame([[datetime.now().strftime("%Y-%m-%d %H:%M"), isim, cinsiyet, maas, profil, sehir, user_ip, beklenti_9ay, toplam, dolar, alim_kaybi, erime]], columns=COL_LIST)
-    if not os.path.isfile(DB_FILE):
-        data.to_csv(DB_FILE, index=False, encoding='utf-8')
-    else:
-        data.to_csv(DB_FILE, mode='a', index=False, header=False, encoding='utf-8')
-
-# --- 📊 PİYASA VERİLERİ (6 Nisan 2026) ---
-GUNCEL_DOLAR, Q1_ENF, TCMB_FAIZ, TCMB_2026_HEDEF = 44.92, 14.40, 37.0, 22.0
-P_PS5_GUNCEL, P_IPHONE_GUNCEL, P_CAR_GUNCEL = 42999, 77999, 1795000
-
-st.set_page_config(page_title="LiraPulse: Full Visuals", layout="wide")
-
-# --- 🎨 CSS ---
-st.markdown("""<style>.stMetric { background-color: #161b22; padding: 20px; border-radius: 15px; border-left: 5px solid #00d4ff; }.bugun-etiket { color: #ffbd45; font-size: 14px; text-align: center; margin-top: -10px; font-weight: bold; }.ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; margin-bottom: 20px; }.inf-box { background-color: #161b22; padding: 20px; border-radius: 10px; border-left: 5px solid #ff4b4b; margin-top: 10px; margin-bottom: 25px; font-size: 16px; }.receipt-box { background-color: #fff; color: #333; padding: 30px; border-radius: 5px; font-family: 'Courier New'; border: 2px dashed #333; margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }</style>""", unsafe_allow_html=True)
-
-if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
-
-# --- 🛰️ ANA SAYFA AKIŞI ---
-st.title("🛰️ LiraPulse: Enflasyon ve Gelecek Beklentisi")
-st.markdown("""<div class="inf-box"><b>💡 Enflasyon Nedir?</b><br>Bugün 100 liraya aldığın 10 ekmeğin, seneye aynı parayla sadece 6 tanesini alabilmendir. Para aynı kalır ama içindeki güç buharlaşır.</div>""", unsafe_allow_html=True)
-
-m1, m2, m3, m4 = st.columns(4)
-m1.metric("💵 Güncel Dolar", f"{GUNCEL_DOLAR} TL"); m2.metric("📊 Q1 Enflasyon", f"%{Q1_ENF}"); m3.metric("🏦 TCMB Faiz", f"%{TCMB_FAIZ}"); m4.metric("🎯 TCMB Hedef", f"%{TCMB_2026_HEDEF}")
-st.divider()
-
-col_in, col_out = st.columns([1.2, 2])
-with col_in:
-    st.subheader("🕵️ Analist Girişi")
-    u_name = st.text_input("Rumuz:", "Analist_01")
-    c1, c2 = st.columns(2)
-    u_gender = c1.selectbox("Cinsiyet:", ["Erkek", "Kadın", "Diğer"])
-    u_salary = c2.number_input("Aylık Maaş (TL):", value=22102)
-    u_city = st.selectbox("Şehir:", ["İstanbul", "Ankara", "İzmir", "Kırklareli", "Bursa", "Antalya", "Diğer"])
-    u_prof = st.selectbox("Harcama Sepeti:", ["Öğrenci", "Emekli", "Beyaz Yakalı", "Esnaf", "Yeni Evli 💍", "Gamer 🎮", "Araç Sahibi 🚗"])
-    st.write("🔮 **Hızlı Senaryo Seçimi**")
-    s1, s2, s3, s4 = st.columns(4)
-    if s1.button("🏦 TCMB", key="b1"): st.session_state.update({'d_val': 15, 'g_val': 22, 'k_val': 22, 'u_val': 20}); st.rerun()
-    if s2.button("🌸 İyimser", key="b2"): st.session_state.update({'d_val': 12, 'g_val': 30, 'k_val': 35, 'u_val': 25}); st.rerun()
-    if s3.button("📊 Realist", key="b3"): st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45}); st.rerun()
-    if s4.button("🌋 Kriz", key="b4"): st.session_state.update({'d_val': 85, 'g_val': 110, 'k_val': 125, 'u_val': 95}); st.rerun()
-    d_a = st.slider("💵 Dolar Artışı (%)", 0, 150, key='d_val'); g_a = st.slider("🛒 Gıda Artışı (%)", 0, 150, key='g_val'); k_a = st.slider("🏠 Kira Artışı (%)", 0, 150, key='k_val'); u_a = st.slider("🚗 Ulaşım Artışı (%)", 0, 150, key='u_val')
-
-# --- 🧮 HESAPLAMA ---
-weights = {"Öğrenci": [0.15, 0.25, 0.45, 0.15], "Emekli": [0.05, 0.55, 0.30, 0.10], "Beyaz Yakalı": [0.20, 0.30, 0.30, 0.20], "Esnaf": [0.40, 0.20, 0.20, 0.20], "Yeni Evli 💍": [0.15, 0.20, 0.50, 0.15], "Gamer 🎮": [0.40, 0.20, 0.20, 0.20], "Araç Sahibi 🚗": [0.15, 0.20, 0.25, 0.40]}
-w = weights[u_prof]; slider_enf = (d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3]); res_total = Q1_ENF + slider_enf 
-alim_kaybi, tahmini_kur = (1 - (1 / (1 + res_total/100))) * 100, GUNCEL_DOLAR * (1 + d_a/100)
-f_ps5, f_iphone, f_car = P_PS5_GUNCEL*(1+res_total/85), P_IPHONE_GUNCEL*(1+(d_a*0.85+res_total*0.15)/100), P_CAR_GUNCEL*(1+(d_a*0.7+res_total*0.3)/100)
-
-with col_out:
-    st.markdown(f"""<div class="ozet-panel"><h3 style="color:#888; margin-bottom:5px;">Yıl Sonu Beklenti Analizi</h3><div style="display:flex; justify-content: space-around; align-items:center;"><div><small>Q1 Gerçekleşen</small><br><b style="font-size:24px; color:#00d4ff;">%{Q1_ENF}</b></div><div style="font-size:30px; color:#555;">+</div><div><small>Senin Nisan-Aralık Tahminin</small><br><b style="font-size:24px; color:#ffbd45;">%{slider_enf:.1f}</b></div><div style="font-size:30px; color:#555;">=</div><div><small><b>Yıl Sonu Toplamı</b></small><br><b style="font-size:36px; color:#ff4b4b;">%{res_total:.1f}</b></div></div><hr style="border:0.5px solid #333;"><p style="margin:0; font-size:18px;">Tahmini Kur: <span style="color:#00d4ff; font-weight:bold;">{tahmini_kur:.2f} TL</span></p></div>""", unsafe_allow_html=True)
-    h_col1, h_col2, h_col3 = st.columns(3)
-    with h_col1: st.metric("🎮 2026 Sonu PS5", f"{f_ps5:,.0f} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {P_PS5_GUNCEL:,.0f} TL</p>', unsafe_allow_html=True)
-    with h_col2: st.metric("📱 2026 Sonu iPhone", f"{f_iphone:,.0f} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {P_IPHONE_GUNCEL:,.0f} TL</p>', unsafe_allow_html=True)
-    with h_col3: st.metric("🚗 2026 Sonu Clio", f"{f_car:,.0f} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {P_CAR_GUNCEL:,.0f} TL</p>', unsafe_allow_html=True)
-
-    c_gauge, c_erime = st.columns(2)
-    with c_gauge: st.plotly_chart(go.Figure(go.Indicator(mode="gauge+number", value=alim_kaybi, title={'text': "Alım Gücü Kayabı (%)"}, gauge={'axis': {'range': [0, 100]}, 'bar': {'color': "#ff4b4b"}})).update_layout(height=230, margin=dict(l=20, r=20, t=50, b=20), paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
-    with c_erime: st.write("### 📉 1.000 TL Akıbeti"); st.title(f"{1000/(1+res_total/100):.2f} TL"); st.markdown(f'<div style="background-color: #333; border-radius: 5px; height:20px;"><div style="background-color: #ff4b4b; width: {max(0, 100-alim_kaybi)}%; height: 20px; border-radius: 5px;"></div></div>', unsafe_allow_html=True)
-
-st.divider()
-
-# --- 🕰️ ZAMAN MAKİNESİ (DOLAR GRAFİĞİ GERİ GELDİ) ---
-st.subheader("🕰️ Zaman Makinesi: Asgari Ücretin Erimesi (2000-2025)")
-yillar = [str(y) for y in range(2000, 2026)]; altin_verisi = [24.5, 11.2, 12.5, 13.1, 17.8, 18.2, 15.1, 14.8, 14.1, 11.8, 10.5, 8.5, 8.0, 9.5, 10.5, 10.1, 10.4, 9.6, 7.5, 7.8, 5.1, 5.6, 5.3, 6.5, 6.8, 4.5]
-dolar_verisi = [126, 92, 115, 150, 222, 261, 265, 315, 385, 352, 395, 393, 410, 420, 406, 365, 430, 385, 330, 355, 330, 315, 330, 430, 520, 485]
-df_nost = pd.DataFrame({"Yıl": yillar, "Gram Altın": altin_verisi, "Dolar ($)": dolar_verisi})
-
-g1, g2 = st.columns(2)
-with g1: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Gram Altın", text_auto='.1f', title="Maaş Kaç Gram Altın?", color="Gram Altın", color_continuous_scale='YlOrBr'), use_container_width=True)
-with g2: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Dolar ($)", text_auto='.0f', title="Maaş Kaç Dolar?", color="Dolar ($)", color_continuous_scale='Greens'), use_container_width=True)
-
-st.divider()
-
-# --- 💾 ADİSYON BUTONU VE UZUN ADİSYON (GERİ GELDİ) ---
-# --- 💾 ADİSYON BUTONU VE GÜNCELLENEN İÇERİK ---
-if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_width=True):
-    save_data(u_name, u_gender, u_salary, u_prof, u_city, slider_enf, res_total, tahmini_kur, alim_kaybi, 1000/(1+res_total/100))
-    st.balloons()
-    
-    # Hesaplamalar
-    bugun_yemek = 1000
-    gelecek_yemek = bugun_yemek * (1 + res_total/100)
-    fark = gelecek_yemek - bugun_yemek
-    bugun_tarih = datetime.now().strftime("%d.%m.%2026")
-    
-    st.markdown(f"""
-    <div class="receipt-box">
-        <center>🧾 <b>LiraPulse Intelligence ADİSYON</b></center>
-        <hr>
-        31.12.2026 | GELECEK FATURASI<br>
-        --------------------------------<br>
-        Müşteri: {u_name}<br>
-        Cinsiyet: {u_gender}<br>
-        --------------------------------<br>
-        1x Akşam Yemeği (2 Kişi)<br>
-        ({bugun_tarih} fiyatı: {bugun_yemek:,.0f} TL) : {gelecek_yemek:,.0f} TL<br>
-        --------------------------------<br>
-        <b>TOPLAM (SENİN SENARYON) : {gelecek_yemek:,.0f} TL</b><br>
-        <span style="color:#ff4b4b; font-weight:bold;">Fazladan Ödeyeceğin: +{fark:,.0f} TL</span><br>
-        --------------------------------<br>
-        <center><i>Veri kaydedildi. Gelecek yaklaşıyor.</i></center>
-    </div>
-    """, unsafe_allow_html=True)
-
-# --- 🔐 YÖNETİCİ ANALİTİK (DOKUNULMADI - TAMİR EDİLDİ) ---
-import streamlit as st
-import pandas as pd
-import plotly.graph_objects as go
-import plotly.express as px
-import os
-from datetime import datetime
-
-# --- 📁 VERİ YÖNETİMİ (TAMAMEN ESKİ USUL - GARANTİ) ---
-DB_FILE = 'lirapulse_v15_data.csv'
-COL_LIST = ['Tarih', 'Katilimci', 'Cinsiyet', 'Maas', 'Profil', 'Sehir', 'IP', 'Nisan_Aralik_Tahmin', 'Yil_Sonu_Toplam', 'Dolar_Beklentisi', 'Alim_Gucu_Kaybi', 'Reel_Kalan_TL']
-
-def save_data(isim, cinsiyet, maas, profil, sehir, beklenti_9ay, toplam, dolar, alim_kaybi, erime):
-    user_ip = "127.0.0.1"
-    try:
-        from streamlit.web.server.websocket_headers import _get_websocket_headers
-        headers = _get_websocket_headers()
-        if headers: user_ip = headers.get("X-Forwarded-For", "127.0.0.1").split(",")[0]
-    except: pass
-    # Veriyi direkt COL_LIST sırasıyla kaydediyoruz
     data = pd.DataFrame([[datetime.now().strftime("%d.%m.%Y %H:%M"), isim, cinsiyet, maas, profil, sehir, user_ip, beklenti_9ay, toplam, dolar, alim_kaybi, erime]], columns=COL_LIST)
     if not os.path.isfile(DB_FILE):
         data.to_csv(DB_FILE, index=False, encoding='utf-8')
@@ -152,13 +28,13 @@ P_PS5_GUNCEL, P_IPHONE_GUNCEL, P_CAR_GUNCEL = 42999, 77999, 1795000
 
 st.set_page_config(page_title="LiraPulse: Gelecek Beklentisi", layout="wide")
 
-# --- 🎨 CSS ---
+# --- 🎨 CSS (DOKUNULMADI) ---
 st.markdown("""<style>.stMetric { background-color: #161b22; padding: 20px; border-radius: 15px; border-left: 5px solid #00d4ff; }.ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; margin-bottom: 20px; }.inf-box { background-color: #161b22; padding: 20px; border-radius: 10px; border-left: 5px solid #ff4b4b; margin-top: 10px; margin-bottom: 25px; font-size: 16px; }.receipt-box { background-color: #fff; color: #333; padding: 30px; border-radius: 5px; font-family: 'Courier New'; border: 2px dashed #333; margin-top: 20px; }</style>""", unsafe_allow_html=True)
 
 if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
 
 st.title("🛰️ LiraPulse: Enflasyon ve Gelecek Beklentisi")
-st.markdown("""<div class="inf-box"><b>💡 Enflasyon Nedir?</b><br>Bugün 100 liraya aldığın 10 ekmeğin, seneye aynı parayla sadece 6 tanesini alabilmendir. Para aynı kalır ama içindeki güç buharlaşır.</div>""", unsafe_allow_html=True)
+st.markdown("""<div class="inf-box"><b>💡 Enflasyon Nedir?</b><br>Bugün 100 liraya aldığın 10 ekmeğin, seneye aynı parayla sadece 6 tanesini alabilmendir.</div>""", unsafe_allow_html=True)
 
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("💵 Güncel Dolar", f"{GUNCEL_DOLAR} TL"); m2.metric("📊 Q1 Enflasyon", f"%{Q1_ENF}"); m3.metric("🏦 TCMB Faiz", f"%{TCMB_FAIZ}"); m4.metric("🎯 TCMB Hedef", f"%{TCMB_2026_HEDEF}")
@@ -167,19 +43,25 @@ st.divider()
 col_in, col_out = st.columns([1.2, 2])
 with col_in:
     st.subheader("🕵️ Analist Girişi")
-    u_name = st.text_input("Rumuz:", "Analist_01")
+    # KEY EKLENDİ - Çakışma Önleyici
+    u_name = st.text_input("Rumuz:", "Analist_01", key="main_user_name")
     c1, c2 = st.columns(2)
-    u_gender = c1.selectbox("Cinsiyet:", ["Erkek", "Kadın", "Diğer"])
-    u_salary = c2.number_input("Aylık Maaş (TL):", value=22102)
-    u_city = st.selectbox("Şehir:", ["İstanbul", "Ankara", "İzmir", "Kırklareli", "Bursa", "Antalya", "Diğer"])
-    u_prof = st.selectbox("Harcama Sepeti:", ["Öğrenci", "Emekli", "Beyaz Yakalı", "Esnaf", "Yeni Evli 💍", "Gamer 🎮", "Araç Sahibi 🚗"])
+    u_gender = c1.selectbox("Cinsiyet:", ["Erkek", "Kadın", "Diğer"], key="main_gender")
+    u_salary = c2.number_input("Aylık Maaş (TL):", value=22102, key="main_salary")
+    u_city = st.selectbox("Şehir:", ["İstanbul", "Ankara", "İzmir", "Kırklareli", "Bursa", "Antalya", "Diğer"], key="main_city")
+    u_prof = st.selectbox("Harcama Sepeti:", ["Öğrenci", "Emekli", "Beyaz Yakalı", "Esnaf", "Yeni Evli 💍", "Gamer 🎮", "Araç Sahibi 🚗"], key="main_profile")
+    
     st.write("🔮 **Hızlı Senaryo Seçimi**")
     s1, s2, s3, s4 = st.columns(4)
-    if s1.button("🏦 TCMB", key="b1"): st.session_state.update({'d_val': 15, 'g_val': 22, 'k_val': 22, 'u_val': 20}); st.rerun()
-    if s2.button("🌸 İyimser", key="b2"): st.session_state.update({'d_val': 12, 'g_val': 30, 'k_val': 35, 'u_val': 25}); st.rerun()
-    if s3.button("📊 Realist", key="b3"): st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45}); st.rerun()
-    if s4.button("🌋 Kriz", key="b4"): st.session_state.update({'d_val': 85, 'g_val': 110, 'k_val': 125, 'u_val': 95}); st.rerun()
-    d_a = st.slider("💵 Dolar Artışı (%)", 0, 150, key='d_val'); g_a = st.slider("🛒 Gıda Artışı (%)", 0, 150, key='g_val'); k_a = st.slider("🏠 Kira Artışı (%)", 0, 150, key='k_val'); u_a = st.slider("🚗 Ulaşım Artışı (%)", 0, 150, key='u_val')
+    if s1.button("🏦 TCMB", key="btn_tcmb"): st.session_state.update({'d_val': 15, 'g_val': 22, 'k_val': 22, 'u_val': 20}); st.rerun()
+    if s2.button("🌸 İyimser", key="btn_iy"): st.session_state.update({'d_val': 12, 'g_val': 30, 'k_val': 35, 'u_val': 25}); st.rerun()
+    if s3.button("📊 Realist", key="btn_re"): st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45}); st.rerun()
+    if s4.button("🌋 Kriz", key="btn_kr"): st.session_state.update({'d_val': 85, 'g_val': 110, 'k_val': 125, 'u_val': 95}); st.rerun()
+    
+    d_a = st.slider("💵 Dolar Artışı (%)", 0, 150, key='d_val')
+    g_a = st.slider("🛒 Gıda Artışı (%)", 0, 150, key='g_val')
+    k_a = st.slider("🏠 Kira Artışı (%)", 0, 150, key='k_val')
+    u_a = st.slider("🚗 Ulaşım Artışı (%)", 0, 150, key='u_val')
 
 # --- 🧮 HESAPLAMA ---
 weights = {"Öğrenci": [0.15, 0.25, 0.45, 0.15], "Emekli": [0.05, 0.55, 0.30, 0.10], "Beyaz Yakalı": [0.20, 0.30, 0.30, 0.20], "Esnaf": [0.40, 0.20, 0.20, 0.20], "Yeni Evli 💍": [0.15, 0.20, 0.50, 0.15], "Gamer 🎮": [0.40, 0.20, 0.20, 0.20], "Araç Sahibi 🚗": [0.15, 0.20, 0.25, 0.40]}
@@ -198,7 +80,7 @@ with col_out:
 
 st.divider()
 
-# --- 🕰️ ZAMAN MAKİNESİ (DOLAR + ALTIN) ---
+# --- 🕰️ ZAMAN MAKİNESİ ---
 st.subheader("🕰️ Zaman Makinesi: Asgari Ücretin Erimesi (2000-2025)")
 yillar = [str(y) for y in range(2000, 2026)]; altin_verisi = [24.5, 11.2, 12.5, 13.1, 17.8, 18.2, 15.1, 14.8, 14.1, 11.8, 10.5, 8.5, 8.0, 9.5, 10.5, 10.1, 10.4, 9.6, 7.5, 7.8, 5.1, 5.6, 5.3, 6.5, 6.8, 4.5]
 dolar_verisi = [126, 92, 115, 150, 222, 261, 265, 315, 385, 352, 395, 393, 410, 420, 406, 365, 430, 385, 330, 355, 330, 315, 330, 430, 520, 485]
@@ -207,27 +89,25 @@ g1, g2 = st.columns(2)
 with g1: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Gram Altın", text_auto='.1f', title="Maaş Kaç Gram Altın?", color="Gram Altın", color_continuous_scale='YlOrBr'), use_container_width=True)
 with g2: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Dolar ($)", text_auto='.0f', title="Maaş Kaç Dolar?", color="Dolar ($)", color_continuous_scale='Greens'), use_container_width=True)
 
-# --- 💾 ADİSYON BUTONU ---
-if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_width=True):
+st.divider()
+
+if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_width=True, key="save_final"):
     save_data(u_name, u_gender, u_salary, u_prof, u_city, slider_enf, res_total, tahmini_kur, alim_kaybi, 1000/(1+res_total/100))
     st.balloons()
     b_yemek = 1000
     g_yemek = b_yemek * (1 + res_total/100)
     st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse Intelligence ADİSYON</b></center><hr>31.12.2026 | GELECEK FATURASI<br>--------------------------------<br>Müşteri: {u_name}<br>Cinsiyet: {u_gender}<br>--------------------------------<br>1x Akşam Yemeği (2 Kişi)<br>(Bugün: 1000 TL) : {g_yemek:,.0f} TL<br>--------------------------------<br><b>TOPLAM (SENİN SENARYON) : {g_yemek:,.0f} TL</b><br>Fazladan Ödeyeceğin: +{g_yemek-b_yemek:,.0f} TL<br>--------------------------------<br><center><i>Veri kaydedildi.</i></center></div>""", unsafe_allow_html=True)
 
-# --- 🔐 YÖNETİCİ PANELİ (KURŞUN GEÇİRMEZ) ---
+# --- 🔐 YÖNETİCİ PANELİ ---
 with st.expander("🔐 LiraPulse Intelligence Admin Control Center"):
-    admin_pass = st.text_input("Yönetici Şifresi:", type="password")
+    admin_pass = st.text_input("Yönetici Şifresi:", type="password", key="admin_auth_pass")
     if admin_pass == "alper2026":
         if os.path.exists(DB_FILE):
             try:
-                # Veriyi en saf haliyle okuyoruz
                 df = pd.read_csv(DB_FILE, on_bad_lines='skip')
-                # Eğer dosyadaki sütun sayısı uymuyorsa, kullanıcıya bir can simidi atıyoruz
-                if len(df.columns) != len(COL_LIST):
-                    st.error("Dosya yapısı bozuk. Yeni veri kaydetmeden önce lütfen veritabanını sıfırla!")
-                else:
-                    st.write("### 📈 Sokağın İstatistikleri")
+                if len(df.columns) == len(COL_LIST):
+                    df.columns = COL_LIST
+                    st.write("### 📈 Sokağın Özeti")
                     s1, s2, s3 = st.columns(3)
                     s1.metric("Toplam Kişi", f"{len(df)}")
                     s2.metric("Ort. Enflasyon", f"%{pd.to_numeric(df['Yil_Sonu_Toplam'], errors='coerce').mean():.1f}")
@@ -238,12 +118,11 @@ with st.expander("🔐 LiraPulse Intelligence Admin Control Center"):
                     df_clean = df.reset_index(drop=True)
                     df_clean.index = range(len(df_clean))
                     df_clean.insert(0, "Seç", False)
-                    edited_df = st.data_editor(df_clean, column_config={"Seç": st.column_config.CheckboxColumn("Sil?", default=False)}, disabled=COL_LIST, use_container_width=True, key="clean_final")
-                    if st.button("🗑️ SEÇİLENLERİ SİL"):
+                    edited_df = st.data_editor(df_clean, column_config={"Seç": st.column_config.CheckboxColumn("Sil?", default=False)}, disabled=COL_LIST, use_container_width=True, key="admin_clean_v23_7")
+                    if st.button("🗑️ SEÇİLENLERİ SİL", key="btn_delete"):
                         df_final = edited_df[edited_df["Seç"] == False].drop(columns=["Seç"])
                         df_final.to_csv(DB_FILE, index=False)
-                        st.success("Temizlendi!"); st.rerun()
-
-                if st.button("🔴 TÜM VERİTABANINI SIFIRLA (DİKKAT!)"):
-                    os.remove(DB_FILE); st.rerun()
+                        st.rerun()
+                else: st.error("Veritabanı yapısı uyumsuz! Sıfırla.")
             except Exception as e: st.error(f"Hata: {e}")
+            if st.button("🔴 VERİTABANINI SIFIRLA", key="btn_reset"): os.remove(DB_FILE); st.rerun()
