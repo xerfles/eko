@@ -24,28 +24,28 @@ def save_data(isim, profil, sehir, beklenti_9ay, toplam, dolar, risk, alim_kaybi
 # --- 📊 GÜNCEL PİYASA VERİLERİ (6 Nisan 2026) ---
 GUNCEL_DOLAR, Q1_ENF, TCMB_FAIZ, TCMB_2026_HEDEF = 44.92, 14.40, 37.0, 22.0
 
-# 🔥 GÜNCEL "TOKAT" FİYATLAR (Yeni Güncellendi)
-P_PS5_GUNCEL = 42999      # PS5 Slim Güncel
-P_IPHONE_GUNCEL = 77999   # iPhone 17 Güncel
-P_CAR_GUNCEL = 1795000    # Renault Clio Güncel
+# 💎 GÜNCEL TOKAT FİYATLAR
+P_PS5_GUNCEL = 42999      
+P_IPHONE_GUNCEL = 77999   
+P_CAR_GUNCEL = 1795000    
 
-st.set_page_config(page_title="LiraPulse: Hyper-Real", layout="wide")
+st.set_page_config(page_title="LiraPulse: Final Engine", layout="wide")
 
 # --- 🎨 CSS ---
 st.markdown("""
     <style>
     .stMetric { background-color: #161b22; padding: 15px; border-radius: 10px; border-left: 5px solid #00d4ff; }
     .bugun-etiket { color: #ffbd45; font-size: 13px; text-align: center; margin-top: -15px; font-weight: bold; }
-    .cert-card { background: linear-gradient(135deg, #00d4ff 0%, #0055ff 100%); color: white; padding: 25px; border-radius: 15px; text-align: center; border: 3px solid #fff; margin-bottom: 20px; }
     .receipt-box { background-color: #fff; color: #333; padding: 20px; border-radius: 5px; font-family: 'Courier New'; border: 2px dashed #333; margin-top: 20px; }
     .ozet-panel { background-color: #1e1e26; padding: 20px; border-radius: 10px; border: 1px solid #30363d; text-align: center; }
     </style>
     """, unsafe_allow_html=True)
 
+# --- 🧠 SENARYO VERİ SETLERİ (Seninle Konuştuğumuz Gerçekçi Veriler) ---
 if 'd_val' not in st.session_state: 
-    st.session_state.update({'d_val': 15, 'g_val': 25, 'k_val': 35, 'u_val': 20})
+    st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
 
-st.title("🛰️ LiraPulse Intelligence v21.3")
+st.title("🛰️ LiraPulse Intelligence v21.5")
 
 # --- 📊 ÜST DASHBOARD ---
 top1, top2, top3, top4 = st.columns(4)
@@ -53,6 +53,29 @@ top1.metric("💵 Güncel Dolar", f"{GUNCEL_DOLAR} TL")
 top2.metric("📊 Q1 Enflasyon", f"%{Q1_ENF}")
 top3.metric("🏦 TCMB Faiz", f"%{TCMB_FAIZ}")
 top4.metric("🎯 TCMB Hedef", f"%{TCMB_2026_HEDEF}")
+
+st.divider()
+
+# --- 🎭 4'LÜ GERÇEKÇİ BUTONLAR ---
+st.subheader("🔮 Bir Gelecek Vizyonu Seç")
+s_col1, s_col2, s_col3, s_col4 = st.columns(4)
+
+if s_col1.button("🏦 TCMB (Resmi Hedef)", use_container_width=True):
+    # Resmi veriler: Düşük kur, düşük hedef
+    st.session_state.update({'d_val': 15, 'g_val': 22, 'k_val': 22, 'u_val': 20})
+    st.rerun()
+if s_col2.button("🌸 İyimser (Umut)", use_container_width=True):
+    # İyimser ama sokağa yakın
+    st.session_state.update({'d_val': 12, 'g_val': 30, 'k_val': 35, 'u_val': 25})
+    st.rerun()
+if s_col3.button("📊 Realist (Sokak Gerçeği)", use_container_width=True):
+    # Kanka işte o meşhur realist veriler
+    st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
+    st.rerun()
+if s_col4.button("🌋 Kriz (Kara Delik)", use_container_width=True):
+    # Tam kaos senaryosu
+    st.session_state.update({'d_val': 85, 'g_val': 110, 'k_val': 125, 'u_val': 95})
+    st.rerun()
 
 st.divider()
 
@@ -64,12 +87,7 @@ with col_in:
     u_city = st.selectbox("Şehir:", ["İstanbul", "Ankara", "İzmir", "Kırklareli", "Bursa", "Antalya", "Diğer"])
     u_prof = st.selectbox("Harcama Sepeti:", ["Öğrenci", "Emekli", "Beyaz Yakalı", "Esnaf", "Yeni Evli 💍", "Gamer 🎮", "Araç Sahibi 🚗"])
     
-    st.write("🚀 **Senaryo Seç:**")
-    s1, s2, s3 = st.columns(3)
-    if s1.button("🌸 İyimser"): st.session_state.update({'d_val':10,'g_val':15,'k_val':20,'u_val':12}); st.rerun()
-    if s2.button("📊 Realist"): st.session_state.update({'d_val':25,'g_val':35,'k_val':45,'u_val':30}); st.rerun()
-    if s3.button("🌋 Kriz"): st.session_state.update({'d_val':60,'g_val':85,'k_val':100,'u_val':75}); st.rerun()
-
+    st.write("🔧 **İnce Ayar (Sliderlar)**")
     d_a = st.slider("💵 Dolar Artışı (%)", 0, 150, key='d_val')
     g_a = st.slider("🛒 Gıda Artışı (%)", 0, 150, key='g_val')
     k_a = st.slider("🏠 Kira Artışı (%)", 0, 150, key='k_val')
@@ -81,13 +99,14 @@ w = weights[u_prof]
 res_total = Q1_ENF + (d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3])
 alim_kaybi, tahmini_kur = (1 - (1 / (1 + res_total/100))) * 100, GUNCEL_DOLAR * (1 + d_a/100)
 
-# Hayal Tahminleri (Güncel Fiyatlara Göre)
+# Hayal Tahminleri
 f_ps5 = P_PS5_GUNCEL * (1 + res_total/85)
 f_iphone = P_IPHONE_GUNCEL * (1 + (d_a*0.85 + res_total*0.15)/100)
 f_car = P_CAR_GUNCEL * (1 + (d_a*0.7 + res_total*0.3)/100)
 
 with col_out:
-    st.markdown(f'<div class="ozet-panel"><small>Senin Enflasyonun</small><br><b style="font-size:32px; color:#ff4b4b;">%{res_total:.1f}</b><br><small>Tahmini Kur: {tahmini_kur:.2f} TL</small></div>', unsafe_allow_html=True)
+    sapma = res_total - TCMB_2026_HEDEF
+    st.markdown(f'<div class="ozet-panel"><small>Senin Enflasyonun</small><br><b style="font-size:32px; color:#ff4b4b;">%{res_total:.1f}</b><br><small>TCMB Hedefinden Sapma: %{sapma:.1f}</small></div>', unsafe_allow_html=True)
     st.write("")
     
     h_col1, h_col2, h_col3 = st.columns(3)
@@ -112,7 +131,7 @@ with col_out:
 
 st.divider()
 
-# --- 🕰️ ZAMAN MAKİNESİ (Resmi Verilerle) ---
+# --- 🕰️ ZAMAN MAKİNESİ (Resmi Veriler) ---
 st.subheader("🕰️ Zaman Makinesi: Asgari Ücretin Erimesi (2000-2025)")
 raw_data = {"Yıl": ["2000", "2005", "2010", "2015", "2020", "2023", "2024", "2025"], "Altın (Gram)": [24.5, 18.2, 10.5, 9.9, 5.1, 6.5, 6.8, 4.5], "Dolar ($)": [126, 261, 395, 365, 330, 430, 520, 485]}
 df_nost = pd.DataFrame(raw_data)
@@ -125,5 +144,5 @@ st.divider()
 if st.button("💾 ANALİZİ KAYDET VE 2026 ADİSYONUNU AL", use_container_width=True):
     save_data(u_name, u_prof, u_city, res_total-Q1_ENF, res_total, tahmini_kur, "Genel", alim_kaybi, 1000/(1+res_total/100))
     st.balloons()
-    food_2026 = 1150 * (1 + res_total/100) # Enflasyonla yemek fiyatı da güncellendi
+    food_2026 = 1150 * (1 + res_total/100)
     st.markdown(f'<div class="receipt-box"><center>🧾 <b>LiraPulse Intelligence ADİSYON</b></center><hr>31.12.2026 | GELECEK FATURASI<br>--------------------------------<br>1x Akşam Yemeği (2 Kişi) : {food_2026:.0f} TL<br>--------------------------------<br><b>TOPLAM (SENİN SENARYON) : {food_2026:.0f} TL</b><br><center><i>Veri kaydedildi. Gelecek yaklaşıyor.</i></center></div>', unsafe_allow_html=True)
