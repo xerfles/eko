@@ -24,7 +24,7 @@ def save_data(isim, profil, sehir, beklenti_9ay, toplam, dolar, risk, alim_kaybi
 # --- 📊 PİYASA VERİLERİ ---
 GUNCEL_DOLAR, GERCEKLESEN_3_AYLIK, TCMB_HEDEF = 44.92, 14.40, 22.0
 
-st.set_page_config(page_title="LiraPulse Pro: Comparison", layout="wide")
+st.set_page_config(page_title="LiraPulse Pro: Verified", layout="wide")
 
 # --- 🎨 CSS ---
 st.markdown("""
@@ -36,9 +36,11 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-if 'd_val' not in st.session_state: st.session_state.update({'d_val': 15, 'g_val': 25, 'k_val', 35, 'u_val', 20})
+# --- 🧠 OTURUM YÖNETİMİ (HATA DÜZELTİLDİ) ---
+if 'd_val' not in st.session_state: 
+    st.session_state.update({'d_val': 15, 'g_val': 25, 'k_val': 35, 'u_val': 20})
 
-st.title("🛰️ LiraPulse Intelligence v20.2")
+st.title("🛰️ LiraPulse Intelligence v20.3")
 
 # --- 🎭 HIZLI SENARYOLAR ---
 st.subheader("🎭 Bir Evren Seç")
@@ -121,3 +123,4 @@ st.markdown(f'<a href="https://twitter.com/intent/tweet?text={urllib.parse.quote
 # --- 🛡️ ADMIN ---
 if st.sidebar.text_input("🔐 Admin", type="password") == "alper2026":
     if os.path.exists(DB_FILE): st.dataframe(pd.read_csv(DB_FILE))
+    
