@@ -5,7 +5,7 @@ import plotly.express as px
 import os
 from datetime import datetime
 
-# --- 📁 VERİ YÖNETİMİ ---
+# --- 📁 VERİ YÖNETİMİ (Sütun Bağımsız Güçlendirildi) ---
 DB_FILE = 'lirapulse_v15_data.csv'
 COL_LIST = ['Tarih', 'Katilimci', 'Cinsiyet', 'Maas', 'Profil', 'Sehir', 'IP', 'Nisan_Aralik_Tahmin', 'Yil_Sonu_Toplam', 'Dolar_Beklentisi', 'Alim_Gucu_Kaybi', 'Reel_Kalan_TL']
 
@@ -22,18 +22,18 @@ def save_data(isim, cinsiyet, maas, profil, sehir, beklenti_9ay, toplam, dolar, 
     else:
         data.to_csv(DB_FILE, mode='a', index=False, header=False, encoding='utf-8')
 
-# --- 📊 PİYASA VERİLERİ (DOKUNULMADI) ---
+# --- 📊 PİYASA VERİLERİ (6 Nisan 2026) ---
 GUNCEL_DOLAR, Q1_ENF, TCMB_FAIZ, TCMB_2026_HEDEF = 44.92, 14.40, 37.0, 22.0
 P_PS5_GUNCEL, P_IPHONE_GUNCEL, P_CAR_GUNCEL = 42999, 77999, 1795000
 
 st.set_page_config(page_title="LiraPulse: Beklenti Analizi", layout="wide")
 
-# --- 🎨 CSS (DOKUNULMADI) ---
+# --- 🎨 CSS ---
 st.markdown("""<style>.stMetric { background-color: #161b22; padding: 20px; border-radius: 15px; border-left: 5px solid #00d4ff; }.ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; margin-bottom: 20px; }.inf-box { background-color: #161b22; padding: 20px; border-radius: 10px; border-left: 5px solid #ff4b4b; margin-top: 10px; margin-bottom: 25px; font-size: 16px; }.receipt-box { background-color: #fff; color: #333; padding: 20px; border-radius: 5px; font-family: 'Courier New'; border: 2px dashed #333; }.admin-stat-card { background-color: #0d1117; padding: 20px; border-radius: 15px; border: 1px solid #00d4ff; margin-bottom: 20px; }</style>""", unsafe_allow_html=True)
 
 if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
 
-# --- 🛰️ ANA SAYFA AKIŞI (DOKUNULMADI) ---
+# --- 🛰️ ANA SAYFA AKIŞI ---
 st.title("🛰️ LiraPulse: Enflasyon ve Gelecek Beklentisi")
 st.markdown("""<div class="inf-box"><b>💡 Enflasyon Nedir?</b><br>Bugün 100 liraya aldığın 10 ekmeğin, seneye aynı parayla sadece 6 tanesini alabilmendir.</div>""", unsafe_allow_html=True)
 
@@ -69,62 +69,73 @@ with col_out:
     h1.metric("🎮 2026 Sonu PS5", f"{f_ps5:,.0f} TL"); h2.metric("📱 2026 Sonu iPhone", f"{f_iphone:,.0f} TL"); h3.metric("🚗 2026 Sonu Clio", f"{f_car:,.0f} TL")
     st.divider()
     c_gauge, c_erime = st.columns(2)
-    with c_gauge: st.plotly_chart(go.Figure(go.Indicator(mode="gauge+number", value=alim_kaybi, title={'text': "Alım Gücü Kayabı (%)"}, gauge={'axis': {'range': [0, 100]}, 'bar': {'color': "#ff4b4b"}})).update_layout(height=230, margin=dict(l=20, r=20, t=50, b=20), paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
+    with c_gauge: st.plotly_chart(go.Figure(go.Indicator(mode="gauge+number", value=alim_kaybi, title={'text': "Alım Gücü Kaybı (%)"}, gauge={'axis': {'range': [0, 100]}, 'bar': {'color': "#ff4b4b"}})).update_layout(height=230, margin=dict(l=20, r=20, t=50, b=20), paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
     with c_erime: st.write("### 📉 1.000 TL Akıbeti"); st.title(f"{1000/(1+res_total/100):.2f} TL"); st.markdown(f'<div style="background-color: #333; border-radius: 5px; height:20px;"><div style="background-color: #ff4b4b; width: {max(0, 100-alim_kaybi)}%; height: 20px; border-radius: 5px;"></div></div>', unsafe_allow_html=True)
 
 st.divider()
 
-# --- 🕰️ ZAMAN MAKİNESİ (DOKUNULMADI) ---
+# --- 🕰️ ZAMAN MAKİNESİ ---
 st.subheader("🕰️ Zaman Makinesi: Asgari Ücretin Erimesi (2000-2025)")
 yillar = [str(y) for y in range(2000, 2026)]; altin_verisi = [24.5, 11.2, 12.5, 13.1, 17.8, 18.2, 15.1, 14.8, 14.1, 11.8, 10.5, 8.5, 8.0, 9.5, 10.5, 10.1, 10.4, 9.6, 7.5, 7.8, 5.1, 5.6, 5.3, 6.5, 6.8, 4.5]
 df_nost = pd.DataFrame({"Yıl": yillar, "Gram Altın": altin_verisi})
 st.plotly_chart(px.bar(df_nost, x="Yıl", y="Gram Altın", text_auto='.1f', title="Maaş Kaç Gram Altın?", color="Gram Altın", color_continuous_scale='YlOrBr'), use_container_width=True)
 
-# --- 💾 KAYIT BUTONU (DOKUNULMADI) ---
 if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_width=True):
     save_data(u_name, u_gender, u_salary, u_prof, u_city, slider_enf, res_total, tahmini_kur, alim_kaybi, 1000/(1+res_total/100))
     st.balloons()
     st.markdown(f'<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr>Müşteri: {u_name}<br>Gelecek kaydedildi.</div>', unsafe_allow_html=True)
 
-# --- 🔐 YÖNETİCİ ANALİTİK PANELİ (İSTEDİĞİN ÖZELLİKLER) ---
+# --- 🔐 YÖNETİCİ ANALİTİK PANELİ (HATASIZ ÇÖZÜM) ---
 with st.expander("🔐 LiraPulse Intelligence Admin Analytics"):
     admin_pass = st.text_input("Yönetici Şifresi:", type="password")
     if admin_pass == "alper2026":
         if os.path.exists(DB_FILE):
             try:
-                df = pd.read_csv(DB_FILE, on_bad_lines='skip').reset_index(drop=True)
-                df.index = range(len(df)) # MultiIndex hatasına karşı önlem
-                
+                # 1. Dosyayı oku ve Sütun isimlerini ZORLA ata
+                df = pd.read_csv(DB_FILE, on_bad_lines='skip')
+                # Eğer sütun sayısı tutuyorsa, COL_LIST'i üzerine çak (isim hatasını öldürür)
+                if len(df.columns) == len(COL_LIST):
+                    df.columns = COL_LIST
+                else:
+                    st.error("Dosya yapısı bozuk, sütunlar eşleşmiyor!")
+
                 st.markdown('<div class="admin-stat-card"><h3>📈 Sokağın Özeti</h3>', unsafe_allow_html=True)
                 s1, s2, s3, s4 = st.columns(4)
                 s1.metric("Toplam Analiz", f"{len(df)} Kişi")
-                s2.metric("Ort. Enflasyon Beklentisi", f"%{df['Yil_Sonu_Toplam'].mean():.1f}")
-                s3.metric("Ortalama Maaş", f"{df['Maas'].mean():,.0f} TL")
-                s4.metric("Ort. Dolar Beklentisi", f"{df['Dolar_Beklentisi'].mean():.2f} TL")
+                
+                # Sütun ismine değil, sırasına göre hesapla (İsim hatası imkansızlaşır)
+                ort_enf = pd.to_numeric(df.iloc[:, 8], errors='coerce').mean()
+                ort_maas = pd.to_numeric(df.iloc[:, 3], errors='coerce').mean()
+                ort_usd = pd.to_numeric(df.iloc[:, 9], errors='coerce').mean()
+                
+                s2.metric("Ort. Enflasyon", f"%{ort_enf:.1f}")
+                s3.metric("Ortalama Maaş", f"{ort_maas:,.0f} TL")
+                s4.metric("Ort. Dolar", f"{ort_usd:.2f} TL")
                 st.markdown('</div>', unsafe_allow_html=True)
 
                 st.write("---")
-                # İstatistik Grafikleri
                 g1, g2 = st.columns(2)
                 with g1:
-                    st.write("**👤 Cinsiyet Dağılımı**")
-                    st.plotly_chart(px.pie(df, names='Cinsiyet', hole=0.4, color_discrete_sequence=px.colors.sequential.Blues_r), use_container_width=True)
+                    st.write("**👤 Cinsiyet**")
+                    st.plotly_chart(px.pie(df, names=df.columns[2], hole=0.4), use_container_width=True)
                 with g2:
-                    st.write("**🛒 Harcama Sepeti Tercihleri**")
-                    st.plotly_chart(px.pie(df, names='Profil', hole=0.4, color_discrete_sequence=px.colors.sequential.RdBu), use_container_width=True)
+                    st.write("**🛒 Sepet Tercihi**")
+                    st.plotly_chart(px.pie(df, names=df.columns[4], hole=0.4), use_container_width=True)
 
                 st.write("**📍 Şehirlere Göre Katılım**")
-                st.plotly_chart(px.bar(df['Sehir'].value_counts().reset_index(), x='Sehir', y='count', color='count', labels={'count':'Kişi Sayısı'}), use_container_width=True)
+                st.plotly_chart(px.bar(df[df.columns[5]].value_counts().reset_index(), x=df.columns[5], y='count'), use_container_width=True)
 
                 st.divider()
-                st.write("### 🧹 Veri Yönetimi & Trol Temizliği")
-                df.insert(0, "Seç", False)
-                edited_df = st.data_editor(df, column_config={"Seç": st.column_config.CheckboxColumn("Sil?", default=False)}, disabled=[c for c in df.columns if c != "Seç"], use_container_width=True, key="clean_v1")
+                st.write("### 🧹 Trol Temizliği")
+                df_clean = df.reset_index(drop=True)
+                df_clean.index = range(len(df_clean))
+                df_clean.insert(0, "Seç", False)
+                edited_df = st.data_editor(df_clean, column_config={"Seç": st.column_config.CheckboxColumn("Sil?", default=False)}, disabled=[c for c in df_clean.columns if c != "Seç"], use_container_width=True, key="clean_final")
                 
-                if st.button("🗑️ SEÇİLEN KAYITLARI SİL"):
-                    df_cleaned = edited_df[edited_df["Seç"] == False].drop(columns=["Seç"])
-                    df_cleaned.to_csv(DB_FILE, index=False)
-                    st.success("Veri tabanı güncellendi!"); st.rerun()
+                if st.button("🗑️ SEÇİLENLERİ SİL"):
+                    df_final = edited_df[edited_df["Seç"] == False].drop(columns=["Seç"])
+                    df_final.to_csv(DB_FILE, index=False)
+                    st.success("Veritabanı temizlendi!"); st.rerun()
 
             except Exception as e: st.error(f"Hata: {e}")
-        else: st.warning("Henüz veri yok.")
+        else: st.warning("Veri yok.")
