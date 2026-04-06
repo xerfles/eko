@@ -57,7 +57,10 @@ col_in, col_out = st.columns([1, 2])
 with col_in:
     st.subheader("🕵️ Analist Girişi")
     u_name = st.text_input("Rumuz:", "Analist_01")
-    u_salary = st.number_input("Aylık Maaş (TL):", min_value=17002, value=45000, step=1000)
+    
+    # 🛠️ BURAYI GÜNCELLEDİM: min_value 0 yapıldı, böylece herkes girebilir.
+    u_salary = st.number_input("Aylık Maaş / Gelir (TL):", min_value=0, value=35000, step=1000)
+    
     u_prof = st.selectbox("Harcama Sepeti:", ["Öğrenci", "Emekli", "Çalışan", "Kamu Personeli", "Esnaf", "Özel"])
     
     st.write("**🚀 Hızlı Senaryolar:**")
@@ -84,7 +87,8 @@ res_9ay = (d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3])
 res_total = GERCEKLESEN_3_AYLIK + res_9ay
 alim_kaybi = (1 - (1 / (1 + res_total/100))) * 100
 bin_tl_kalan = 1000 * (1 / (1 + res_total/100))
-reel_maas = u_salary * (1 / (1 + res_total/100))
+# Eğer gelir 0 ise hata vermemesi için kontrol:
+reel_maas = u_salary * (1 / (1 + res_total/100)) if u_salary > 0 else 0
 
 # --- 🏁 ANALİZ PANELİ ---
 with col_out:
@@ -93,11 +97,10 @@ with col_out:
     
     r1, r2, r3 = st.columns(3)
     r1.metric("📉 Alım Gücü Kaybı", f"%{alim_kaybi:.1f}")
-    r2.metric("🍞 Reel Maaş", f"{reel_maas:.0f} TL")
+    r2.metric("🍞 Reel Karşılık", f"{reel_maas:.0f} TL")
     r3.metric("📈 Toplam Enflasyon", f"%{res_total:.2f}")
 
-    # 🚀 YENİ: ZAM DEDEKTÖRÜ (ŞOK ETKİSİ)
-    zam_gereksinimi = res_total * 1.1 # Refah payı eklenmiş hali
+    zam_gereksinimi = res_total * 1.1 
     st.warning(f"🚨 **LiraPulse Uyarısı:** Alım gücünü koruman ve %10 refah payı için alman gereken minimum zam: **%{zam_gereksinimi:.1f}**")
 
     st.divider()
@@ -125,7 +128,6 @@ with col_graph:
 
 with col_stats:
     st.subheader("🧀 Peynir Endeksi")
-    # 2020 peynir kg fiyatı ~30 TL, 2026 tahmini
     kg_2020 = 1000 / 40
     kg_bugun = 1000 / 350
     kg_2026 = kg_bugun / (1 + res_total/100)
@@ -134,7 +136,6 @@ with col_stats:
     st.write(f"**2020:** {kg_2020:.1f} kg 🧀")
     st.write(f"**BUGÜN:** {kg_bugun:.1f} kg 🧀")
     st.write(f"**2026 SONU:** {kg_2026:.1f} kg 🔴")
-    st.caption("Fiyatlar ortalama market verilerinden simüle edilmiştir.")
 
 st.divider()
 
@@ -143,7 +144,7 @@ btn_col1, btn_col2 = st.columns(2)
 
 with btn_col1:
     if st.button("💾 ANALİZİ VERİ BANKASINA KAYDET", use_container_width=True):
-        save_data(u_name, u_prof, "İstanbul", res_9ay, res_total, GUNCEL_DOLAR*(1+d_a/100), "Genel", alim_kaybi, bin_tl_kalan)
+        save_data(u_name, u_prof, "Genel", res_9ay, res_total, GUNCEL_DOLAR*(1+d_a/100), "Genel", alim_kaybi, bin_tl_kalan)
         st.balloons()
         st.success("LiraPulse veritabanına kaydedildi!")
 
