@@ -24,14 +24,13 @@ def save_data(isim, profil, sehir, beklenti_9ay, toplam, dolar, risk, alim_kaybi
 # --- 📊 PİYASA VERİLERİ (6 Nisan 2026) ---
 GUNCEL_DOLAR, GERCEKLESEN_3_AYLIK, TCMB_HEDEF, MEVCUT_FAIZ = 44.92, 14.40, 22.0, 37.0 
 
-st.set_page_config(page_title="LiraPulse Pro: Currency Master", layout="wide")
+st.set_page_config(page_title="LiraPulse Pro: Analytics", layout="wide")
 
 # --- 🎨 CSS ---
 st.markdown("""
     <style>
     .stMetric { background-color: #161b22; padding: 15px; border-radius: 10px; border-left: 5px solid #00d4ff; }
     .sefalet-box { background-color: #ff4b4b; color: white; padding: 20px; border-radius: 15px; text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 10px; }
-    .advisor-box { background-color: #238636; color: white; padding: 15px; border-radius: 10px; border-left: 10px solid #ffffff; margin-top: 10px; }
     .nabiz-card { background: linear-gradient(90deg, #161b22 0%, #0d1117 100%); padding: 10px; border-radius: 8px; border: 1px solid #30363d; margin-top: 5px;}
     </style>
     """, unsafe_allow_html=True)
@@ -39,8 +38,7 @@ st.markdown("""
 for key, val in [('d_val', 15), ('g_val', 25), ('k_val', 35), ('u_val', 20)]:
     if key not in st.session_state: st.session_state[key] = val
 
-st.title("🛰️ LiraPulse Currency Master v17.4")
-st.markdown("🔍 *Altın ve Dolar Bazlı Alım Gücü Arşivi*")
+st.title("🛰️ LiraPulse Pro Analytics v17.5")
 
 # --- 🌐 TOPLUMSAL NABIZ ---
 if os.path.exists(DB_FILE):
@@ -92,38 +90,42 @@ with col_out:
     r2.metric("🍞 Reel Maaş", f"{reel_maas:.0f} TL")
     r3.metric("📉 Tahmini Kur", f"{tahmini_dolar:.2f} TL")
 
-    st.subheader("⚔️ Enflasyon Savaşları (Tarihsel)")
+    st.subheader("⚔️ Enflasyon Savaşları (2021-2025)")
     war_data = {
         "Yıl": ["2021", "2022", "2023", "2024", "2025"],
         "Enf.": ["%36", "%64", "%65", "%45", "%28"],
         "Altın (%)": ["+72 ✅", "+40 ❌", "+78 ✅", "+61 ✅", "+35 ✅"],
-        "BIST 100 (%)": ["+26 ❌", "+196 ✅", "+35 ❌", "+48 ✅", "+40 ✅"],
+        "BIST 100": ["- ❌", "+196 ✅", "+35 ❌", "+48 ✅", "+40 ✅"],
         "Dolar (%)": ["+79 ✅", "+39 ❌", "+57 ❌", "+21 ❌", "+18 ❌"]
     }
     st.table(pd.DataFrame(war_data))
 
 st.divider()
 
-# --- 🕰️ NOSTALJİ: ALTIN VE DOLAR BAZLI MAAŞ (YENİLENDİ) ---
-st.subheader("🕰️ Zaman Makinesi: Asgari Ücretin Döviz/Altın Karşılığı")
-# Tarihsel asgari ücret / kurlar (yaklaşık değerler)
+# --- 🕰️ ZAMAN MAKİNESİ (TEMİZ GÖRÜNÜM) ---
+st.subheader("🕰️ Asgari Ücret Arşivi: Satın Alma Gücü Yolculuğu")
+
+# Veriler
 nostalgia_data = {
     "Yıl": ["2005", "2010", "2015", "2020", "2024", "BUGÜN", "2026 (Tahm.)"],
     "Gram Altın": [18.5, 12.4, 9.8, 7.2, 5.8, 5.1, 5.1 / (1 + res_total/150)],
-    "Dolar ($)": [260, 385, 410, 380, 520, 378, 17002 / tahmini_dolar if u_salary == 0 else u_salary / tahmini_dolar]
+    "Dolar ($)": [260, 385, 410, 380, 520, 378, 17002 / tahmini_dolar]
 }
 df_nost = pd.DataFrame(nostalgia_data)
-# Geniş tabloyu grafiğe dökme
-fig_nost = go.Figure()
-fig_nost.add_trace(go.Bar(x=df_nost["Yıl"], y=df_nost["Gram Altın"], name="Gram Altın", marker_color='#ffbd45'))
-fig_nost.add_trace(go.Bar(x=df_nost["Yıl"], y=df_nost["Dolar ($)"], name="Dolar ($)", marker_color='#2ecc71', yaxis="y2"))
 
-fig_nost.update_layout(
-    yaxis=dict(title="Altın (Gram)"),
-    yaxis2=dict(title="Dolar ($)", overlaying="y", side="right"),
-    barmode="group", legend=dict(x=0.01, y=0.99)
-)
-st.plotly_chart(fig_nost, use_container_width=True)
+g1, g2 = st.columns(2)
+
+with g1:
+    st.write("🪙 **Maaş Kaç Gram Altın Ediyordu?**")
+    fig_gold = px.bar(df_nost, x="Yıl", y="Gram Altın", text_auto='.1f', color="Gram Altın", color_continuous_scale='YlOrBr')
+    fig_gold.update_layout(showlegend=False, height=350)
+    st.plotly_chart(fig_gold, use_container_width=True)
+
+with g2:
+    st.write("💵 **Maaş Kaç Dolar Ediyordu?**")
+    fig_usd = px.bar(df_nost, x="Yıl", y="Dolar ($)", text_auto='.0f', color="Dolar ($)", color_continuous_scale='Greens')
+    fig_usd.update_layout(showlegend=False, height=350)
+    st.plotly_chart(fig_usd, use_container_width=True)
 
 st.divider()
 
@@ -135,7 +137,7 @@ with btn_col1:
         st.balloons()
 
 with btn_col2:
-    tweet_text = f"LiraPulse Sefalet Puanım: {sefalet_puanı}/100! 🌋 2026'da maaşım sadece {tahmini_dolar:.2f} TL kur üzerinden eriyor. Senin puanın kaç? Hesapla: https://huspevhztwxasrstrhne7z.streamlit.app"
+    tweet_text = f"LiraPulse Sefalet Puanım: {sefalet_puanı}/100! 🌋 2026'da maaşım asgari ücret bazında sadece {17002 / tahmini_dolar:.0f}$ ediyor. Hesapla: https://huspevhztwxasrstrhne7z.streamlit.app"
     encoded_tweet = urllib.parse.quote(tweet_text)
     st.markdown(f'<a href="https://twitter.com/intent/tweet?text={encoded_tweet}" target="_blank"><button style="width:100%; height:45px; background-color:#1DA1F2; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold; font-size:16px;">🐦 PUANINI PAYLAŞ & MEYDAN OKU</button></a>', unsafe_allow_html=True)
 
