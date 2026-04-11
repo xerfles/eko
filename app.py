@@ -26,15 +26,17 @@ def save_to_sheets(veri):
         st.error(f"Kayıt Hatası: {e}")
         return False
 
-# --- 🇹🇷 TÜRKÇE SAYI FORMATLAYICI ---
-def tr_format(number, decimals=2):
+# --- 🇹🇷 TÜRKÇE SAYI FORMATLAYICI (SONDAKİ 2 SIFIR SİLİNDİ) ---
+def tr_format(number):
     try:
-        # Önce Amerikan formatında virgüllü yap (örn: 3,750.50)
-        fmt = f"{{:,.{decimals}f}}".format(float(number))
-        # Virgülleri X yap, Noktaları virgül yap, X'leri nokta yap -> 3.750,50
-        return fmt.replace(',', 'X').replace('.', ',').replace('X', '.')
+        fmt = f"{float(number):,.2f}"
+        s = fmt.replace(',', 'X').replace('.', ',').replace('X', '.')
+        # Eğer sayı tam sayıysa sondaki ,00 kısmını at
+        if s.endswith(",00"):
+            return s[:-3]
+        return s
     except:
-        return "0,00"
+        return "0"
 
 # --- 📊 PİYASA VERİLERİ ---
 GUNCEL_DOLAR, Q1_ENF, TCMB_FAIZ, TCMB_2026_HEDEF = 44.92, 14.40, 37.0, 21.0
@@ -42,7 +44,7 @@ P_PS5, P_IPHONE, P_CLIO = 42999, 77999, 1795000
 
 st.set_page_config(page_title="LiraPulse: Gelecek Analizi", layout="wide")
 
-# --- 🎨 CSS: TASARIM KORUMASI ---
+# --- 🎨 CSS ---
 st.markdown("""<style>
     .main { background-color: #0d1117; }
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
@@ -91,9 +93,9 @@ alim_kaybi = round((1 - (1 / (1 + res_total/100))) * 100, 2)
 with col_out:
     st.markdown(f"""<div class="ozet-panel"><h3>Yıl Sonu Beklenti Analizi</h3><div style="display:flex; justify-content: space-around; align-items:center;"><div><small>Q1 Gerçekleşen</small><br><b style="font-size:24px; color:#00d4ff;">%{tr_format(Q1_ENF)}</b></div><div style="font-size:30px; color:#555;">+</div><div><small>Tahminin</small><br><b style="font-size:24px; color:#ffbd45;">%{tr_format(s_enf)}</b></div><div style="font-size:30px; color:#555;">=</div><div><small><b>Yıl Sonu Toplamı</b></small><br><b style="font-size:36px; color:#ff4b4b;">%{tr_format(res_total)}</b></div></div><hr style="border:0.5px solid #333;"><p>Tahmini Kur: <b>{tr_format(tahmini_kur)} TL</b></p></div>""", unsafe_allow_html=True)
     h1, h2, h3 = st.columns(3)
-    with h1: st.metric("🎮 PS5 (2026)", f"{tr_format(P_PS5*(1+res_total/85), 0)} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {tr_format(P_PS5, 0)} TL</p>', unsafe_allow_html=True)
-    with h2: st.metric("📱 iPhone (2026)", f"{tr_format(P_IPHONE*(1+res_total/95), 0)} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {tr_format(P_IPHONE, 0)} TL</p>', unsafe_allow_html=True)
-    with h3: st.metric("🚗 Clio (2026)", f"{tr_format(P_CLIO*(1+res_total/100), 0)} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: 1.795.000 TL</p>', unsafe_allow_html=True)
+    with h1: st.metric("🎮 PS5 (2026)", f"{tr_format(P_PS5*(1+res_total/85))} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {tr_format(P_PS5)} TL</p>', unsafe_allow_html=True)
+    with h2: st.metric("📱 iPhone (2026)", f"{tr_format(P_IPHONE*(1+res_total/95))} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {tr_format(P_IPHONE)} TL</p>', unsafe_allow_html=True)
+    with h3: st.metric("🚗 Clio (2026)", f"{tr_format(P_CLIO*(1+res_total/100))} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: 1.795.000 TL</p>', unsafe_allow_html=True)
     st.divider()
     st.plotly_chart(go.Figure(go.Indicator(mode="gauge+number", value=alim_kaybi, title={'text': "Alım Gücü Kaybı (%)"}, gauge={'bar': {'color': "#ff4b4b"}})).update_layout(height=280, paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
 
@@ -108,9 +110,14 @@ g1, g2 = st.columns(2)
 with g1: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Gram Altın", title="Maaş Kaç Gram Altın?", color="Gram Altın", color_continuous_scale="YlOrBr"), use_container_width=True)
 with g2: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Dolar ($)", title="Maaş Kaç Dolar?", color="Dolar ($)", color_continuous_scale="Greens"), use_container_width=True)
 
-# --- 💾 EXCEL'E KAYIT YERİ ---
+# --- 💾 EXCEL'E KAYIT YERİ (SONDAKİ 2 SIFIR SİLİNDİ) ---
 if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_width=True):
-    def f_tr(val): return f"'{val:.2f}".replace(".", ",")
+    def f_tr(val): 
+        # Excel'e yazarken de o lanet iki sıfırı atıyoruz
+        s = f"{val:.2f}".replace(".", ",")
+        if s.endswith(",00"):
+            return f"'{s[:-3]}"
+        return f"'{s}"
     
     kayit_id = str(uuid.uuid4().hex[:8]).upper()
     reel_kalan = round(1000/(1+res_total/100), 2)
@@ -140,10 +147,9 @@ with st.expander("🔐 Admin Control Center"):
                         try: 
                             s = str(val).replace("'", "").strip()
                             if s == "": return 0.0
-                            # Hem nokta hem virgül varsa (1.234,56)
                             if '.' in s and ',' in s:
                                 s = s.replace('.', '').replace(',', '.')
-                            elif ',' in s: # Sadece virgül varsa (1234,56)
+                            elif ',' in s:
                                 s = s.replace(',', '.')
                             return float(s)
                         except: return 0.0
@@ -180,7 +186,6 @@ with st.expander("🔐 Admin Control Center"):
             s1, s2, s3 = st.columns(3)
             s1.metric("Toplam Katılım", f"{len(df_admin)} Kişi")
             
-            # BURASI ÖNEMLİ: Artık 3,750 yerine 3.750,00 TL formatında yazacak!
             s2.metric("Ort. Maaş", f"{tr_format(df_admin['Maas'].mean())} TL")
             s3.metric("Ort. Enflasyon", f"%{tr_format(df_admin['Yil_Sonu_Toplam'].mean())}")
             
@@ -195,7 +200,8 @@ with st.expander("🔐 Admin Control Center"):
             
             edited_df = st.data_editor(df_edit, column_config={
                 "Seç": st.column_config.CheckboxColumn("Sil?", default=False), 
-                "Maas": st.column_config.NumberColumn("Maaş", format="%.2f"),
+                # Tablodaki gösterimi de o 2 sıfırı atacak şekilde ayarladım
+                "Maas": st.column_config.NumberColumn("Maaş", format="%.0f"),
                 "Kayit_ID": st.column_config.TextColumn("Kimlik No (ID)")
             }, use_container_width=True, hide_index=True)
             
