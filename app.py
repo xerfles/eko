@@ -32,12 +32,14 @@ P_PS5, P_IPHONE, P_CLIO = 42999, 77999, 1795000
 
 st.set_page_config(page_title="LiraPulse: Gelecek Beklentisi", layout="wide")
 
-# --- 🎨 CSS: TASARIM KORUMASI ---
+# --- 🎨 CSS ---
 st.markdown("""<style>
     .main { background-color: #0d1117; }
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; }
     .bugun-etiket { color: #ffbd45; font-size: 13px; text-align: center; margin-top: -10px; font-weight: bold; }
+    .receipt-box { background-color: #fff; color: #333 !important; padding: 20px; border-radius: 5px; font-family: 'Courier New', monospace; border: 2px dashed #333; margin: 20px auto; max-width: 450px; }
+    .receipt-box b, .receipt-box center, .receipt-box p, .receipt-box hr { color: #333 !important; border-color: #333 !important; }
     </style>""", unsafe_allow_html=True)
 
 if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
@@ -77,7 +79,7 @@ tahmini_kur = GUNCEL_DOLAR * (1 + d_a/100)
 alim_kaybi = (1 - (1 / (1 + res_total/100))) * 100
 
 with col_out:
-    st.markdown(f"""<div class="ozet-panel"><h3 style="color:#888; margin-bottom:5px;">Yıl Sonu Beklenti Analizi</h3><div style="display:flex; justify-content: space-around; align-items:center;"><div><small>Q1 Gerçekleşen</small><br><b style="font-size:24px; color:#00d4ff;">%{Q1_ENF}</b></div><div style="font-size:30px; color:#555;">+</div><div><small>Senin Tahminin</small><br><b style="font-size:24px; color:#ffbd45;">%{s_enf:.1f}</b></div><div style="font-size:30px; color:#555;">=</div><div><small><b>Yıl Sonu Toplamı</b></small><br><b style="font-size:36px; color:#ff4b4b;">%{res_total:.1f}</b></div></div><hr style="border:0.5px solid #333;"><p style="margin:0; font-size:18px;">Tahmini Kur: <span style="color:#00d4ff; font-weight:bold;">{tahmini_kur:.2f} TL</span></p></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="ozet-panel"><h3 style="color:#888; margin-bottom:5px;">Yıl Sonu Beklenti Analizi</h3><div style="display:flex; justify-content: space-around; align-items:center;"><div><small>Q1 Gerçekleşen</small><br><b style="font-size:24px; color:#00d4ff;">%{Q1_ENF}</b></div><div style="font-size:30px; color:#555;">+</div><div><small>Senin Tahminin</small><br><b style="font-size:24px; color:#ffbd45;">%{s_enf:.2f}</b></div><div style="font-size:30px; color:#555;">=</div><div><small><b>Yıl Sonu Toplamı</b></small><br><b style="font-size:36px; color:#ff4b4b;">%{res_total:.2f}</b></div></div><hr style="border:0.5px solid #333;"><p style="margin:0; font-size:18px;">Tahmini Kur: <span style="color:#00d4ff; font-weight:bold;">{tahmini_kur:.2f} TL</span></p></div>""", unsafe_allow_html=True)
     
     h1, h2, h3 = st.columns(3)
     with h1: st.metric("🎮 PS5 (2026)", f"{P_PS5*(1+res_total/85):,.0f} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {P_PS5:,.0f} TL</p>', unsafe_allow_html=True)
@@ -86,12 +88,12 @@ with col_out:
     
     st.divider()
     c_g, c_e = st.columns(2)
-    with c_g: st.plotly_chart(go.Figure(go.Indicator(mode="gauge+number", value=alim_kaybi, title={'text': "Alım Gücü Kayabı (%)"}, gauge={'bar': {'color': "#ff4b4b"}})).update_layout(height=280, paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
+    with c_g: st.plotly_chart(go.Figure(go.Indicator(mode="gauge+number", value=alim_kaybi, title={'text': "Alım Gücü Kaybı (%)"}, gauge={'bar': {'color': "#ff4b4b"}})).update_layout(height=280, paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
     with c_e: st.write("### 📉 1.000 TL Akıbeti"); st.title(f"{1000/(1+res_total/100):.2f} TL")
 
 st.divider()
 
-# --- 🕰️ ZAMAN MAKİNESİ (GERİ GELDİ) ---
+# --- 🕰️ ZAMAN MAKİNESİ ---
 st.subheader("🕰️ Zaman Makinesi: Asgari Ücretin Erimesi")
 yillar = [str(y) for y in range(2000, 2026)]; altin = [24.5, 11.2, 12.5, 13.1, 17.8, 18.2, 15.1, 14.8, 14.1, 11.8, 10.5, 8.5, 8.0, 9.5, 10.5, 10.1, 10.4, 9.6, 7.5, 7.8, 5.1, 5.6, 5.3, 6.5, 6.8, 4.5]
 dolar = [126, 92, 115, 150, 222, 261, 265, 315, 385, 352, 395, 393, 410, 420, 406, 365, 430, 385, 330, 355, 330, 315, 330, 430, 520, 485]
@@ -100,13 +102,15 @@ g1, g2 = st.columns(2)
 with g1: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Gram Altın", title="Maaş Kaç Gram Altın?", color="Gram Altın", color_continuous_scale="YlOrBr"), use_container_width=True)
 with g2: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Dolar ($)", title="Maaş Kaç Dolar?", color="Dolar ($)", color_continuous_scale="Greens"), use_container_width=True)
 
+# --- 💾 KAYIT VE ADİSYON ---
 if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_width=True):
-    v = [datetime.now().strftime("%d.%m.%Y %H:%M"), u_name, u_gender, str(u_salary).replace(".",","), u_prof, u_city, "0.0.0.0", str(s_enf).replace(".",","), str(res_total).replace(".",","), str(tahmini_kur).replace(".",","), str(alim_kaybi).replace(".",","), str(1000/(1+res_total/100)).replace(".",",")]
+    # Excel formatı: %24.44 gibi (Virgülle ayrılmış metin olarak)
+    v = [datetime.now().strftime("%d.%m.%Y %H:%M"), u_name, u_gender, str(round(u_salary, 2)).replace(".",","), u_prof, u_city, "0.0.0.0", str(round(s_enf, 2)).replace(".",","), str(round(res_total, 2)).replace(".",","), str(round(tahmini_kur, 2)).replace(".",","), str(round(alim_kaybi, 2)).replace(".",","), str(round(1000/(1+res_total/100), 2)).replace(".",",")]
     if save_to_sheets(v):
         st.balloons()
-        st.success("Veri Google Sheets'e mermi gibi kaydedildi!")
+        st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>Profil:</b> {u_prof}</p><p><b>Yıl Sonu Tahmini:</b> %{res_total:.2f}</p><p><b>Alım Gücü Kaybı:</b> %{alim_kaybi:.2f}</p><p><b>1.000 TL Reel Değer:</b> {1000/(1+res_total/100):.2f} TL</p><hr><center><i>Veri Google Sheets'e Mermi Gibi İşlendi.</i></center></div>""", unsafe_allow_html=True)
 
-# --- 🔐 ADMIN (SİLME ÖZELLİĞİ VE DOĞRU HESAPLAMA GERİ GELDİ) ---
+# --- 🔐 ADMIN ---
 with st.expander("🔐 Admin Control Center"):
     if st.text_input("Şifre:", type="password", key="adm_pw") == "alper2026":
         try:
@@ -115,14 +119,14 @@ with st.expander("🔐 Admin Control Center"):
             df_cloud = pd.DataFrame(sheet.get_all_records())
             
             if not df_cloud.empty:
-                # KRİTİK VERİ TEMİZLEME MOTORU
-                def parse_tr_float(val):
+                def clean_num(val):
                     try: return float(str(val).replace(',', '.'))
                     except: return 0.0
 
-                df_cloud['Maas'] = df_cloud['Maas'].apply(parse_tr_float)
-                target_col = 'Yil_Sonu_Toplar' if 'Yil_Sonu_Toplar' in df_cloud.columns else 'Yil_Sonu_Toplam'
-                df_cloud['Clean_Enf'] = df_cloud[target_col].apply(parse_tr_float)
+                # Sayısal sütunları temizle
+                df_cloud['Maas'] = df_cloud['Maas'].apply(clean_num)
+                target_col = 'Yil_Sonu_Toplam' if 'Yil_Sonu_Toplam' in df_cloud.columns else 'Yil_Sonu_Toplar'
+                df_cloud['Clean_Enf'] = df_cloud[target_col].apply(clean_num)
 
                 st.write("### 📈 Sokağın Röntgenti")
                 s1, s2, s3 = st.columns(3)
@@ -136,9 +140,10 @@ with st.expander("🔐 Admin Control Center"):
                 with gr3: st.plotly_chart(px.pie(df_cloud, names='Profil', title="Profil", hole=0.4), use_container_width=True)
                 
                 st.divider()
-                st.write("### 🧹 Veri Temizliği (Gerçek IP'ler Gösteriliyor)")
+                st.write("### 🧹 Veri Temizliği (Checkbox Aktif)")
                 df_edit = df_cloud.drop(columns=['Clean_Enf'])
                 df_edit.insert(0, "Seç", False)
+                
                 edited_df = st.data_editor(df_edit, column_config={
                     "Seç": st.column_config.CheckboxColumn("Sil?", default=False),
                     "Maas": st.column_config.NumberColumn("Maaş", format="%.2f"),
