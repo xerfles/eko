@@ -32,14 +32,12 @@ P_PS5, P_IPHONE, P_CLIO = 42999, 77999, 1795000
 
 st.set_page_config(page_title="LiraPulse: Gelecek Beklentisi", layout="wide")
 
-# --- 🎨 CSS ---
+# --- 🎨 CSS: TASARIM KORUMASI ---
 st.markdown("""<style>
     .main { background-color: #0d1117; }
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; }
     .bugun-etiket { color: #ffbd45; font-size: 13px; text-align: center; margin-top: -10px; font-weight: bold; }
-    .receipt-box { background-color: #fff; color: #333 !important; padding: 20px; border-radius: 5px; font-family: 'Courier New', monospace; border: 2px dashed #333; margin: 20px auto; max-width: 450px; }
-    .receipt-box b, .receipt-box center { color: #333 !important; }
     </style>""", unsafe_allow_html=True)
 
 if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
@@ -106,9 +104,9 @@ if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_wi
     v = [datetime.now().strftime("%d.%m.%Y %H:%M"), u_name, u_gender, str(u_salary).replace(".",","), u_prof, u_city, "0.0.0.0", str(s_enf).replace(".",","), str(res_total).replace(".",","), str(tahmini_kur).replace(".",","), str(alim_kaybi).replace(".",","), str(1000/(1+res_total/100)).replace(".",",")]
     if save_to_sheets(v):
         st.balloons()
-        st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr>Analist: {u_name}<br>Yıl Sonu Tahmini: %{res_total:.1f}<br><hr><center><i>Veri Google Sheets'e Kaydedildi.</i></center></div>""", unsafe_allow_html=True)
+        st.success("Veri Google Sheets'e mermi gibi kaydedildi!")
 
-# --- 🔐 ADMIN (SİLME ÖZELLİĞİ GERİ GELDİ) ---
+# --- 🔐 ADMIN (SİLME ÖZELLİĞİ VE DOĞRU HESAPLAMA GERİ GELDİ) ---
 with st.expander("🔐 Admin Control Center"):
     if st.text_input("Şifre:", type="password", key="adm_pw") == "alper2026":
         try:
@@ -117,12 +115,13 @@ with st.expander("🔐 Admin Control Center"):
             df_cloud = pd.DataFrame(sheet.get_all_records())
             
             if not df_cloud.empty:
+                # KRİTİK VERİ TEMİZLEME MOTORU
                 def parse_tr_float(val):
                     try: return float(str(val).replace(',', '.'))
                     except: return 0.0
 
                 df_cloud['Maas'] = df_cloud['Maas'].apply(parse_tr_float)
-                target_col = 'Yil_Sonu_Toplam' if 'Yil_Sonu_Toplam' in df_cloud.columns else 'Yil_Sonu_Toplar'
+                target_col = 'Yil_Sonu_Toplar' if 'Yil_Sonu_Toplar' in df_cloud.columns else 'Yil_Sonu_Toplam'
                 df_cloud['Clean_Enf'] = df_cloud[target_col].apply(parse_tr_float)
 
                 st.write("### 📈 Sokağın Röntgenti")
@@ -134,16 +133,16 @@ with st.expander("🔐 Admin Control Center"):
                 gr1, gr2, gr3 = st.columns(3)
                 with gr1: st.plotly_chart(px.pie(df_cloud, names='Cinsiyet', title="Cinsiyet", hole=0.4), use_container_width=True)
                 with gr2: st.plotly_chart(px.pie(df_cloud, names='Sehir', title="Şehir", hole=0.4), use_container_width=True)
-                with gr3: st.plotly_chart(px.pie(df_cloud, names='Profil', title="Sepet", hole=0.4), use_container_width=True)
+                with gr3: st.plotly_chart(px.pie(df_cloud, names='Profil', title="Profil", hole=0.4), use_container_width=True)
                 
                 st.divider()
-                st.write("### 🧹 Veri Temizliği")
-                # SİLME SEÇENEĞİ BURADA
+                st.write("### 🧹 Veri Temizliği (Gerçek IP'ler Gösteriliyor)")
                 df_edit = df_cloud.drop(columns=['Clean_Enf'])
                 df_edit.insert(0, "Seç", False)
                 edited_df = st.data_editor(df_edit, column_config={
                     "Seç": st.column_config.CheckboxColumn("Sil?", default=False),
                     "Maas": st.column_config.NumberColumn("Maaş", format="%.2f"),
+                    target_col: st.column_config.NumberColumn("Enflasyon", format="%.2f"),
                     "IP": st.column_config.TextColumn("IP Adresi")
                 }, use_container_width=True, hide_index=True)
                 
