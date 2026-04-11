@@ -41,7 +41,7 @@ GUNCEL_DOLAR, Q1_ENF = 44.92, 14.40
 
 st.set_page_config(page_title="LiraPulse: Enflasyon ve Gelecek Beklentisi", layout="wide")
 
-# --- 🎨 CSS: ÖZEL TASARIM ---
+# --- 🎨 CSS ---
 st.markdown("""<style>
     .main { background-color: #0d1117; }
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
@@ -52,7 +52,6 @@ st.markdown("""<style>
 
 if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
 
-# --- 🛰️ ÜST BAŞLIK VE AÇIKLAMA ---
 st.title("🛰️ LiraPulse: Enflasyon ve Gelecek Beklentisi")
 st.markdown("Enflasyon, paranın alım gücünün düşmesi ve yaşam maliyetlerinin artmasıdır. Bu panel üzerinden kendi beklentilerini oluşturabilirsin.")
 
@@ -127,19 +126,15 @@ with st.expander("🔐 Admin Control Center"):
                     for i in range(1, len(vals)):
                         row = vals[i]
                         clean_data.append({
-                            "Tarih": row[0] if len(row) > 0 else "",
-                            "Analist": row[1] if len(row) > 1 else "",
-                            "Cinsiyet": row[2] if len(row) > 2 else "",
-                            "Maas": clean_num(row[3]) if len(row) > 3 else 0.0,
-                            "Profil": row[4] if len(row) > 4 else "",
-                            "Sehir": row[5] if len(row) > 5 else "",
-                            "Kayit_ID": str(row[6]).strip() if len(row) > 6 else "",
-                            "Enflasyon": clean_num(row[8]) if len(row) > 8 else 0.0,
-                            "Dolar": clean_num(row[9]) if len(row) > 9 else 0.0
+                            "Tarih": row[0] if len(row) > 0 else "", "Analist": row[1] if len(row) > 1 else "", "Cinsiyet": row[2] if len(row) > 2 else "",
+                            "Maas": clean_num(row[3]) if len(row) > 3 else 0.0, "Profil": row[4] if len(row) > 4 else "", "Sehir": row[5] if len(row) > 5 else "",
+                            "Kayit_ID": str(row[6]).strip() if len(row) > 6 else "", "Enflasyon": clean_num(row[8]) if len(row) > 8 else 0.0, "Dolar": clean_num(row[9]) if len(row) > 9 else 0.0
                         })
                     st.session_state['admin_data'] = clean_data
                     st.success("Excel'den veriler çekildi!")
-                else: st.info("Excel boş.")
+                else: 
+                    st.session_state['admin_data'] = []
+                    st.info("Excel boş.")
             except Exception as e: st.error(f"Hata: {e}")
 
         if st.session_state['admin_data']:
@@ -152,11 +147,18 @@ with st.expander("🔐 Admin Control Center"):
             s3.metric("Ort. Enflasyon", f"%{tr_format(df['Enflasyon'].mean())}")
             s4.metric("Ort. Dolar", f"{tr_format(df['Dolar'].mean())} TL")
             
-            # --- 📊 ESKİ GRAFİKLER GERİ GELDİ ---
-            g_col1, g_col2, g_col3 = st.columns(3)
-            with g_col1: st.plotly_chart(px.pie(df, names='Cinsiyet', title="Cinsiyet Dağılımı", hole=0.4, color_discrete_sequence=px.colors.sequential.RdBu), use_container_width=True)
-            with g_col2: st.plotly_chart(px.pie(df, names='Sehir', title="Şehir Dağılımı", hole=0.4, color_discrete_sequence=px.colors.sequential.Blues), use_container_width=True)
-            with g_col3: st.plotly_chart(px.pie(df, names='Profil', title="Harcama Sepeti", hole=0.4, color_discrete_sequence=px.colors.sequential.Greens), use_container_width=True)
+            # --- 🛡️ GRAFİK KORUMASI ---
+            if not df.empty:
+                g_col1, g_col2, g_col3 = st.columns(3)
+                with g_col1:
+                    if 'Cinsiyet' in df.columns and not df['Cinsiyet'].isnull().all():
+                        st.plotly_chart(px.pie(df, names='Cinsiyet', title="Cinsiyet Dağılımı", hole=0.4, color_discrete_sequence=px.colors.sequential.RdBu), use_container_width=True)
+                with g_col2:
+                    if 'Sehir' in df.columns and not df['Sehir'].isnull().all():
+                        st.plotly_chart(px.pie(df, names='Sehir', title="Şehir Dağılımı", hole=0.4, color_discrete_sequence=px.colors.sequential.Blues), use_container_width=True)
+                with g_col3:
+                    if 'Profil' in df.columns and not df['Profil'].isnull().all():
+                        st.plotly_chart(px.pie(df, names='Profil', title="Harcama Sepeti", hole=0.4, color_discrete_sequence=px.colors.sequential.Greens), use_container_width=True)
             
             st.divider()
             df_edit = df.copy(); df_edit.insert(0, "Seç", False)
