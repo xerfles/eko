@@ -39,34 +39,41 @@ def tr_format(number):
 # --- 📊 PİYASA VERİLERİ ---
 GUNCEL_DOLAR, Q1_ENF = 44.92, 14.40
 
-st.set_page_config(page_title="LiraPulse: Gelecek Analizi", layout="wide")
+st.set_page_config(page_title="LiraPulse: Enflasyon ve Gelecek Beklentisi", layout="wide")
 
-# --- 🎨 CSS ---
+# --- 🎨 CSS: ÖZEL TASARIM ---
 st.markdown("""<style>
     .main { background-color: #0d1117; }
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; }
     .receipt-box { background-color: #fff; color: #333 !important; padding: 20px; border-radius: 5px; border: 2px dashed #333; margin: 20px auto; max-width: 450px; line-height: 1.6; }
+    .receipt-box b, .receipt-box center, .receipt-box p { color: #333 !important; }
     </style>""", unsafe_allow_html=True)
 
 if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
 
+# --- 🛰️ ÜST BAŞLIK VE AÇIKLAMA ---
 st.title("🛰️ LiraPulse: Enflasyon ve Gelecek Beklentisi")
+st.markdown("Enflasyon, paranın alım gücünün düşmesi ve yaşam maliyetlerinin artmasıdır. Bu panel üzerinden kendi beklentilerini oluşturabilirsin.")
 
 col_in, col_out = st.columns([1.2, 2])
 
 with col_in:
+    st.subheader("🕵️ Analist Girişi")
     u_name = st.text_input("Rumuz:", "Analist_01")
     u_salary = st.number_input("Aylık Maaş (TL):", value=22102)
     u_prof = st.selectbox("Harcama Sepeti:", ["Öğrenci", "Mavi Yaka", "Beyaz Yaka", "Emekli", "Kamu Personeli"])
     u_city = st.selectbox("Şehir:", ["Kırklareli", "İstanbul", "Ankara", "İzmir", "Diğer"])
+    u_gender = st.selectbox("Cinsiyet:", ["Erkek", "Kadın", "Belirtmek İstemiyorum"])
     
     st.write("🔮 **Senaryo Seç**")
-    s1, s2, s3, s4 = st.columns(4)
+    s1, s2, s3, s4, s5, s6 = st.columns(6)
     if s1.button("🏦 TCMB"): st.session_state.update({'d_val': 5, 'g_val': 8, 'k_val': 7, 'u_val': 6}); st.rerun()
     if s2.button("📉 TÜİK"): st.session_state.update({'d_val': 12, 'g_val': 22, 'k_val': 20, 'u_val': 16}); st.rerun()
-    if s3.button("📊 Realist"): st.session_state.update({'d_val': 35, 'g_val': 48, 'k_val': 50, 'u_val': 42}); st.rerun()
-    if s4.button("🌋 Kriz"): st.session_state.update({'d_val': 100, 'g_val': 120, 'k_val': 130, 'u_val': 110}); st.rerun()
+    if s3.button("🌸 İyimser"): st.session_state.update({'d_val': 20, 'g_val': 32, 'k_val': 30, 'u_val': 28}); st.rerun()
+    if s4.button("📊 Realist"): st.session_state.update({'d_val': 35, 'g_val': 48, 'k_val': 50, 'u_val': 42}); st.rerun()
+    if s5.button("🔥 ENAG"): st.session_state.update({'d_val': 55, 'g_val': 70, 'k_val': 75, 'u_val': 60}); st.rerun()
+    if s6.button("🌋 Kriz"): st.session_state.update({'d_val': 100, 'g_val': 120, 'k_val': 130, 'u_val': 110}); st.rerun()
     
     d_a = st.slider("💵 Dolar Artışı (%)", 0, 150, key='d_val')
     g_a = st.slider("🛒 Gıda Artışı (%)", 0, 150, key='g_val')
@@ -92,12 +99,12 @@ if st.button("💾 ANALİZİ KAYDET", use_container_width=True):
         s = f"{val:.2f}".replace(".", ",")
         return f"'{s[:-3]}" if s.endswith(",00") else f"'{s}"
     kayit_id = str(uuid.uuid4().hex[:8]).upper()
-    v = [datetime.now().strftime("%d.%m.%Y %H:%M"), u_name, "", f_tr(u_salary), u_prof, u_city, kayit_id, f_tr(s_enf), f_tr(res_total), f_tr(tahmini_kur), f_tr(alim_kaybi), f_tr(round(1000/(1+res_total/100), 2))]
+    v = [datetime.now().strftime("%d.%m.%Y %H:%M"), u_name, u_gender, f_tr(u_salary), u_prof, u_city, kayit_id, f_tr(s_enf), f_tr(res_total), f_tr(tahmini_kur), f_tr(alim_kaybi), f_tr(round(1000/(1+res_total/100), 2))]
     if save_to_sheets(v):
         st.balloons()
         st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>Enflasyon:</b> %{tr_format(res_total)}</p><p><b>Dolar:</b> {tr_format(tahmini_kur)} TL</p></div>""", unsafe_allow_html=True)
 
-# --- 🔐 ADMIN PANELİ (NUMARALI SİSTEM) ---
+# --- 🔐 ADMIN PANELİ ---
 if 'admin_data' not in st.session_state: st.session_state['admin_data'] = []
 
 with st.expander("🔐 Admin Control Center"):
@@ -107,7 +114,6 @@ with st.expander("🔐 Admin Control Center"):
                 client = get_gspread_client()
                 sheet = client.open("LiraPulse_Veri").sheet1
                 vals = sheet.get_all_values()
-                
                 if len(vals) > 1:
                     def clean_num(val):
                         try:
@@ -117,16 +123,16 @@ with st.expander("🔐 Admin Control Center"):
                             elif ',' in s: s = s.replace(',', '.')
                             return float(s)
                         except: return 0.0
-
                     clean_data = []
-                    # 0. satır başlıktır, o yüzden 1'den başlıyoruz
                     for i in range(1, len(vals)):
                         row = vals[i]
-                        # SÜTUN İSİMLERİNE BAKMIYORUZ, SIRAYA BAKIYORUZ!
                         clean_data.append({
                             "Tarih": row[0] if len(row) > 0 else "",
                             "Analist": row[1] if len(row) > 1 else "",
+                            "Cinsiyet": row[2] if len(row) > 2 else "",
                             "Maas": clean_num(row[3]) if len(row) > 3 else 0.0,
+                            "Profil": row[4] if len(row) > 4 else "",
+                            "Sehir": row[5] if len(row) > 5 else "",
                             "Kayit_ID": str(row[6]).strip() if len(row) > 6 else "",
                             "Enflasyon": clean_num(row[8]) if len(row) > 8 else 0.0,
                             "Dolar": clean_num(row[9]) if len(row) > 9 else 0.0
@@ -138,11 +144,19 @@ with st.expander("🔐 Admin Control Center"):
 
         if st.session_state['admin_data']:
             df = pd.DataFrame(st.session_state['admin_data'])
+            
+            # --- ÖZET KUTULARI ---
             s1, s2, s3, s4 = st.columns(4)
-            s1.metric("Toplam", f"{len(df)} Kişi")
+            s1.metric("Toplam Katılım", f"{len(df)} Kişi")
             s2.metric("Ort. Maaş", f"{tr_format(df['Maas'].mean())} TL")
             s3.metric("Ort. Enflasyon", f"%{tr_format(df['Enflasyon'].mean())}")
             s4.metric("Ort. Dolar", f"{tr_format(df['Dolar'].mean())} TL")
+            
+            # --- 📊 ESKİ GRAFİKLER GERİ GELDİ ---
+            g_col1, g_col2, g_col3 = st.columns(3)
+            with g_col1: st.plotly_chart(px.pie(df, names='Cinsiyet', title="Cinsiyet Dağılımı", hole=0.4, color_discrete_sequence=px.colors.sequential.RdBu), use_container_width=True)
+            with g_col2: st.plotly_chart(px.pie(df, names='Sehir', title="Şehir Dağılımı", hole=0.4, color_discrete_sequence=px.colors.sequential.Blues), use_container_width=True)
+            with g_col3: st.plotly_chart(px.pie(df, names='Profil', title="Harcama Sepeti", hole=0.4, color_discrete_sequence=px.colors.sequential.Greens), use_container_width=True)
             
             st.divider()
             df_edit = df.copy(); df_edit.insert(0, "Seç", False)
