@@ -26,15 +26,18 @@ def save_to_sheets(veri):
         st.error(f"Kayıt Hatası: {e}")
         return False
 
-# --- 🇹🇷 TÜRKÇE SAYI FORMATLAYICI ---
+# --- 🇹🇷 TÜRKÇE SAYI FORMATLAYICI (KESİN VE HATASIZ) ---
 def tr_format(number, decimals=2):
     try:
         val = float(number)
-        fmt = f"{{:,.{decimals}f}}".format(val)
-        s = fmt.replace(',', 'X').replace('.', ',').replace('X', '.')
-        if decimals == 0 or s.endswith(",00"):
-            return s[:-3] if not (decimals == 0 and s.endswith(",00")) else s
-        return s
+        if decimals == 0:
+            fmt = f"{val:,.0f}"
+            return fmt.replace(',', '.')
+        else:
+            fmt = f"{val:,.2f}"
+            s = fmt.replace(',', 'X').replace('.', ',').replace('X', '.')
+            if s.endswith(",00"): return s[:-3]
+            return s
     except: return "0"
 
 # --- 📊 PİYASA VERİLERİ ---
@@ -49,8 +52,6 @@ st.markdown("""<style>
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; }
     .bugun-etiket { color: #ffbd45; font-size: 13px; text-align: center; margin-top: -10px; font-weight: bold; }
-    .receipt-box { background-color: #fff; color: #333 !important; padding: 30px; border-radius: 10px; font-family: 'Courier New', monospace; border: 3px dashed #333; margin: 20px auto; max-width: 500px; line-height: 1.8; text-align: left; }
-    .receipt-box b, .receipt-box center, .receipt-box p, .receipt-box hr { color: #333 !important; border-color: #333 !important; }
     .ekmek-text { color: #ffbd45; font-size: 14px; font-weight: bold; margin-bottom: 20px; }
     </style>""", unsafe_allow_html=True)
 
@@ -105,7 +106,7 @@ alim_kaybi = round((1 - (1 / (1 + res_total/100))) * 100, 2)
 reel_deger = round(1000/(1+res_total/100), 2)
 
 with col_out:
-    # --- YIL SONU ANALİZİ (İSTEDİĞİN GİBİ SAĞDAKİ MATEMATİKLİ YAPI) ---
+    # --- YIL SONU ANALİZİ (Q1 + TAHMİN = TOPLAM MATEMATİĞİ) ---
     st.markdown(f"""<div class="ozet-panel">
         <h3 style="color:#aaa; margin-bottom: 20px;">Yıl Sonu Beklenti Analizi</h3>
         <div style="display:flex; justify-content: space-around; align-items:center; margin-bottom: 15px;">
@@ -119,9 +120,9 @@ with col_out:
         <p style="font-size:16px; color:#ccc; margin-top:10px;">Tahmini Kur: <b>{tr_format(tahmini_kur)} TL</b></p>
     </div>""", unsafe_allow_html=True)
     
-    st.write("") # Boşluk
+    st.write("") 
     
-    # --- PS5, IPHONE, CLIO (Güncel Fiyat Etiketleriyle) ---
+    # --- PS5, IPHONE, CLIO (Güncel Fiyat Etiketleriyle Hatasız Format) ---
     h1, h2, h3 = st.columns(3)
     with h1: st.metric("🎮 PS5 (2026)", f"{tr_format(P_PS5*(1+res_total/85), 0)} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {tr_format(P_PS5, 0)} TL</p>', unsafe_allow_html=True)
     with h2: st.metric("📱 iPhone (2026)", f"{tr_format(P_IPHONE*(1+res_total/95), 0)} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {tr_format(P_IPHONE, 0)} TL</p>', unsafe_allow_html=True)
@@ -129,15 +130,28 @@ with col_out:
     
     st.divider()
     
-    # --- KADRAN VE 1000 TL AKIBETİ (Yan Yana) ---
+    # --- KADRAN VE 1000 TL AKIBETİ (BAŞLIKLI VE BARLI) ---
     c_g, c_e = st.columns(2)
     with c_g: 
-        st.plotly_chart(go.Figure(go.Indicator(mode="gauge+number", value=alim_kaybi, title={'text': "Alım Gücü Kaybı (%)"}, gauge={'bar': {'color': "#ff4b4b"}})).update_layout(height=220, margin=dict(l=20, r=20, t=30, b=10), paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
+        # Kadranın üstten kesilmemesi için margin-top (t=50) artırıldı
+        st.plotly_chart(go.Figure(go.Indicator(
+            mode="gauge+number", 
+            value=alim_kaybi, 
+            title={'text': "Alım Gücü Kaybı (%)", 'font': {'size': 16}}, 
+            gauge={'bar': {'color': "#ff4b4b"}}
+        )).update_layout(height=250, margin=dict(l=30, r=30, t=50, b=20), paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
+    
     with c_e: 
-        st.markdown(f"""<div style="background-color: #161b22; padding: 25px; border-radius: 15px; border-left: 5px solid #ff4b4b; margin-top:20px;">
-            <p style="margin:0; color:#aaa; font-size:16px; font-weight:bold;">📉 1.000 TL Akıbeti</p>
-            <h2 style="margin:0; color:#fff; font-size:36px;">{tr_format(reel_deger)} TL</h2>
-        </div>""", unsafe_allow_html=True)
+        yuzde_kalan = max(0, min(100, (reel_deger / 1000) * 100))
+        st.markdown(f"""
+        <div style="background-color: #161b22; padding: 30px 25px; border-radius: 10px; border: 1px solid #30363d; margin-top: 10px;">
+            <p style="color: #aaa; font-size: 14px; margin-bottom: 5px; font-weight: bold;">📉 1.000 TL Akıbeti</p>
+            <h2 style="color: #fff; margin-top: 0; margin-bottom: 20px; font-size: 36px;">{tr_format(reel_deger)} TL</h2>
+            <div style="height: 10px; background-color: #252532; border-radius: 5px; width: 100%;">
+                <div style="height: 100%; background-color: #ff4b4b; border-radius: 5px; width: {yuzde_kalan}%;"></div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
 st.divider()
 
@@ -154,12 +168,33 @@ if st.button("💾 ANALİZİ KAYDET VE ADİSYONU AL", use_container_width=True):
     def f_tr(val):
         s = f"{val:.2f}".replace(".", ",")
         return f"'{s[:-3]}" if s.endswith(",00") else f"'{s}"
+    
     kayit_id = str(uuid.uuid4().hex[:8]).upper()
     v = [datetime.now().strftime("%d.%m.%Y %H:%M"), u_name, u_gender, f_tr(u_salary), u_prof, u_city, kayit_id, f_tr(s_enf), f_tr(res_total), f_tr(tahmini_kur), f_tr(alim_kaybi), f_tr(reel_deger)]
+    
     if save_to_sheets(v):
         st.balloons()
-        # --- ADİSYON ---
-        st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>ID:</b> {kayit_id}</p><p><b>Tahmini Enflasyon:</b> %{tr_format(res_total)}</p><p><b>Dolar Beklentisi:</b> {tr_format(tahmini_kur)} TL</p><p><b>1.000 TL Reel Değer:</b> {tr_format(reel_deger)} TL</p><hr><center><i>Veri Google Sheets'e Mermi Gibi İşlendi.</i></center></div>""", unsafe_allow_html=True)
+        
+        # RESTORAN TİPİ YENİ ADİSYON HESAPLAMALARI
+        kahvalti_fiyat = 300 * (1 + res_total/100) # Temel fiyat 300 TL (2 kişilik)
+        aksam_fiyat = 450 * (1 + res_total/100)    # Temel fiyat 450 TL
+        toplam_hesap = kahvalti_fiyat + aksam_fiyat
+
+        st.markdown(f"""
+        <div style="background-color: #fff; color: #000; padding: 30px; font-family: 'Courier New', Courier, monospace; width: 100%; max-width: 480px; margin: 30px auto; border: 1px solid #ddd; box-shadow: 2px 2px 15px rgba(0,0,0,0.5);">
+            <center><b>🧾 LiraPulse Intelligence ADİSYON</b></center><br>
+            <p style="margin:4px 0;">TARİH: 31.12.2026</p>
+            <p style="margin:4px 0;">MASA: 2026 SONU</p>
+            <p style="margin:4px 0;">ANALİST: {u_name}</p>
+            <p style="margin:15px 0;">-----------------------------------------</p>
+            <div style="display:flex; justify-content:space-between;"><p style="margin:4px 0;">2x Serpme Kahvaltı (Gerçekçi)</p><p style="margin:4px 0;">: {tr_format(kahvalti_fiyat, 0)} TL</p></div>
+            <div style="display:flex; justify-content:space-between;"><p style="margin:4px 0;">1x Akşam Yemeği (2 Kişi)</p><p style="margin:4px 0;">: {tr_format(aksam_fiyat, 0)} TL</p></div>
+            <p style="margin:15px 0;">-----------------------------------------</p>
+            <div style="display:flex; justify-content:space-between;"><b style="margin:4px 0; font-size:16px;">TOPLAM (SENİN SENARYON)</b><b style="margin:4px 0; font-size:16px;">: {tr_format(toplam_hesap, 0)} TL</b></div>
+            <p style="margin:15px 0;">-----------------------------------------</p><br>
+            <center><i>Geleceği Görmek Cesaret İster.</i></center>
+        </div>
+        """, unsafe_allow_html=True)
 
 # --- 🔐 ADMIN PANELİ ---
 if 'admin_data' not in st.session_state: st.session_state['admin_data'] = []
