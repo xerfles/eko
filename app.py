@@ -227,6 +227,46 @@ if st.button("Buluta Gönder"):
         st.success("✅ Veri Excel'e uçtu! Kontrol et kanka.")
     except Exception as e:
         st.error(f"❌ Hata çıktı: {e}")
+        import streamlit as st
+import gspread
+from google.oauth2.service_account import Credentials
+from datetime import datetime
+
+# Hata ayıklama için bağlantıyı buraya aldım
+def test_connection():
+    try:
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
+        client = gspread.authorize(creds)
+        
+        # Dosyayı açmayı dene
+        sheet_name = "LiraPulse_Veri" # Büyük-küçük harfe dikkat!
+        sheet = client.open(sheet_name).sheet1
+        return client, sheet, "Bağlantı Başarılı! ✅"
+    except Exception as e:
+        return None, None, f"Hata: {str(e)}"
+
+st.title("🛡️ LiraPulse: Sistem Kontrolü")
+
+# Bağlantıyı test et
+client, sheet, status = test_connection()
+st.write(f"Sistem Durumu: **{status}**")
+
+if client:
+    st.success("Google Sheets'e ulaşıldı! Artık veri gönderebiliriz.")
+    u_name = st.text_input("Test Rumuzu:")
+    if st.button("Veriyi Gönder"):
+        try:
+            # Buradaki liste başlık sayınla (A'dan L'ye) aynı olmalı
+            test_veri = [datetime.now().strftime("%d.%m.%Y"), u_name, "", 0, "", "", "", 0, 0, 0, 0, 0]
+            sheet.append_row(test_veri)
+            st.balloons()
+            st.info("Excel'e bak kanka, gelmiş olmalı!")
+        except Exception as e:
+            st.error(f"Gönderme hatası: {e}")
+else:
+    st.error("Bağlantı kurulamadı. Secrets veya API izinlerini kontrol et.")
+    st.info(f"Senin bot mailin: {st.secrets['gcp_service_account']['client_email']}")
 
 # Admin Paneli
 if st.checkbox("Verileri Göster"):
