@@ -6,7 +6,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 import uuid
-import requests  # CANLI VERİ İÇİN EKLENDİ
+import requests
 
 # --- 🔐 GOOGLE SHEETS MOTORU ---
 def get_gspread_client():
@@ -42,18 +42,16 @@ def tr_format(number, decimals=2):
     except: return "0"
 
 # --- 🌐 CANLI DOLAR ÇEKİCİ (ZIRHLI VE HIZLI) ---
-@st.cache_data(ttl=3600)  # Saatte 1 kez çeker, siteyi asla yavaşlatmaz
+@st.cache_data(ttl=3600)
 def get_live_usd():
     try:
-        # API'ye bağlanıp güncel kuru soruyoruz (2 saniye bekleme süresi)
         res = requests.get('https://api.exchangerate-api.com/v4/latest/USD', timeout=2)
         return round(res.json()['rates']['TRY'], 2)
     except:
-        # İnternet koparsa veya API çökerse hata verme, güvenli rakamı kullan (B Planı)
         return 44.59
 
 # --- 📊 PİYASA VERİLERİ ---
-GUNCEL_DOLAR = get_live_usd()  # ARTIK MANUEL DEĞİL, CANLI!
+GUNCEL_DOLAR = get_live_usd()
 Q1_ENF, TCMB_FAIZ, TCMB_2026_HEDEF = 14.40, 37.0, 22.0
 P_PS5, P_IPHONE, P_CLIO = 42999, 77999, 1795000
 
@@ -72,12 +70,14 @@ st.markdown("""<style>
 
 if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
 
-# --- 🔐 ADMIN PANELİ (SOL MENÜYE TAŞINDI) ---
+# --- 🔐 ADMIN PANELİ GİRİŞİ (SOL MENÜDE) ---
 if 'admin_data' not in st.session_state: st.session_state['admin_data'] = []
 
 with st.sidebar.expander("🔐 Admin Control Center"):
+    # Şifreyi burada kontrol edip, panelin grafiklerini en altta göstereceğiz
     if st.text_input("Şifre:", type="password", key="adm_pw") == "alper2026":
-        if st.button("🔄 Verileri Excel'den Tazele"):
+        st.success("Giriş Başarılı! İstatistikler sayfanın en altındadır.")
+        if st.button("🔄 Verileri Excel'den Tazele", use_container_width=True):
             try:
                 client = get_gspread_client(); sheet = client.open("LiraPulse_Veri").sheet1; vals = sheet.get_all_values()
                 if len(vals) > 1:
@@ -93,28 +93,9 @@ with st.sidebar.expander("🔐 Admin Control Center"):
                     for i in range(1, len(vals)):
                         row = vals[i]
                         new_data.append({"Tarih": row[0], "Analist": row[1], "Cinsiyet": row[2], "Maas": clean_num(row[3]), "Profil": row[4], "Sehir": row[5], "Kayit_ID": str(row[6]), "Enflasyon": clean_num(row[8]), "Dolar": clean_num(row[9]), "Reel": clean_num(row[11])})
-                    st.session_state['admin_data'] = new_data; st.success("Çekildi!")
+                    st.session_state['admin_data'] = new_data; st.success("Çekildi! Aşağı kaydırın.")
                 else: st.info("Excel boş.")
             except Exception as e: st.error(f"Hata: {e}")
-
-        if len(st.session_state['admin_data']) > 0:
-            df = pd.DataFrame(st.session_state['admin_data'])
-            s1, s2, s3, s4 = st.columns(4)
-            s1.metric("Toplam Katılım", f"{len(df)} Kişi"); s2.metric("Ort. Maaş", f"{tr_format(df['Maas'].mean())} TL"); s3.metric("Ort. Enflasyon", f"%{tr_format(df['Enflasyon'].mean())}"); s4.metric("Ort. Dolar", f"{tr_format(df['Dolar'].mean())} TL")
-            g1, g2, g3 = st.columns(3)
-            with g1: st.plotly_chart(px.pie(df, names='Cinsiyet', title="Cinsiyet Dağılımı", hole=0.4), use_container_width=True)
-            with g2: st.plotly_chart(px.pie(df, names='Sehir', title="Şehir Dağılımı", hole=0.4), use_container_width=True)
-            with g3: st.plotly_chart(px.pie(df, names='Profil', title="Harcama Sepeti", hole=0.4), use_container_width=True)
-            st.divider()
-            df_edit = df.copy(); df_edit.insert(0, "Seç", False)
-            edited_df = st.data_editor(df_edit, column_config={"Seç": st.column_config.CheckboxColumn("Sil?", default=False), "Maas": st.column_config.NumberColumn("Maaş", format="%.0f")}, use_container_width=True, hide_index=True)
-            if st.button("🗑️ SEÇİLENLERİ SİL"):
-                sec_idler = edited_df[edited_df["Seç"] == True]["Kayit_ID"].tolist()
-                if sec_idler:
-                    client = get_gspread_client(); sheet = client.open("LiraPulse_Veri").sheet1; all_vals = sheet.get_all_values()
-                    rows_to_del = [i+1 for i, r in enumerate(all_vals) if len(r) > 6 and str(r[6]).strip() in sec_idler]
-                    for r_num in sorted(rows_to_del, reverse=True): sheet.delete_rows(r_num)
-                    st.success("Silindi!"); st.session_state['admin_data'] = []; st.rerun()
 
 # --- 🍞 ÜST BAŞLIK VE EKMEK ÖRNEĞİ ---
 st.title("🛰️ LiraPulse: Geleceğin Faturası")
@@ -314,3 +295,40 @@ if st.button("💾 ANALİZİ KAYDET VE ADİSYONU AL", use_container_width=True):
             <center><i>Geleceği Görmek Cesaret İster.</i></center>
         </div>
         """, unsafe_allow_html=True)
+
+# --- 🔐 ADMIN DASHBOARD (EN ALTTA, SADECE GİRİŞ YAPILINCA ÇIKAR) ---
+if st.session_state.get("adm_pw") == "alper2026":
+    st.divider()
+    st.subheader("⚙️ Yönetici Paneli: Veri ve İstatistikler")
+    if len(st.session_state['admin_data']) > 0:
+        df = pd.DataFrame(st.session_state['admin_data'])
+        s1, s2, s3, s4 = st.columns(4)
+        s1.metric("Toplam Katılım", f"{len(df)} Kişi")
+        s2.metric("Ort. Maaş", f"{tr_format(df['Maas'].mean())} TL")
+        s3.metric("Ort. Enflasyon", f"%{tr_format(df['Enflasyon'].mean())}")
+        s4.metric("Ort. Dolar", f"{tr_format(df['Dolar'].mean())} TL")
+        
+        g1, g2, g3 = st.columns(3)
+        with g1: st.plotly_chart(px.pie(df, names='Cinsiyet', title="Cinsiyet Dağılımı", hole=0.4), use_container_width=True)
+        with g2: st.plotly_chart(px.pie(df, names='Sehir', title="Şehir Dağılımı", hole=0.4), use_container_width=True)
+        with g3: st.plotly_chart(px.pie(df, names='Profil', title="Harcama Sepeti", hole=0.4), use_container_width=True)
+        
+        st.divider()
+        df_edit = df.copy()
+        df_edit.insert(0, "Seç", False)
+        edited_df = st.data_editor(df_edit, column_config={"Seç": st.column_config.CheckboxColumn("Sil?", default=False), "Maas": st.column_config.NumberColumn("Maaş", format="%.0f")}, use_container_width=True, hide_index=True)
+        
+        if st.button("🗑️ SEÇİLENLERİ SİL"):
+            sec_idler = edited_df[edited_df["Seç"] == True]["Kayit_ID"].tolist()
+            if sec_idler:
+                client = get_gspread_client()
+                sheet = client.open("LiraPulse_Veri").sheet1
+                all_vals = sheet.get_all_values()
+                rows_to_del = [i+1 for i, r in enumerate(all_vals) if len(r) > 6 and str(r[6]).strip() in sec_idler]
+                for r_num in sorted(rows_to_del, reverse=True): 
+                    sheet.delete_rows(r_num)
+                st.success("Silindi!")
+                st.session_state['admin_data'] = []
+                st.rerun()
+    else:
+        st.info("Gösterilecek veri yok. Lütfen sol menüden 'Verileri Excel'den Tazele' butonuna tıklayın.")
