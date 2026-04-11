@@ -26,7 +26,7 @@ def save_to_sheets(veri):
         st.error(f"Kayıt Hatası: {e}")
         return False
 
-# --- 📊 PİYASA VERİLERİ ---
+# --- 📊 PİYASA VERİLERİ (11 Nisan 2026) ---
 GUNCEL_DOLAR, Q1_ENF, TCMB_FAIZ, TCMB_2026_HEDEF = 44.92, 14.40, 37.0, 21.0
 P_PS5, P_IPHONE, P_CLIO = 42999, 77999, 1795000
 
@@ -37,7 +37,6 @@ st.markdown("""<style>
     .main { background-color: #0d1117; }
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; }
-    .bugun-etiket { color: #ffbd45; font-size: 13px; text-align: center; margin-top: -10px; font-weight: bold; }
     .receipt-box { background-color: #fff; color: #333 !important; padding: 20px; border-radius: 5px; font-family: 'Courier New', monospace; border: 2px dashed #333; margin: 20px auto; max-width: 450px; }
     </style>""", unsafe_allow_html=True)
 
@@ -56,12 +55,10 @@ with col_in:
     u_city = st.selectbox("Şehir:", ["Kırklareli", "İstanbul", "Ankara", "İzmir", "Diğer"])
     
     st.write("🔮 **Gelecek Senaryosunu Seç**")
-    s1, s2, s3 = st.columns(3)
+    s1, s2, s3, s4, s5, s6 = st.columns(6)
     if s1.button("🏦 TCMB"): st.session_state.update({'d_val': 5, 'g_val': 8, 'k_val': 7, 'u_val': 6}); st.rerun()
     if s2.button("📉 TÜİK"): st.session_state.update({'d_val': 12, 'g_val': 22, 'k_val': 20, 'u_val': 16}); st.rerun()
     if s3.button("🌸 İyimser"): st.session_state.update({'d_val': 20, 'g_val': 32, 'k_val': 30, 'u_val': 28}); st.rerun()
-    
-    s4, s5, s6 = st.columns(3)
     if s4.button("📊 Realist"): st.session_state.update({'d_val': 35, 'g_val': 48, 'k_val': 50, 'u_val': 42}); st.rerun()
     if s5.button("🔥 ENAG"): st.session_state.update({'d_val': 55, 'g_val': 70, 'k_val': 75, 'u_val': 60}); st.rerun()
     if s6.button("🌋 Kriz"): st.session_state.update({'d_val': 100, 'g_val': 120, 'k_val': 130, 'u_val': 110}); st.rerun()
@@ -76,28 +73,24 @@ weights = {"Öğrenci": [0.25, 0.20, 0.40, 0.15], "Mavi Yaka": [0.10, 0.45, 0.30
 w = weights[u_prof]
 s_enf = (d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3])
 res_total = Q1_ENF + s_enf
-alim_kaybi = (1 - (1 / (1 + res_total/100))) * 100
 tahmini_kur = GUNCEL_DOLAR * (1 + d_a/100)
 
 with col_out:
     st.markdown(f"""<div class="ozet-panel"><h3 style="color:#888; margin-bottom:5px;">Yıl Sonu Beklenti Analizi</h3><div style="display:flex; justify-content: space-around; align-items:center;"><div><small>Q1 Gerçekleşen</small><br><b style="font-size:24px; color:#00d4ff;">%{Q1_ENF}</b></div><div style="font-size:30px; color:#555;">+</div><div><small>Senin Tahminin</small><br><b style="font-size:24px; color:#ffbd45;">%{s_enf:.1f}</b></div><div style="font-size:30px; color:#555;">=</div><div><small><b>Yıl Sonu Toplamı</b></small><br><b style="font-size:36px; color:#ff4b4b;">%{res_total:.1f}</b></div></div><hr style="border:0.5px solid #333;"><p style="margin:0; font-size:18px;">Tahmini Kur: <span style="color:#00d4ff; font-weight:bold;">{tahmini_kur:.2f} TL</span></p></div>""", unsafe_allow_html=True)
-    
     h1, h2, h3 = st.columns(3)
     with h1: st.metric("🎮 PS5 (2026)", f"{P_PS5*(1+res_total/85):,.0f} TL")
     with h2: st.metric("📱 iPhone (2026)", f"{P_IPHONE*(1+res_total/95):,.0f} TL")
     with h3: st.metric("🚗 Clio (2026)", f"{P_CLIO*(1+res_total/100):,.0f} TL")
-    
     st.divider()
-    c_g, c_e = st.columns(2)
-    with c_g: st.plotly_chart(go.Figure(go.Indicator(mode="gauge+number", value=alim_kaybi, title={'text': "Alım Gücü Kayabı (%)"}, gauge={'bar': {'color': "#ff4b4b"}})).update_layout(height=280, paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
-    with c_e: st.write("### 📉 1.000 TL Akıbeti"); st.title(f"{1000/(1+res_total/100):.2f} TL")
+    alim_kaybi = (1 - (1 / (1 + res_total/100))) * 100
+    st.write("### 📉 1.000 TL Akıbeti")
+    st.title(f"{1000/(1+res_total/100):.2f} TL")
 
 if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_width=True):
-    # Sheets'e gönderirken virgüllü kaydediyoruz ki manuel bakarken kolay olsun
     v = [datetime.now().strftime("%d.%m.%Y %H:%M"), u_name, u_gender, str(u_salary).replace(".",","), u_prof, u_city, "0.0.0.0", str(s_enf).replace(".",","), str(res_total).replace(".",","), str(tahmini_kur).replace(".",","), str(alim_kaybi).replace(".",","), str(1000/(1+res_total/100)).replace(".",",")]
     if save_to_sheets(v):
         st.balloons()
-        st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr>Analist: {u_name}<br>Yıl Sonu Tahmini: %{res_total:.1f}<br><hr><center><i>Veri Google Sheets'e Kaydedildi.</i></center></div>""", unsafe_allow_html=True)
+        st.success("Veri Google Sheets'e mermi gibi kaydedildi!")
 
 # --- 🔐 ADMIN ---
 with st.expander("🔐 Admin Control Center"):
@@ -105,51 +98,38 @@ with st.expander("🔐 Admin Control Center"):
         try:
             client = get_gspread_client()
             sheet = client.open("LiraPulse_Veri").sheet1
-            data = sheet.get_all_records()
-            df_cloud = pd.DataFrame(data)
+            df_cloud = pd.DataFrame(sheet.get_all_records())
             
             if not df_cloud.empty:
-                # --- 📉 VERİ TEMİZLEME MOTORU (VİRGÜLLERİ NOKTAYA ÇEVİRİR) ---
+                # --- 📉 VERİ TEMİZLEME (VİRGÜLLERİ NOKTAYA ÇEVİRİR) ---
                 def clean_num(val):
-                    if isinstance(val, str):
-                        return float(val.replace(',', '.'))
-                    return float(val)
+                    try: return float(str(val).replace(',', '.'))
+                    except: return 0.0
 
                 df_cloud['Maas'] = df_cloud['Maas'].apply(clean_num)
-                df_cloud['Yil_Sonu_Toplar'] = df_cloud['Yil_Sonu_Toplar'].apply(clean_num)
+                # DİKKAT: Sütun adı Excel'deki gibi "Yil_Sonu_Toplam" olarak düzeltildi
+                df_cloud['Yil_Sonu_Toplam'] = df_cloud['Yil_Sonu_Toplam'].apply(clean_num)
                 df_cloud['Dolar_Beklentisi'] = df_cloud['Dolar_Beklentisi'].apply(clean_num)
-                df_cloud['Alim_Gucu_Kay'] = df_cloud['Alim_Gucu_Kay'].apply(clean_num)
-                df_cloud['Reel_Kalan_TL'] = df_cloud['Reel_Kalan_TL'].apply(clean_num)
 
                 st.write("### 📈 Sokağın Röntgenti")
                 s1, s2, s3 = st.columns(3)
                 s1.metric("Toplam Katılım", f"{len(df_cloud)} Kişi")
                 s2.metric("Ort. Maaş", f"{df_cloud['Maas'].mean():,.2f} TL")
-                s3.metric("Ort. Enflasyon", f"%{df_cloud['Yil_Sonu_Toplar'].mean():.2f}")
+                s3.metric("Ort. Enflasyon", f"%{df_cloud['Yil_Sonu_Toplam'].mean():.2f}")
                 
+                # Pasta Grafikleri
                 gr1, gr2, gr3 = st.columns(3)
-                with gr1:
-                    gen_data = df_cloud['Cinsiyet'].value_counts().reset_index()
-                    gen_data.columns = ['Cinsiyet', 'count']
-                    st.plotly_chart(px.pie(gen_data, names='Cinsiyet', values='count', title="Cinsiyet Dağılımı", hole=0.4), use_container_width=True)
-                with gr2:
-                    city_data = df_cloud['Sehir'].value_counts().reset_index()
-                    city_data.columns = ['Sehir', 'count']
-                    st.plotly_chart(px.pie(city_data, names='Sehir', values='count', title="Şehir Dağılımı", hole=0.4), use_container_width=True)
-                with gr3:
-                    prof_data = df_cloud['Profil'].value_counts().reset_index()
-                    prof_data.columns = ['Profil', 'count']
-                    st.plotly_chart(px.pie(prof_data, names='Profil', values='count', title="Sepet Dağılımı", hole=0.4), use_container_width=True)
+                with gr1: st.plotly_chart(px.pie(df_cloud, names='Cinsiyet', title="Cinsiyet"), use_container_width=True)
+                with gr2: st.plotly_chart(px.pie(df_cloud, names='Sehir', title="Şehir"), use_container_width=True)
+                with gr3: st.plotly_chart(px.pie(df_cloud, names='Profil', title="Profil"), use_container_width=True)
                 
                 st.divider()
                 st.write("### 🧹 Veri Temizliği (Gerçek IP'ler Gösteriliyor)")
-                
-                # Tabloda gösterirken şık format
                 st.data_editor(df_cloud, column_config={
                     "Maas": st.column_config.NumberColumn("Maaş", format="%.2f"),
-                    "Yil_Sonu_Toplar": st.column_config.NumberColumn("Yıl Sonu Enflasyon", format="%.2f"),
+                    "Yil_Sonu_Toplam": st.column_config.NumberColumn("Enflasyon", format="%.2f"),
                     "Dolar_Beklentisi": st.column_config.NumberColumn("Dolar Beklentisi", format="%.2f"),
                     "IP": st.column_config.TextColumn("Kullanıcı IP") # IP GİZLEME KALDIRILDI
                 }, use_container_width=True, hide_index=True)
         except Exception as e: 
-            st.error(f"Veri yükleme hatası: {e}")
+            st.error(f"Veri çekilemedi. Hata: {e}")
