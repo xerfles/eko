@@ -25,20 +25,20 @@ def save_to_sheets(veri):
         st.error(f"Kayıt Hatası: {e}")
         return False
 
-# --- 📊 PİYASA VERİLERİ (11 Nisan 2026) ---
+# --- 📊 PİYASA VERİLERİ (GÜNCEL) ---
 GUNCEL_DOLAR, Q1_ENF, TCMB_FAIZ, TCMB_2026_HEDEF = 44.92, 14.40, 37.0, 21.0
 P_PS5, P_IPHONE, P_CLIO = 42999, 77999, 1795000
 
 st.set_page_config(page_title="LiraPulse: Gelecek Beklentisi", layout="wide")
 
-# --- 🎨 CSS: ADİSYON VE TASARIM KORUMASI ---
+# --- 🎨 CSS: TASARIM KORUMASI ---
 st.markdown("""<style>
     .main { background-color: #0d1117; }
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; }
     .bugun-etiket { color: #ffbd45; font-size: 13px; text-align: center; margin-top: -10px; font-weight: bold; }
     .receipt-box { background-color: #fff; color: #333 !important; padding: 20px; border-radius: 5px; font-family: 'Courier New', monospace; border: 2px dashed #333; margin: 20px auto; max-width: 450px; line-height: 1.6; }
-    .receipt-box b, .receipt-box center, .receipt-box p, .receipt-box hr { color: #333 !important; border-color: #333 !important; }
+    .receipt-box b, .receipt-box center, .receipt-box p { color: #333 !important; }
     </style>""", unsafe_allow_html=True)
 
 if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
@@ -102,13 +102,14 @@ with g1: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Gram Altın", title="Maaş
 with g2: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Dolar ($)", title="Maaş Kaç Dolar?", color="Dolar ($)", color_continuous_scale="Greens"), use_container_width=True)
 
 if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_width=True):
+    # EXCEL'E YAZARKEN VİRGÜL KULLAN
     def f_tr(val): return "{:.2f}".format(val).replace(".", ",")
     v = [datetime.now().strftime("%d.%m.%Y %H:%M"), u_name, u_gender, f_tr(u_salary), u_prof, u_city, "0.0.0.0", f_tr(s_enf), f_tr(res_total), f_tr(tahmini_kur), f_tr(alim_kaybi), f_tr(1000/(1+res_total/100))]
     if save_to_sheets(v):
         st.balloons()
-        st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>Yıl Sonu Tahmini:</b> %{res_total:.2f}</p><p><b>1.000 TL Reel Değer:</b> {1000/(1+res_total/100):.2f} TL</p><hr><center><i>Veri Google Sheets'e Mermi Gibi İşlendi.</i></center></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>Profil:</b> {u_prof}</p><p><b>Yıl Sonu Tahmini:</b> %{res_total:.2f}</p><p><b>1.000 TL Reel Değer:</b> {1000/(1+res_total/100):.2f} TL</p><hr><center><i>Veri Google Sheets'e Mermi Gibi İşlendi.</i></center></div>""", unsafe_allow_html=True)
 
-# --- 🔐 ADMIN: VERİ TEMİZLEME MOTORU GÜÇLENDİRİLDİ ---
+# --- 🔐 ADMIN: SÜPER TEMİZLEYİCİ BURADA ---
 with st.expander("🔐 Admin Control Center"):
     if st.text_input("Şifre:", type="password", key="adm_pw") == "alper2026":
         try:
@@ -117,9 +118,12 @@ with st.expander("🔐 Admin Control Center"):
             df_cloud = pd.DataFrame(sheet.get_all_records())
             
             if not df_cloud.empty:
-                # KRİTİK TEMİZLİK: Virgülleri Noktaya Çevir ve Sayıya Zorla
+                # KRİTİK TEMİZLİK: Virgülleri Noktaya Çevir, Boşlukları Sil, Sayıya Zorla
                 def clean_num(val):
-                    try: return float(str(val).replace(',', '.'))
+                    try: 
+                        # Önce metne çevir, virgülü noktaya döndür, gereksiz boşlukları at
+                        s = str(val).replace(',', '.').strip()
+                        return float(s)
                     except: return 0.0
 
                 df_cloud['Maas'] = df_cloud['Maas'].apply(clean_num)
@@ -130,7 +134,7 @@ with st.expander("🔐 Admin Control Center"):
                 s1, s2, s3 = st.columns(3)
                 s1.metric("Toplam Katılım", f"{len(df_cloud)} Kişi")
                 s2.metric("Ort. Maaş", f"{df_cloud['Maas'].mean():,.2f} TL")
-                # Filtrelenmiş ve temizlenmiş ortalama
+                # Filtrelenmiş ortalama
                 clean_data = df_cloud[df_cloud['Clean_Enf'] < 1000]['Clean_Enf']
                 s3.metric("Ort. Enflasyon", f"%{clean_data.mean():.2f}")
                 
