@@ -6,6 +6,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 import uuid
+import requests  # CANLI VERİ İÇİN EKLENDİ
 
 # --- 🔐 GOOGLE SHEETS MOTORU ---
 def get_gspread_client():
@@ -40,8 +41,20 @@ def tr_format(number, decimals=2):
             return s
     except: return "0"
 
+# --- 🌐 CANLI DOLAR ÇEKİCİ (ZIRHLI VE HIZLI) ---
+@st.cache_data(ttl=3600)  # Saatte 1 kez çeker, siteyi asla yavaşlatmaz
+def get_live_usd():
+    try:
+        # API'ye bağlanıp güncel kuru soruyoruz (2 saniye bekleme süresi)
+        res = requests.get('https://api.exchangerate-api.com/v4/latest/USD', timeout=2)
+        return round(res.json()['rates']['TRY'], 2)
+    except:
+        # İnternet koparsa veya API çökerse hata verme, güvenli rakamı kullan (B Planı)
+        return 44.59
+
 # --- 📊 PİYASA VERİLERİ ---
-GUNCEL_DOLAR, Q1_ENF, TCMB_FAIZ, TCMB_2026_HEDEF = 44.92, 14.40, 37.0, 22.0
+GUNCEL_DOLAR = get_live_usd()  # ARTIK MANUEL DEĞİL, CANLI!
+Q1_ENF, TCMB_FAIZ, TCMB_2026_HEDEF = 14.40, 37.0, 22.0
 P_PS5, P_IPHONE, P_CLIO = 42999, 77999, 1795000
 
 st.set_page_config(page_title="LiraPulse: Geleceğin Faturası", layout="wide")
