@@ -287,5 +287,17 @@ if st.checkbox("Verileri Göster"):
     
     creds = Credentials.from_service_account_info(creds_info, scopes=scope)
     return gspread.authorize(creds)
+    def get_gspread_client():
+    # Bu satırın başında 4 tane boşluk olmalı (Tab tuşuna bas)
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    
+    # Bu satırların başında da aynı şekilde boşluk olmalı
+    creds_info = st.secrets["gcp_service_account"].to_dict()
+    
+    if "private_key" in creds_info:
+        creds_info["private_key"] = creds_info["private_key"].replace("\\n", "\n")
+    
+    creds = Credentials.from_service_account_info(creds_info, scopes=scope)
+    return gspread.authorize(creds)
     except:
         st.write("Henüz veri yok.")
