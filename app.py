@@ -53,11 +53,13 @@ st.markdown("""<style>
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; }
     .bugun-etiket { color: #ffbd45; font-size: 13px; text-align: center; margin-top: -10px; font-weight: bold; }
     .ekmek-text { color: #ffbd45; font-size: 14px; font-weight: bold; margin-bottom: 20px; }
+    .receipt-box { background-color: #fff; color: #333 !important; padding: 30px; border-radius: 10px; font-family: 'Courier New', monospace; border: 3px dashed #333; margin: 20px auto; max-width: 500px; line-height: 1.8; text-align: left; }
+    .receipt-box b, .receipt-box center, .receipt-box p, .receipt-box hr { color: #333 !important; border-color: #333 !important; }
     </style>""", unsafe_allow_html=True)
 
 if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
 
-# --- 🍞 ÜST BAŞLIK VE EKMEK ÖRNEĞİ (EN TEPE) ---
+# --- 🍞 ÜST BAŞLIK VE EKMEK ÖRNEĞİ ---
 st.markdown('<p class="ekmek-text">💡 Enflasyon Nedir?<br>Bugün 100 liraya aldığın 10 ekmeğin, seneye aynı parayla sadece 6 tanesini alabilmendir.</p>', unsafe_allow_html=True)
 
 # --- 📈 4'LÜ TEPE METRİKLERİ ---
@@ -66,6 +68,35 @@ tm1.metric("💵 Güncel Dolar", f"{GUNCEL_DOLAR} TL")
 tm2.metric("📉 Q1 Enflasyon", f"%{Q1_ENF}")
 tm3.metric("🏦 TCMB Faiz", f"%{TCMB_FAIZ}")
 tm4.metric("🎯 TCMB Hedef", f"%{TCMB_2026_HEDEF}")
+st.divider()
+
+# --- ⚔️ YENİ BÖLÜM: YIL YIL ENFLASYON VS YATIRIM ARAÇLARI (2020-2025) ---
+st.subheader("⚔️ Yıl Yıl Yüzleşme: Enflasyonu Yenenler ve Yenilenler")
+st.markdown("<small style='color:#aaa;'>Hangi yıl kim kazandırdı, kim kaybettirdi? (Yıllık % Getiriler)</small>", unsafe_allow_html=True)
+
+df_yatirim = pd.DataFrame({
+    "Yıl": ["2020", "2021", "2022", "2023", "2024", "2025 (Tahmin)"],
+    "Enflasyon (%)": [14.6, 36.0, 64.2, 64.7, 45.0, 25.0],
+    "TL Mevduat (%)": [12.0, 17.0, 16.0, 35.0, 50.0, 40.0],
+    "Dolar (%)": [24.0, 78.0, 40.0, 57.0, 25.0, 15.0],
+    "Gram Altın (%)": [56.0, 70.0, 43.0, 78.0, 40.0, 20.0],
+    "BIST 100 (%)": [29.0, 25.0, 196.0, 35.0, 45.0, 30.0]
+})
+
+df_melted = df_yatirim.melt(id_vars=["Yıl"], var_name="Araç", value_name="Getiri (%)")
+
+fig_yatirim = px.bar(df_melted, x="Yıl", y="Getiri (%)", color="Araç", barmode="group",
+                     color_discrete_map={
+                         "Enflasyon (%)": "#ff4b4b", # Kırmızı
+                         "TL Mevduat (%)": "#888888", # Gri
+                         "Dolar (%)": "#28a745", # Yeşil
+                         "Gram Altın (%)": "#ffbd45", # Sarı
+                         "BIST 100 (%)": "#00d4ff" # Mavi
+                     })
+fig_yatirim.update_layout(height=400, paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}, 
+                          legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                          margin=dict(l=0, r=0, t=30, b=0))
+st.plotly_chart(fig_yatirim, use_container_width=True)
 st.divider()
 
 col_in, col_out = st.columns([1.2, 2])
@@ -156,9 +187,9 @@ st.divider()
 
 # --- 🕰️ ZAMAN MAKİNESİ ---
 st.subheader("🕰️ Zaman Makinesi: Asgari Ücretin Erimesi (2000-2025)")
-yillar = [str(y) for y in range(2000, 2026)]; altin = [24.5, 11.2, 12.5, 13.1, 17.8, 18.2, 15.1, 14.8, 14.1, 11.8, 10.5, 8.5, 8.0, 9.5, 10.5, 10.1, 10.4, 9.6, 7.5, 7.8, 5.1, 5.6, 5.3, 6.5, 6.8, 4.5]
-dolar = [126, 92, 115, 150, 222, 261, 265, 315, 385, 352, 395, 393, 410, 420, 406, 365, 430, 385, 330, 355, 330, 315, 330, 430, 520, 485]
-df_nost = pd.DataFrame({"Yıl": yillar, "Gram Altın": altin, "Dolar ($)": dolar})
+yillar_nost = [str(y) for y in range(2000, 2026)]; altin_nost = [24.5, 11.2, 12.5, 13.1, 17.8, 18.2, 15.1, 14.8, 14.1, 11.8, 10.5, 8.5, 8.0, 9.5, 10.5, 10.1, 10.4, 9.6, 7.5, 7.8, 5.1, 5.6, 5.3, 6.5, 6.8, 4.5]
+dolar_nost = [126, 92, 115, 150, 222, 261, 265, 315, 385, 352, 395, 393, 410, 420, 406, 365, 430, 385, 330, 355, 330, 315, 330, 430, 520, 485]
+df_nost = pd.DataFrame({"Yıl": yillar_nost, "Gram Altın": altin_nost, "Dolar ($)": dolar_nost})
 g1, g2 = st.columns(2)
 with g1: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Gram Altın", title="Maaş Kaç Gram Altın?", color="Gram Altın", color_continuous_scale="Blues"), use_container_width=True)
 with g2: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Dolar ($)", title="Maaş Kaç Dolar?", color="Dolar ($)", color_continuous_scale="Greens"), use_container_width=True)
@@ -173,12 +204,8 @@ if st.button("💾 ANALİZİ KAYDET VE ADİSYONU AL", use_container_width=True):
     
     if save_to_sheets(v):
         st.balloons()
-        
-        # --- 1000 TL'LİK BAZ ADİSYON MATEMATİĞİ DÜZELDİ ---
-        t_kahvalti = 400 # Yıl başı fiyatı
-        t_aksam = 600    # Yıl başı fiyatı
-        
-        # Senin enflasyon senaryona göre yıl sonu fiyatları
+        t_kahvalti = 400
+        t_aksam = 600
         y_kahvalti = t_kahvalti * (1 + res_total/100)
         y_aksam = t_aksam * (1 + res_total/100)
         y_toplam = y_kahvalti + y_aksam
