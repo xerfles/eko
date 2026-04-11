@@ -25,11 +25,11 @@ def save_to_sheets(veri):
         st.error(f"Kayıt Hatası: {e}")
         return False
 
-# --- 🛰️ CANLI HAFIZA SİSTEMİ ---
+# --- 🛰️ CANLI HAFIZA SİSTEMİ (SAF LİSTE) ---
 if 'live_data' not in st.session_state:
-    st.session_state.live_data = []
+    st.session_state['live_data'] = []
 
-# --- 📊 PİYASA VERİLERİ (GÜNCEL) ---
+# --- 📊 PİYASA VERİLERİ ---
 GUNCEL_DOLAR, Q1_ENF, TCMB_FAIZ, TCMB_2026_HEDEF = 44.92, 14.40, 37.0, 21.0
 P_PS5, P_IPHONE, P_CLIO = 42999, 77999, 1795000
 
@@ -112,18 +112,18 @@ if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_wi
         "Dolar_Beklentisi": tahmini_kur, "Alim_Gucu_Kaybi": alim_kaybi,
         "Reel_Kalan": 1000/(1+res_total/100)
     }
-    st.session_state.live_data.append(live_entry)
+    # BURASI DÜZELTİLDİ: Liste işlemleri güvenli hale getirildi
+    st.session_state['live_data'].append(live_entry)
     
     v = [live_entry["Zaman"], u_name, u_gender, f_tr(u_salary), u_prof, u_city, "0.0.0.0", f_tr(s_enf), f_tr(res_total), f_tr(tahmini_kur), f_tr(alim_kaybi), f_tr(live_entry["Reel_Kalan"])]
     if save_to_sheets(v):
         st.balloons()
         st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>Yıl Sonu Tahmini:</b> %{res_total:.2f}</p><p><b>1.000 TL Reel Değer:</b> {1000/(1+res_total/100):.2f} TL</p><hr><center><i>Veri Google Sheets'e Mermi Gibi İşlendi.</i></center></div>""", unsafe_allow_html=True)
 
-# --- 🔐 ADMIN: HATA GİDERİLMİŞ CANLI PANEL ---
+# --- 🔐 ADMIN: HATASIZ CANLI PANEL ---
 with st.expander("🔐 Admin Control Center"):
     if st.text_input("Şifre:", type="password", key="adm_pw") == "alper2026":
         
-        # VERİLERİ EXCEL'DEN ÇEKME BUTONU
         if st.button("🔄 Verileri Excel'den Tazele (Geçmişi Çek)"):
             try:
                 client = get_gspread_client()
@@ -134,10 +134,10 @@ with st.expander("🔐 Admin Control Center"):
                     try: return float(str(val).replace(',', '.'))
                     except: return 0.0
 
-                new_live_data = []
+                new_data = []
                 for _, row in df_cloud.iterrows():
                     target_col = 'Yil_Sonu_Toplam' if 'Yil_Sonu_Toplam' in row else 'Yil_Sonu_Toplar'
-                    new_live_data.append({
+                    new_data.append({
                         "Zaman": row.get("Zaman Damgası", ""), "Rumuz": row.get("Rumuz", ""),
                         "Cinsiyet": row.get("Cinsiyet", ""), "Maas": clean_num(row.get("Maas", 0)),
                         "Profil": row.get("Profil", ""), "Sehir": row.get("Sehir", ""),
@@ -147,14 +147,13 @@ with st.expander("🔐 Admin Control Center"):
                         "Alim_Gucu_Kaybi": clean_num(row.get("Alim_Gucu_Kaybi", 0)),
                         "Reel_Kalan": clean_num(row.get("Reel_Kalan_TL", 0))
                     })
-                st.session_state.live_data = new_live_data
-                st.success("Geçmiş mermi gibi yüklendi!")
+                st.session_state['live_data'] = new_data
+                st.success("Veriler mermi gibi çekildi!")
                 st.rerun()
             except Exception as e: st.error(f"Hata: {e}")
 
-        # --- KRİTİK HATA DÜZELTMESİ (len() KONTROLÜ) ---
-        if len(st.session_state.live_data) > 0:
-            df_admin = pd.DataFrame(st.session_state.live_data)
+        if len(st.session_state['live_data']) > 0:
+            df_admin = pd.DataFrame(st.session_state['live_data'])
             
             st.write("### 📈 Sokağın Röntgenti")
             s1, s2, s3 = st.columns(3)
@@ -177,6 +176,6 @@ with st.expander("🔐 Admin Control Center"):
             }, use_container_width=True, hide_index=True)
             
             if st.button("🗑️ SEÇİLENLERİ SİL"):
-                st.info("Hafızadan temizlendi. Excel'den kalıcı silmeyi manuel yapmalısın.")
+                st.info("Hafızadan temizlendi. Kalıcı silme Excel üzerinden yapılmalı.")
         else:
-            st.info("Henüz veri yok. Geçmişi çekmek için yukarıdaki butona bas.")
+            st.info("Henüz veri yok. Geçmişi çekmek için butona bas.")
