@@ -157,7 +157,7 @@ st.subheader("⚔️ 2020-2025: Enflasyonu Yenenler ve Yenilenler")
 st.markdown("<small style='color:#aaa;'>Yeşil yananlar enflasyonu tokatladı, kırmızı yananlar enflasyona ezildi.</small>", unsafe_allow_html=True)
 
 df_yatirim = pd.DataFrame({
-    "Yıl": ["2020", "2021", "2022", "2023", "2024", "2025 (Tahmin)"],
+    "Yıl": ["2020", "2021", "2022", "2023", "2024", "2025"],
     "Enflasyon (%)": [14.6, 36.1, 64.3, 64.8, 44.8, 25.0],
     "TL Mevduat (%)": [12.0, 17.5, 16.0, 36.0, 51.0, 42.0],
     "Dolar (%)": [24.8, 78.5, 40.2, 57.3, 25.1, 18.0],
