@@ -46,7 +46,7 @@ P_PS5, P_IPHONE, P_CLIO = 42999, 77999, 1795000
 
 st.set_page_config(page_title="LiraPulse: Gelecek Analizi", layout="wide")
 
-# --- 🎨 CSS ---
+# --- 🎨 CSS: TASARIM KORUMASI ---
 st.markdown("""<style>
     .main { background-color: #0d1117; }
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
@@ -57,8 +57,10 @@ st.markdown("""<style>
 
 if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
 
+# --- 🍞 ÜST BAŞLIK VE EKMEK ÖRNEĞİ (EN TEPE) ---
 st.markdown('<p class="ekmek-text">💡 Enflasyon Nedir?<br>Bugün 100 liraya aldığın 10 ekmeğin, seneye aynı parayla sadece 6 tanesini alabilmendir.</p>', unsafe_allow_html=True)
 
+# --- 📈 4'LÜ TEPE METRİKLERİ ---
 tm1, tm2, tm3, tm4 = st.columns(4)
 tm1.metric("💵 Güncel Dolar", f"{GUNCEL_DOLAR} TL")
 tm2.metric("📉 Q1 Enflasyon", f"%{Q1_ENF}")
@@ -104,7 +106,7 @@ alim_kaybi = round((1 - (1 / (1 + res_total/100))) * 100, 2)
 reel_deger = round(1000/(1+res_total/100), 2)
 
 with col_out:
-    # --- YIL SONU ANALİZİ (MATEMATİKLİ YAPI) ---
+    # --- YIL SONU ANALİZİ ---
     st.markdown(f"""<div class="ozet-panel">
         <h3 style="color:#aaa; margin-bottom: 20px;">Yıl Sonu Beklenti Analizi</h3>
         <div style="display:flex; justify-content: space-around; align-items:center; margin-bottom: 15px;">
@@ -120,6 +122,7 @@ with col_out:
     
     st.write("") 
     
+    # --- PS5, IPHONE, CLIO ---
     h1, h2, h3 = st.columns(3)
     with h1: st.metric("🎮 PS5 (2026)", f"{tr_format(P_PS5*(1+res_total/85), 0)} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {tr_format(P_PS5, 0)} TL</p>', unsafe_allow_html=True)
     with h2: st.metric("📱 iPhone (2026)", f"{tr_format(P_IPHONE*(1+res_total/95), 0)} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {tr_format(P_IPHONE, 0)} TL</p>', unsafe_allow_html=True)
@@ -127,6 +130,7 @@ with col_out:
     
     st.divider()
     
+    # --- KADRAN VE 1000 TL AKIBETİ ---
     c_g, c_e = st.columns(2)
     with c_g: 
         st.plotly_chart(go.Figure(go.Indicator(
@@ -150,6 +154,7 @@ with col_out:
 
 st.divider()
 
+# --- 🕰️ ZAMAN MAKİNESİ ---
 st.subheader("🕰️ Zaman Makinesi: Asgari Ücretin Erimesi (2000-2025)")
 yillar = [str(y) for y in range(2000, 2026)]; altin = [24.5, 11.2, 12.5, 13.1, 17.8, 18.2, 15.1, 14.8, 14.1, 11.8, 10.5, 8.5, 8.0, 9.5, 10.5, 10.1, 10.4, 9.6, 7.5, 7.8, 5.1, 5.6, 5.3, 6.5, 6.8, 4.5]
 dolar = [126, 92, 115, 150, 222, 261, 265, 315, 385, 352, 395, 393, 410, 420, 406, 365, 430, 385, 330, 355, 330, 315, 330, 430, 520, 485]
@@ -169,14 +174,11 @@ if st.button("💾 ANALİZİ KAYDET VE ADİSYONU AL", use_container_width=True):
     if save_to_sheets(v):
         st.balloons()
         
-        # --- ADİSYON MATEMATİĞİ DÜZELDİ (ENFLASYON EKLEME) ---
-        
-        # Temel fiyatlar (Yıl başı ucuz fiyatları)
-        t_kahvalti = 300 
-        t_aksam = 450
+        # --- 1000 TL'LİK BAZ ADİSYON MATEMATİĞİ DÜZELDİ ---
+        t_kahvalti = 400 # Yıl başı fiyatı
+        t_aksam = 600    # Yıl başı fiyatı
         
         # Senin enflasyon senaryona göre yıl sonu fiyatları
-        # (Örn: %60 enflasyon varsa 300 -> 480 olur, 858 TL gibi indirim gözükmez)
         y_kahvalti = t_kahvalti * (1 + res_total/100)
         y_aksam = t_aksam * (1 + res_total/100)
         y_toplam = y_kahvalti + y_aksam
@@ -188,10 +190,10 @@ if st.button("💾 ANALİZİ KAYDET VE ADİSYONU AL", use_container_width=True):
             <p style="margin:4px 0;">MASA: 2026 SONU</p>
             <p style="margin:4px 0;">ANALİST: {u_name}</p>
             <p style="margin:15px 0;">-----------------------------------------</p>
-            <div style="display:flex; justify-content:space-between;"><p style="margin:4px 0;">2x Serpme Kahvaltı (Gerçekçi)</p><p style="margin:4px 0;">: {tr_format(y_kahvalti, 0)} TL</p></div>
+            <div style="display:flex; justify-content:space-between;"><p style="margin:4px 0;">2x Serpme Kahvaltı</p><p style="margin:4px 0;">: {tr_format(y_kahvalti, 0)} TL</p></div>
             <div style="display:flex; justify-content:space-between;"><p style="margin:4px 0;">1x Akşam Yemeği (2 Kişi)</p><p style="margin:4px 0;">: {tr_format(y_aksam, 0)} TL</p></div>
             <p style="margin:15px 0;">-----------------------------------------</p>
-            <div style="display:flex; justify-content:space-between;"><b style="margin:4px 0; font-size:16px;">TOPLAM (SENİN SENARYON)</b><b style="margin:4px 0; font-size:16px;">: {tr_format(y_toplam, 0)} TL</b></div>
+            <div style="display:flex; justify-content:space-between;"><b style="margin:4px 0; font-size:16px;">TOPLAM (Yıl Başı: 1.000 TL)</b><b style="margin:4px 0; font-size:16px;">: {tr_format(y_toplam, 0)} TL</b></div>
             <p style="margin:15px 0;">-----------------------------------------</p><br>
             <center><i>Geleceği Görmek Cesaret İster.</i></center>
         </div>
