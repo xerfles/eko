@@ -29,20 +29,20 @@ def save_to_sheets(veri):
 if 'live_data' not in st.session_state:
     st.session_state['live_data'] = []
 
-# --- 📊 PİYASA VERİLERİ (GÜNCEL) ---
+# --- 📊 PİYASA VERİLERİ ---
 GUNCEL_DOLAR, Q1_ENF, TCMB_FAIZ, TCMB_2026_HEDEF = 44.92, 14.40, 37.0, 21.0
 P_PS5, P_IPHONE, P_CLIO = 42999, 77999, 1795000
 
-st.set_page_config(page_title="LiraPulse: Gelecek Beklentisi", layout="wide")
+st.set_page_config(page_title="LiraPulse: Gelecek Analizi", layout="wide")
 
-# --- 🎨 CSS: TASARIM KORUMASI ---
+# --- 🎨 CSS ---
 st.markdown("""<style>
     .main { background-color: #0d1117; }
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; }
     .bugun-etiket { color: #ffbd45; font-size: 13px; text-align: center; margin-top: -10px; font-weight: bold; }
     .receipt-box { background-color: #fff; color: #333 !important; padding: 20px; border-radius: 5px; font-family: 'Courier New', monospace; border: 2px dashed #333; margin: 20px auto; max-width: 450px; line-height: 1.6; }
-    .receipt-box b, .receipt-box center, .receipt-box p, .receipt-box hr { color: #333 !important; border-color: #333 !important; }
+    .receipt-box b, .receipt-box center, .receipt-box p { color: #333 !important; }
     </style>""", unsafe_allow_html=True)
 
 if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
@@ -103,103 +103,68 @@ with g2: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Dolar ($)", title="Maaş K
 
 if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_width=True):
     def f_tr(val): return "{:.2f}".format(val).replace(".", ",")
-    
     live_entry = {
-        "Zaman": datetime.now().strftime("%d.%m.%Y %H:%M"),
-        "Rumuz": u_name, "Cinsiyet": u_gender, "Maas": u_salary,
-        "Profil": u_prof, "Sehir": u_city, "IP": "0.0.0.0",
-        "Senin_Tahminin": s_enf, "Yil_Sonu_Toplam": res_total,
-        "Dolar_Beklentisi": tahmini_kur, "Alim_Gucu_Kaybi": alim_kaybi,
-        "Reel_Kalan": round(1000/(1+res_total/100), 2),
-        "Excel_Row": None # Yeni kayıt henüz Excel'de değil
+        "Zaman": datetime.now().strftime("%d.%m.%Y %H:%M"), "Rumuz": u_name, "Cinsiyet": u_gender, "Maas": u_salary,
+        "Profil": u_prof, "Sehir": u_city, "IP": "0.0.0.0", "Senin_Tahminin": s_enf, "Yil_Sonu_Toplam": res_total,
+        "Dolar_Beklentisi": tahmini_kur, "Alim_Gucu_Kaybi": alim_kaybi, "Reel_Kalan": round(1000/(1+res_total/100), 2)
     }
-    
-    if not isinstance(st.session_state['live_data'], list):
-        st.session_state['live_data'] = []
-    
+    if not isinstance(st.session_state['live_data'], list): st.session_state['live_data'] = []
     st.session_state['live_data'].append(live_entry)
-    
     v = [live_entry["Zaman"], u_name, u_gender, f_tr(u_salary), u_prof, u_city, "0.0.0.0", f_tr(s_enf), f_tr(res_total), f_tr(tahmini_kur), f_tr(alim_kaybi), f_tr(live_entry["Reel_Kalan"])]
     if save_to_sheets(v):
         st.balloons()
         st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>Yıl Sonu Tahmini:</b> %{res_total:.2f}</p><p><b>1.000 TL Reel Değer:</b> {live_entry['Reel_Kalan']:.2f} TL</p><hr><center><i>Veri Google Sheets'e Mermi Gibi İşlendi.</i></center></div>""", unsafe_allow_html=True)
 
-# --- 🔐 ADMIN: TAM SENKRONİZE TEMİZLİK ---
+# --- 🔐 ADMIN ---
 with st.expander("🔐 Admin Control Center"):
     if st.text_input("Şifre:", type="password", key="adm_pw") == "alper2026":
-        
         if st.button("🔄 Verileri Excel'den Tazele (Geçmişi Çek)"):
             try:
-                client = get_gspread_client()
-                sheet = client.open("LiraPulse_Veri").sheet1
-                records = sheet.get_all_records()
-                
+                client = get_gspread_client(); sheet = client.open("LiraPulse_Veri").sheet1; records = sheet.get_all_records()
                 def clean_num(val):
                     try: return float(str(val).replace(',', '.'))
                     except: return 0.0
-
                 new_data = []
                 for i, row in enumerate(records):
-                    target_col = 'Yil_Sonu_Toplam' if 'Yil_Sonu_Toplam' in row else 'Yil_Sonu_Toplar'
+                    t_col = 'Yil_Sonu_Toplam' if 'Yil_Sonu_Toplam' in row else 'Yil_Sonu_Toplar'
                     new_data.append({
-                        "Zaman": row.get("Zaman Damgası", ""), "Rumuz": row.get("Rumuz", ""),
-                        "Cinsiyet": row.get("Cinsiyet", ""), "Maas": clean_num(row.get("Maas", 0)),
-                        "Profil": row.get("Profil", ""), "Sehir": row.get("Sehir", ""),
-                        "IP": row.get("IP", "0.0.0.0"), "Senin_Tahminin": clean_num(row.get("Senin_Tahminin", 0)),
-                        "Yil_Sonu_Toplam": clean_num(row.get(target_col, 0)),
-                        "Dolar_Beklentisi": clean_num(row.get("Dolar_Beklentisi", 0)),
-                        "Alim_Gucu_Kaybi": clean_num(row.get("Alim_Gucu_Kaybi", 0)),
-                        "Reel_Kalan": clean_num(row.get("Reel_Kalan_TL", 0)),
-                        "Excel_Row": i + 2 # Google Sheets'te 1. satır başlıktır, veri 2'den başlar
+                        "Zaman": row.get("Zaman Damgası", ""), "Rumuz": row.get("Rumuz", ""), "Cinsiyet": row.get("Cinsiyet", ""), "Maas": clean_num(row.get("Maas", 0)),
+                        "Profil": row.get("Profil", ""), "Sehir": row.get("Sehir", ""), "IP": row.get("IP", "0.0.0.0"), "Senin_Tahminin": clean_num(row.get("Senin_Tahminin", 0)),
+                        "Yil_Sonu_Toplam": clean_num(row.get(t_col, 0)), "Dolar_Beklentisi": clean_num(row.get("Dolar_Beklentisi", 0)),
+                        "Alim_Gucu_Kaybi": clean_num(row.get("Alim_Gucu_Kaybi", 0)), "Reel_Kalan": clean_num(row.get("Reel_Kalan_TL", 0)), "Excel_Row": i + 2
                     })
-                st.session_state['live_data'] = new_data
-                st.success("Excel mermi gibi çekildi!")
-                st.rerun()
+                st.session_state['live_data'] = new_data; st.success("Excel mermi gibi çekildi!"); st.rerun()
             except Exception as e: st.error(f"Hata: {e}")
 
         live_list = st.session_state.get('live_data', [])
         if isinstance(live_list, list) and len(live_list) > 0:
             df_admin = pd.DataFrame(live_list)
-            
             st.write("### 📈 Sokağın Röntgenti")
             s1, s2, s3 = st.columns(3)
-            s1.metric("Toplam Katılım", f"{len(df_admin)} Kişi")
-            s2.metric("Ort. Maaş", f"{df_admin['Maas'].mean():,.2f} TL")
-            s3.metric("Ort. Enflasyon", f"%{df_admin['Yil_Sonu_Toplam'].mean():.2f}")
+            s1.metric("Toplam Katılım", f"{len(df_admin)} Kişi"); s2.metric("Ort. Maaş", f"{df_admin['Maas'].mean():,.2f} TL"); s3.metric("Ort. Enflasyon", f"%{df_admin['Yil_Sonu_Toplam'].mean():.2f}")
             
             gr1, gr2, gr3 = st.columns(3)
             with gr1: st.plotly_chart(px.pie(df_admin, names='Cinsiyet', title="Cinsiyet", hole=0.4), use_container_width=True)
             with gr2: st.plotly_chart(px.pie(df_admin, names='Sehir', title="Şehir", hole=0.4), use_container_width=True)
             with gr3: st.plotly_chart(px.pie(df_admin, names='Profil', title="Profil", hole=0.4), use_container_width=True)
             
-            st.divider()
-            df_edit = df_admin.copy()
-            df_edit.insert(0, "Seç", False)
-            edited_df = st.data_editor(df_edit, column_config={
-                "Seç": st.column_config.CheckboxColumn("Sil?", default=False),
-                "Maas": st.column_config.NumberColumn("Maaş", format="%.2f"),
-                "Excel_Row": None # Row numarasını kullanıcı görmesin
-            }, use_container_width=True, hide_index=True)
+            st.divider(); df_edit = df_admin.copy(); df_edit.insert(0, "Seç", False)
+            edited_df = st.data_editor(df_edit, column_config={"Seç": st.column_config.CheckboxColumn("Sil?", default=False), "Maas": st.column_config.NumberColumn("Maaş", format="%.2f")}, use_container_width=True, hide_index=True)
             
             if st.button("🗑️ SEÇİLENLERİ SİL (KÖKTEN TEMİZLİK)"):
                 try:
-                    # Silineceklerin Excel satır numaralarını al
-                    rows_to_delete = sorted(edited_df[edited_df["Seç"] == True]["Excel_Row"].dropna().tolist(), reverse=True)
+                    # 'Excel_Row' sütunu var mı kontrol et, yoksa hata vermeden geç
+                    if 'Excel_Row' in edited_df.columns:
+                        rows_to_del = sorted(edited_df[edited_df["Seç"] == True]["Excel_Row"].dropna().tolist(), reverse=True)
+                        if rows_to_del:
+                            client = get_gspread_client(); sheet = client.open("LiraPulse_Veri").sheet1
+                            for r_num in rows_to_del: sheet.delete_rows(int(r_num))
+                            st.success(f"{len(rows_to_del)} veri Excel'den kazındı!")
                     
-                    if rows_to_delete:
-                        client = get_gspread_client()
-                        sheet = client.open("LiraPulse_Veri").sheet1
-                        
-                        # Excel'den Tersten Sil (Kayma olmaması için)
-                        for r_num in rows_to_delete:
-                            sheet.delete_rows(int(r_num))
-                        
-                        st.success(f"{len(rows_to_delete)} veri Excel'den kazındı!")
-                    
-                    # Canlı hafızayı güncelle
-                    st.session_state['live_data'] = edited_df[edited_df["Seç"] == False].drop(columns=["Seç"]).to_dict('records')
+                    # Hafızayı her halükarda güncelle
+                    remaining = edited_df[edited_df["Seç"] == False].drop(columns=["Seç"])
+                    st.session_state['live_data'] = remaining.to_dict('records')
                     st.rerun()
-                    
                 except Exception as e: st.error(f"Silme Hatası: {e}")
         else:
             st.info("Henüz veri yok. Geçmişi çekmek için butona bas.")
