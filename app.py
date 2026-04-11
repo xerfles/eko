@@ -61,6 +61,7 @@ col_in, col_out = st.columns([1.2, 2])
 with col_in:
     st.subheader("🕵️ Analist Girişi")
     u_name = st.text_input("Rumuz:", "Analist_01")
+    u_gender = st.selectbox("Cinsiyet:", ["Erkek", "Kadın", "Belirtmek İstemiyorum"]) # İSTEDİĞİN EKLEME BURADA
     u_salary = st.number_input("Aylık Maaş (TL):", value=22102)
     u_prof = st.selectbox("Harcama Sepeti (Profil):", ["Öğrenci", "Mavi Yaka", "Beyaz Yaka", "Emekli", "Kamu Personeli"])
     u_city = st.selectbox("Şehir:", ["Kırklareli", "İstanbul", "Ankara", "İzmir", "Diğer"])
@@ -120,12 +121,12 @@ with g1: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Gram Altın", title="Maaş
 with g2: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Dolar ($)", title="Maaş Kaç Dolar?", color="Dolar ($)", color_continuous_scale="Greens"), use_container_width=True)
 
 if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_width=True):
-    v = [datetime.now().strftime("%d.%m.%Y %H:%M"), u_name, "", u_salary, u_prof, u_city, "0.0.0.0", s_enf, res_total, tahmini_kur, alim_kaybi, 1000/(1+res_total/100)]
+    v = [datetime.now().strftime("%d.%m.%Y %H:%M"), u_name, u_gender, u_salary, u_prof, u_city, "0.0.0.0", s_enf, res_total, tahmini_kur, alim_kaybi, 1000/(1+res_total/100)]
     if save_to_sheets(v):
         st.balloons()
         st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr>Analist: {u_name}<br>Yıl Sonu Tahmini: %{res_total:.1f}<br>1.000 TL'lik Yemek Sonu: {(1000*(1+res_total/100)):,.0f} TL<br><hr><center><i>Veri Google Sheets'e Kaydedildi.</i></center></div>""", unsafe_allow_html=True)
 
-# --- 🔐 ADMIN: ÜÇLÜ GRAFİK DÜZENLEMESİ ---
+# --- 🔐 ADMIN ---
 with st.expander("🔐 Admin Control Center"):
     if st.text_input("Şifre:", type="password", key="adm_pw") == "alper2026":
         try:
@@ -134,7 +135,6 @@ with st.expander("🔐 Admin Control Center"):
             df_cloud = pd.DataFrame(sheet.get_all_records())
             
             if not df_cloud.empty:
-                # Veri Temizliği
                 df_cloud['Maas'] = pd.to_numeric(df_cloud['Maas'], errors='coerce').fillna(0)
                 df_cloud['Yil_Sonu_Toplam'] = pd.to_numeric(df_cloud['Yil_Sonu_Toplam'], errors='coerce').fillna(0)
                 df_cloud['Cinsiyet'] = df_cloud['Cinsiyet'].astype(str).str.strip().str.capitalize()
@@ -145,17 +145,13 @@ with st.expander("🔐 Admin Control Center"):
                 s2.metric("Ort. Maaş", f"{df_cloud['Maas'].mean():,.0f} TL")
                 s3.metric("Ort. Enflasyon", f"%{df_cloud[df_cloud['Yil_Sonu_Toplam'] < 500]['Yil_Sonu_Toplam'].mean():.1f}")
                 
-                # --- 📊 ÜÇ AYRI PASTA GRAFİĞİ (İstediğin Yer) ---
                 gr1, gr2, gr3 = st.columns(3)
-                
                 with gr1:
                     gender_data = df_cloud['Cinsiyet'].value_counts().reset_index()
                     st.plotly_chart(px.pie(gender_data, names='Cinsiyet', values='count', title="Cinsiyet Dağılımı", hole=0.4, color_discrete_sequence=px.colors.qualitative.Pastel), use_container_width=True)
-                
                 with gr2:
                     city_data = df_cloud['Sehir'].value_counts().reset_index()
                     st.plotly_chart(px.pie(city_data, names='Sehir', values='count', title="Şehir Dağılımı", hole=0.4, color_discrete_sequence=px.colors.qualitative.Set3), use_container_width=True)
-                
                 with gr3:
                     prof_data = df_cloud['Profil'].value_counts().reset_index()
                     st.plotly_chart(px.pie(prof_data, names='Profil', values='count', title="Sepet Dağılımı", hole=0.4, color_discrete_sequence=px.colors.qualitative.Safe), use_container_width=True)
