@@ -275,5 +275,17 @@ if st.checkbox("Verileri Göster"):
         sheet = client.open("LiraPulse_Veri").sheet1
         df = pd.DataFrame(sheet.get_all_records())
         st.dataframe(df)
+        def get_gspread_client():
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    
+    # Secrets'tan bilgileri al
+    creds_info = st.secrets["gcp_service_account"].to_dict()
+    
+    # KRİTİK NOKTA: PEM hatasını önlemek için \n işaretlerini gerçek alt satıra çevir
+    if "private_key" in creds_info:
+        creds_info["private_key"] = creds_info["private_key"].replace("\\n", "\n")
+    
+    creds = Credentials.from_service_account_info(creds_info, scopes=scope)
+    return gspread.authorize(creds)
     except:
         st.write("Henüz veri yok.")
