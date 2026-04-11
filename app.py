@@ -61,7 +61,7 @@ col_in, col_out = st.columns([1.2, 2])
 with col_in:
     st.subheader("🕵️ Analist Girişi")
     u_name = st.text_input("Rumuz:", "Analist_01")
-    u_gender = st.selectbox("Cinsiyet:", ["Erkek", "Kadın", "Belirtmek İstemiyorum"]) # İSTEDİĞİN EKLEME BURADA
+    u_gender = st.selectbox("Cinsiyet:", ["Erkek", "Kadın", "Belirtmek İstemiyorum"])
     u_salary = st.number_input("Aylık Maaş (TL):", value=22102)
     u_prof = st.selectbox("Harcama Sepeti (Profil):", ["Öğrenci", "Mavi Yaka", "Beyaz Yaka", "Emekli", "Kamu Personeli"])
     u_city = st.selectbox("Şehir:", ["Kırklareli", "İstanbul", "Ankara", "İzmir", "Diğer"])
@@ -135,15 +135,22 @@ with st.expander("🔐 Admin Control Center"):
             df_cloud = pd.DataFrame(sheet.get_all_records())
             
             if not df_cloud.empty:
+                # 1. ORTALAMA ENFLASYON DÜZELTİLDİ (Sayısal çeviri ve NaN temizliği)
                 df_cloud['Maas'] = pd.to_numeric(df_cloud['Maas'], errors='coerce').fillna(0)
-                df_cloud['Yil_Sonu_Toplam'] = pd.to_numeric(df_cloud['Yil_Sonu_Toplam'], errors='coerce').fillna(0)
-                df_cloud['Cinsiyet'] = df_cloud['Cinsiyet'].astype(str).str.strip().str.capitalize()
+                df_cloud['Yil_Sonu_Toplam'] = pd.to_numeric(df_cloud['Yil_Sonu_Toplam'], errors='coerce')
                 
+                # Sütunları temizle ve IP maskele
+                df_cloud['Cinsiyet'] = df_cloud['Cinsiyet'].astype(str).str.strip().str.capitalize()
+                df_cloud['IP'] = "***.***.***.***" 
+
                 st.write("### 📈 Sokağın Röntgenti")
                 s1, s2, s3 = st.columns(3)
                 s1.metric("Toplam Katılım", f"{len(df_cloud)} Kişi")
                 s2.metric("Ort. Maaş", f"{df_cloud['Maas'].mean():,.0f} TL")
-                s3.metric("Ort. Enflasyon", f"%{df_cloud[df_cloud['Yil_Sonu_Toplam'] < 500]['Yil_Sonu_Toplam'].mean():.1f}")
+                
+                # Filtrelenmiş ortalama (Hatalı yüksek verileri göstermemek için)
+                avg_enf = df_cloud['Yil_Sonu_Toplam'].dropna().mean()
+                s3.metric("Ort. Enflasyon", f"%{avg_enf:.1f}" if not pd.isna(avg_enf) else "%0.0")
                 
                 gr1, gr2, gr3 = st.columns(3)
                 with gr1:
@@ -158,14 +165,30 @@ with st.expander("🔐 Admin Control Center"):
                 
                 st.divider()
                 st.write("### 🧹 Veri Temizliği")
-                df_edit = df_cloud.copy()
+                
+                # 2. VERİLERDE VİRGÜL/BİNLİK AYIRICI DÜZELTİLDİ
+                df_display = df_cloud.copy()
+                numeric_cols = df_display.select_dtypes(include=['number']).columns
+                
+                df_edit = df_display.copy()
                 df_edit.insert(0, "Seç", False)
-                edited_df = st.data_editor(df_edit, column_config={"Seç": st.column_config.CheckboxColumn("Sil?", default=False)}, use_container_width=True, hide_index=True)
+                
+                # Tablo görüntüsünde sayıları formatla
+                edited_df = st.data_editor(df_edit, column_config={
+                    "Seç": st.column_config.CheckboxColumn("Sil?", default=False),
+                    "Maas": st.column_config.NumberColumn("Maaş", format="%d"),
+                    "Yil_Sonu_Toplam": st.column_config.NumberColumn("Enflasyon", format="%.1f"),
+                    "Dolar_Beklentisi": st.column_config.NumberColumn("Dolar Beklentisi", format="%.2f"),
+                    "Alim_Gucu_Kaybi": st.column_config.NumberColumn("Alım Gücü Kaybı", format="%.2f"),
+                    "Reel_Kalan_TL": st.column_config.NumberColumn("Reel Kalan", format="%.2f")
+                }, use_container_width=True, hide_index=True)
                 
                 if st.button("🗑️ SEÇİLENLERİ SİL"):
                     rows_to_keep = edited_df[edited_df["Seç"] == False].drop(columns=["Seç"])
+                    # IP sütununu gizlediğimiz için buluta yazarken dikkatli oluyoruz (Opsiyonel: IP'yi gerçek veriden al)
                     sheet.clear()
                     sheet.update([rows_to_keep.columns.values.tolist()] + rows_to_keep.values.tolist())
                     st.success("Troller temizlendi!")
                     st.rerun()
-        except: st.warning("Veri bekleniyor...")
+        except Exception as e: 
+            st.error(f"Veri hatası: {e}")
