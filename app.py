@@ -25,7 +25,7 @@ def save_to_sheets(veri):
         st.error(f"Kayıt Hatası: {e}")
         return False
 
-# --- 🛰️ CANLI HAFIZA SİSTEMİ (SESSION STATE) ---
+# --- 🛰️ CANLI HAFIZA SİSTEMİ ---
 if 'live_data' not in st.session_state:
     st.session_state.live_data = []
 
@@ -42,7 +42,7 @@ st.markdown("""<style>
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; }
     .bugun-etiket { color: #ffbd45; font-size: 13px; text-align: center; margin-top: -10px; font-weight: bold; }
     .receipt-box { background-color: #fff; color: #333 !important; padding: 20px; border-radius: 5px; font-family: 'Courier New', monospace; border: 2px dashed #333; margin: 20px auto; max-width: 450px; line-height: 1.6; }
-    .receipt-box b, .receipt-box center, .receipt-box p { color: #333 !important; }
+    .receipt-box b, .receipt-box center, .receipt-box p, .receipt-box hr { color: #333 !important; border-color: #333 !important; }
     </style>""", unsafe_allow_html=True)
 
 if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
@@ -104,7 +104,6 @@ with g2: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Dolar ($)", title="Maaş K
 if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_width=True):
     def f_tr(val): return "{:.2f}".format(val).replace(".", ",")
     
-    # Canlı Hafızaya (Session State) Saf Sayı Olarak Kaydet
     live_entry = {
         "Zaman": datetime.now().strftime("%d.%m.%Y %H:%M"),
         "Rumuz": u_name, "Cinsiyet": u_gender, "Maas": u_salary,
@@ -115,17 +114,16 @@ if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_wi
     }
     st.session_state.live_data.append(live_entry)
     
-    # Excel'e Virgüllü Olarak Kaydet
     v = [live_entry["Zaman"], u_name, u_gender, f_tr(u_salary), u_prof, u_city, "0.0.0.0", f_tr(s_enf), f_tr(res_total), f_tr(tahmini_kur), f_tr(alim_kaybi), f_tr(live_entry["Reel_Kalan"])]
     if save_to_sheets(v):
         st.balloons()
-        st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>Profil:</b> {u_prof}</p><p><b>Yıl Sonu Tahmini:</b> %{res_total:.2f}</p><p><b>1.000 TL Reel Değer:</b> {1000/(1+res_total/100):.2f} TL</p><hr><center><i>Veri Google Sheets'e Mermi Gibi İşlendi.</i></center></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>Yıl Sonu Tahmini:</b> %{res_total:.2f}</p><p><b>1.000 TL Reel Değer:</b> {1000/(1+res_total/100):.2f} TL</p><hr><center><i>Veri Google Sheets'e Mermi Gibi İşlendi.</i></center></div>""", unsafe_allow_html=True)
 
-# --- 🔐 ADMIN: CANLI HAFIZADAN BESLENEN PANEL ---
+# --- 🔐 ADMIN: HATA GİDERİLMİŞ CANLI PANEL ---
 with st.expander("🔐 Admin Control Center"):
     if st.text_input("Şifre:", type="password", key="adm_pw") == "alper2026":
         
-        # EXCEL'DEN ÇEKME BUTONU (Sadece Hafıza Sıfırlanırsa Lazım)
+        # VERİLERİ EXCEL'DEN ÇEKME BUTONU
         if st.button("🔄 Verileri Excel'den Tazele (Geçmişi Çek)"):
             try:
                 client = get_gspread_client()
@@ -136,7 +134,6 @@ with st.expander("🔐 Admin Control Center"):
                     try: return float(str(val).replace(',', '.'))
                     except: return 0.0
 
-                # Excel Verisini Saf Sayıya Çevir ve Hafızaya At
                 new_live_data = []
                 for _, row in df_cloud.iterrows():
                     target_col = 'Yil_Sonu_Toplam' if 'Yil_Sonu_Toplam' in row else 'Yil_Sonu_Toplar'
@@ -151,14 +148,15 @@ with st.expander("🔐 Admin Control Center"):
                         "Reel_Kalan": clean_num(row.get("Reel_Kalan_TL", 0))
                     })
                 st.session_state.live_data = new_live_data
-                st.success("Tüm geçmiş Excel'den mermi gibi çekildi!")
+                st.success("Geçmiş mermi gibi yüklendi!")
+                st.rerun()
             except Exception as e: st.error(f"Hata: {e}")
 
-        # CANLI PANEL GÖRÜNÜMÜ
-        if st.session_state.live_data:
+        # --- KRİTİK HATA DÜZELTMESİ (len() KONTROLÜ) ---
+        if len(st.session_state.live_data) > 0:
             df_admin = pd.DataFrame(st.session_state.live_data)
             
-            st.write("### 📈 Sokağın Röntgenti (Canlı Hafıza)")
+            st.write("### 📈 Sokağın Röntgenti")
             s1, s2, s3 = st.columns(3)
             s1.metric("Toplam Katılım", f"{len(df_admin)} Kişi")
             s2.metric("Ort. Maaş", f"{df_admin['Maas'].mean():,.2f} TL")
@@ -170,17 +168,15 @@ with st.expander("🔐 Admin Control Center"):
             with gr3: st.plotly_chart(px.pie(df_admin, names='Profil', title="Profil", hole=0.4), use_container_width=True)
             
             st.divider()
-            st.write("### 🧹 Veri Temizliği (Checkbox Aktif)")
             df_edit = df_admin.copy()
             df_edit.insert(0, "Seç", False)
             edited_df = st.data_editor(df_edit, column_config={
                 "Seç": st.column_config.CheckboxColumn("Sil?", default=False),
                 "Maas": st.column_config.NumberColumn("Maaş", format="%.2f"),
-                "Yil_Sonu_Toplam": st.column_config.NumberColumn("Enflasyon", format="%.2f"),
-                "IP": st.column_config.TextColumn("IP Adresi")
+                "Yil_Sonu_Toplam": st.column_config.NumberColumn("Enflasyon", format="%.2f")
             }, use_container_width=True, hide_index=True)
             
             if st.button("🗑️ SEÇİLENLERİ SİL"):
-                st.info("Hafızadan silindi. Kalıcı silme için Google Sheets'ten manuel silin.")
+                st.info("Hafızadan temizlendi. Excel'den kalıcı silmeyi manuel yapmalısın.")
         else:
-            st.info("Henüz canlı veri yok. Geçmişi çekmek için yukarıdaki butona bas.")
+            st.info("Henüz veri yok. Geçmişi çekmek için yukarıdaki butona bas.")
