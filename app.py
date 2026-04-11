@@ -53,9 +53,55 @@ st.markdown("""<style>
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; }
     .bugun-etiket { color: #ffbd45; font-size: 13px; text-align: center; margin-top: -10px; font-weight: bold; }
     .ekmek-text { color: #ffbd45; font-size: 14px; font-weight: bold; margin-bottom: 20px; }
+    .receipt-box { background-color: #fff; color: #333 !important; padding: 30px; border-radius: 10px; font-family: 'Courier New', monospace; border: 3px dashed #333; margin: 20px auto; max-width: 500px; line-height: 1.8; text-align: left; }
+    .receipt-box b, .receipt-box center, .receipt-box p, .receipt-box hr { color: #333 !important; border-color: #333 !important; }
     </style>""", unsafe_allow_html=True)
 
 if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
+
+# --- 🔐 ADMIN PANELİ (SOL MENÜYE TAŞINDI) ---
+if 'admin_data' not in st.session_state: st.session_state['admin_data'] = []
+
+with st.sidebar.expander("🔐 Admin Control Center"):
+    if st.text_input("Şifre:", type="password", key="adm_pw") == "alper2026":
+        if st.button("🔄 Verileri Excel'den Tazele"):
+            try:
+                client = get_gspread_client(); sheet = client.open("LiraPulse_Veri").sheet1; vals = sheet.get_all_values()
+                if len(vals) > 1:
+                    def clean_num(val):
+                        try:
+                            s = str(val).replace("'", "").strip()
+                            if not s: return 0.0
+                            if '.' in s and ',' in s: s = s.replace('.', '').replace(',', '.')
+                            elif ',' in s: s = s.replace(',', '.')
+                            return float(s)
+                        except: return 0.0
+                    new_data = []
+                    for i in range(1, len(vals)):
+                        row = vals[i]
+                        new_data.append({"Tarih": row[0], "Analist": row[1], "Cinsiyet": row[2], "Maas": clean_num(row[3]), "Profil": row[4], "Sehir": row[5], "Kayit_ID": str(row[6]), "Enflasyon": clean_num(row[8]), "Dolar": clean_num(row[9]), "Reel": clean_num(row[11])})
+                    st.session_state['admin_data'] = new_data; st.success("Çekildi!")
+                else: st.info("Excel boş.")
+            except Exception as e: st.error(f"Hata: {e}")
+
+        if len(st.session_state['admin_data']) > 0:
+            df = pd.DataFrame(st.session_state['admin_data'])
+            s1, s2, s3, s4 = st.columns(4)
+            s1.metric("Toplam Katılım", f"{len(df)} Kişi"); s2.metric("Ort. Maaş", f"{tr_format(df['Maas'].mean())} TL"); s3.metric("Ort. Enflasyon", f"%{tr_format(df['Enflasyon'].mean())}"); s4.metric("Ort. Dolar", f"{tr_format(df['Dolar'].mean())} TL")
+            g1, g2, g3 = st.columns(3)
+            with g1: st.plotly_chart(px.pie(df, names='Cinsiyet', title="Cinsiyet Dağılımı", hole=0.4), use_container_width=True)
+            with g2: st.plotly_chart(px.pie(df, names='Sehir', title="Şehir Dağılımı", hole=0.4), use_container_width=True)
+            with g3: st.plotly_chart(px.pie(df, names='Profil', title="Harcama Sepeti", hole=0.4), use_container_width=True)
+            st.divider()
+            df_edit = df.copy(); df_edit.insert(0, "Seç", False)
+            edited_df = st.data_editor(df_edit, column_config={"Seç": st.column_config.CheckboxColumn("Sil?", default=False), "Maas": st.column_config.NumberColumn("Maaş", format="%.0f")}, use_container_width=True, hide_index=True)
+            if st.button("🗑️ SEÇİLENLERİ SİL"):
+                sec_idler = edited_df[edited_df["Seç"] == True]["Kayit_ID"].tolist()
+                if sec_idler:
+                    client = get_gspread_client(); sheet = client.open("LiraPulse_Veri").sheet1; all_vals = sheet.get_all_values()
+                    rows_to_del = [i+1 for i, r in enumerate(all_vals) if len(r) > 6 and str(r[6]).strip() in sec_idler]
+                    for r_num in sorted(rows_to_del, reverse=True): sheet.delete_rows(r_num)
+                    st.success("Silindi!"); st.session_state['admin_data'] = []; st.rerun()
 
 # --- 🍞 ÜST BAŞLIK VE EKMEK ÖRNEĞİ ---
 st.markdown('<p class="ekmek-text">💡 Enflasyon Nedir?<br>Bugün 100 liraya aldığın 10 ekmeğin, seneye aynı parayla sadece 6 tanesini alabilmendir.</p>', unsafe_allow_html=True)
@@ -106,7 +152,7 @@ alim_kaybi = round((1 - (1 / (1 + res_total/100))) * 100, 2)
 reel_deger = round(1000/(1+res_total/100), 2)
 
 with col_out:
-    # --- YIL SONU ANALİZİ ---
+    # --- YIL SONU ANALİZİ (MATEMATİKLİ YAPI) ---
     st.markdown(f"""<div class="ozet-panel">
         <h3 style="color:#aaa; margin-bottom: 20px;">Yıl Sonu Beklenti Analizi</h3>
         <div style="display:flex; justify-content: space-around; align-items:center; margin-bottom: 15px;">
@@ -132,7 +178,10 @@ with col_out:
     c_g, c_e = st.columns(2)
     with c_g: 
         st.plotly_chart(go.Figure(go.Indicator(
-            mode="gauge+number", value=alim_kaybi, title={'text': "Alım Gücü Kaybı (%)", 'font': {'size': 16}}, gauge={'bar': {'color': "#ff4b4b"}}
+            mode="gauge+number", 
+            value=alim_kaybi, 
+            title={'text': "Alım Gücü Kaybı (%)", 'font': {'size': 16}}, 
+            gauge={'bar': {'color': "#ff4b4b"}}
         )).update_layout(height=250, margin=dict(l=30, r=30, t=50, b=20), paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
     
     with c_e: 
@@ -182,7 +231,7 @@ styled_df = df_yatirim.style.apply(color_cells, axis=1).format({
 })
 st.dataframe(styled_df, use_container_width=True, hide_index=True)
 
-# --- 🛒 YENİ BÖLÜM: SOKAĞIN ENFLASYONU (TEK ÖRNEKLİ TABLO) ---
+# --- 🛒 SOKAĞIN ENFLASYONU ---
 st.write("")
 st.subheader("🛒 Sokağın Enflasyonu: Pazarın Şampiyonları ve Kaybedenleri")
 st.markdown("<small style='color:#aaa;'>Halkın cebini en çok yakanlar ve fiyatı en az artanlar (Tekil Ürün Bazında)</small>", unsafe_allow_html=True)
@@ -251,47 +300,3 @@ if st.button("💾 ANALİZİ KAYDET VE ADİSYONU AL", use_container_width=True):
             <center><i>Geleceği Görmek Cesaret İster.</i></center>
         </div>
         """, unsafe_allow_html=True)
-
-# --- 🔐 ADMIN PANELİ ---
-if 'admin_data' not in st.session_state: st.session_state['admin_data'] = []
-
-with st.expander("🔐 Admin Control Center"):
-    if st.text_input("Şifre:", type="password", key="adm_pw") == "alper2026":
-        if st.button("🔄 Verileri Excel'den Tazele"):
-            try:
-                client = get_gspread_client(); sheet = client.open("LiraPulse_Veri").sheet1; vals = sheet.get_all_values()
-                if len(vals) > 1:
-                    def clean_num(val):
-                        try:
-                            s = str(val).replace("'", "").strip()
-                            if not s: return 0.0
-                            if '.' in s and ',' in s: s = s.replace('.', '').replace(',', '.')
-                            elif ',' in s: s = s.replace(',', '.')
-                            return float(s)
-                        except: return 0.0
-                    new_data = []
-                    for i in range(1, len(vals)):
-                        row = vals[i]
-                        new_data.append({"Tarih": row[0], "Analist": row[1], "Cinsiyet": row[2], "Maas": clean_num(row[3]), "Profil": row[4], "Sehir": row[5], "Kayit_ID": str(row[6]), "Enflasyon": clean_num(row[8]), "Dolar": clean_num(row[9]), "Reel": clean_num(row[11])})
-                    st.session_state['admin_data'] = new_data; st.success("Çekildi!")
-                else: st.info("Excel boş.")
-            except Exception as e: st.error(f"Hata: {e}")
-
-        if len(st.session_state['admin_data']) > 0:
-            df = pd.DataFrame(st.session_state['admin_data'])
-            s1, s2, s3, s4 = st.columns(4)
-            s1.metric("Toplam Katılım", f"{len(df)} Kişi"); s2.metric("Ort. Maaş", f"{tr_format(df['Maas'].mean())} TL"); s3.metric("Ort. Enflasyon", f"%{tr_format(df['Enflasyon'].mean())}"); s4.metric("Ort. Dolar", f"{tr_format(df['Dolar'].mean())} TL")
-            g1, g2, g3 = st.columns(3)
-            with g1: st.plotly_chart(px.pie(df, names='Cinsiyet', title="Cinsiyet Dağılımı", hole=0.4), use_container_width=True)
-            with g2: st.plotly_chart(px.pie(df, names='Sehir', title="Şehir Dağılımı", hole=0.4), use_container_width=True)
-            with g3: st.plotly_chart(px.pie(df, names='Profil', title="Harcama Sepeti", hole=0.4), use_container_width=True)
-            st.divider()
-            df_edit = df.copy(); df_edit.insert(0, "Seç", False)
-            edited_df = st.data_editor(df_edit, column_config={"Seç": st.column_config.CheckboxColumn("Sil?", default=False), "Maas": st.column_config.NumberColumn("Maaş", format="%.0f")}, use_container_width=True, hide_index=True)
-            if st.button("🗑️ SEÇİLENLERİ SİL"):
-                sec_idler = edited_df[edited_df["Seç"] == True]["Kayit_ID"].tolist()
-                if sec_idler:
-                    client = get_gspread_client(); sheet = client.open("LiraPulse_Veri").sheet1; all_vals = sheet.get_all_values()
-                    rows_to_del = [i+1 for i, r in enumerate(all_vals) if len(r) > 6 and str(r[6]).strip() in sec_idler]
-                    for r_num in sorted(rows_to_del, reverse=True): sheet.delete_rows(r_num)
-                    st.success("Silindi!"); st.session_state['admin_data'] = []; st.rerun()
