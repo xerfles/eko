@@ -132,63 +132,65 @@ with st.expander("🔐 Admin Control Center"):
         try:
             client = get_gspread_client()
             sheet = client.open("LiraPulse_Veri").sheet1
-            df_cloud = pd.DataFrame(sheet.get_all_records())
+            data = sheet.get_all_records()
+            df_cloud = pd.DataFrame(data)
             
             if not df_cloud.empty:
-                # 1. ORTALAMA ENFLASYON DÜZELTİLDİ
+                # --- 📊 VERİ TEMİZLEME VE SAYISAL DÖNÜŞÜM (Hataları çözen kısım) ---
                 df_cloud['Maas'] = pd.to_numeric(df_cloud['Maas'], errors='coerce').fillna(0)
-                # Enflasyon sütunu sayıya çevrilip NaN temizlendi
+                # Enflasyon verilerini sayıya çeviriyoruz (Troll verileri NaN yapar)
                 df_cloud['Yil_Sonu_Toplam'] = pd.to_numeric(df_cloud['Yil_Sonu_Toplam'], errors='coerce')
                 
-                # IP maskeleme
-                df_cloud['IP'] = "***.***.***.***" 
+                # Cinsiyetleri temizle
+                df_cloud['Cinsiyet'] = df_cloud['Cinsiyet'].astype(str).str.strip().str.capitalize()
 
                 st.write("### 📈 Sokağın Röntgenti")
                 s1, s2, s3 = st.columns(3)
                 s1.metric("Toplam Katılım", f"{len(df_cloud)} Kişi")
                 s2.metric("Ort. Maaş", f"{df_cloud['Maas'].mean():,.0f} TL")
                 
-                # Sadece gerçekçi sayıların ortalamasını al
-                clean_enf = df_cloud['Yil_Sonu_Toplam'].dropna()
+                # Absürt ortalamayı düzeltmek için sadece makul değerlerin (örn %0-1000 arası) ortalamasını al
+                clean_enf = df_cloud[df_cloud['Yil_Sonu_Toplam'].between(0, 1000)]['Yil_Sonu_Toplam']
                 avg_enf = clean_enf.mean() if not clean_enf.empty else 0.0
                 s3.metric("Ort. Enflasyon", f"%{avg_enf:.1f}")
                 
-                # 2. PASTA GRAFİĞİ HATASI DÜZELTİLDİ (names='index' yerine doğru sütun isimleri)
+                # --- 🥧 PASTA GRAFİKLERİ (Hata düzeltildi) ---
                 gr1, gr2, gr3 = st.columns(3)
                 with gr1:
-                    gender_data = df_cloud['Cinsiyet'].astype(str).str.capitalize().value_counts().reset_index()
-                    gender_data.columns = ['Cinsiyet', 'count'] # Sütun isimlerini netleştiriyoruz
-                    st.plotly_chart(px.pie(gender_data, names='Cinsiyet', values='count', title="Cinsiyet Dağılımı", hole=0.4, color_discrete_sequence=px.colors.qualitative.Pastel), use_container_width=True)
+                    g_data = df_cloud['Cinsiyet'].value_counts().reset_index()
+                    g_data.columns = ['Cinsiyet', 'count']
+                    st.plotly_chart(px.pie(g_data, names='Cinsiyet', values='count', title="Cinsiyet Dağılımı", hole=0.4, color_discrete_sequence=px.colors.qualitative.Pastel), use_container_width=True)
                 with gr2:
-                    city_data = df_cloud['Sehir'].value_counts().reset_index()
-                    city_data.columns = ['Sehir', 'count']
-                    st.plotly_chart(px.pie(city_data, names='Sehir', values='count', title="Şehir Dağılımı", hole=0.4, color_discrete_sequence=px.colors.qualitative.Set3), use_container_width=True)
+                    c_data = df_cloud['Sehir'].value_counts().reset_index()
+                    c_data.columns = ['Sehir', 'count']
+                    st.plotly_chart(px.pie(c_data, names='Sehir', values='count', title="Şehir Dağılımı", hole=0.4, color_discrete_sequence=px.colors.qualitative.Set3), use_container_width=True)
                 with gr3:
-                    prof_data = df_cloud['Profil'].value_counts().reset_index()
-                    prof_data.columns = ['Profil', 'count']
-                    st.plotly_chart(px.pie(prof_data, names='Profil', values='count', title="Sepet Dağılımı", hole=0.4, color_discrete_sequence=px.colors.qualitative.Safe), use_container_width=True)
+                    p_data = df_cloud['Profil'].value_counts().reset_index()
+                    p_data.columns = ['Profil', 'count']
+                    st.plotly_chart(px.pie(p_data, names='Profil', values='count', title="Sepet Dağılımı", hole=0.4, color_discrete_sequence=px.colors.qualitative.Safe), use_container_width=True)
                 
                 st.divider()
-                st.write("### 🧹 Veri Temizliği")
+                st.write("### 🧹 Veri Temizliği (Gerçek IP'ler Gösteriliyor)")
                 
-                # Verilerde virgül formatı
+                # --- 📋 TABLO GÖRÜNÜMÜ (Formatlama ve IP gösterimi) ---
                 df_edit = df_cloud.copy()
                 df_edit.insert(0, "Seç", False)
                 
-                st.data_editor(df_edit, column_config={
+                edited_df = st.data_editor(df_edit, column_config={
                     "Seç": st.column_config.CheckboxColumn("Sil?", default=False),
                     "Maas": st.column_config.NumberColumn("Maaş", format="%d"),
                     "Yil_Sonu_Toplam": st.column_config.NumberColumn("Enflasyon", format="%.1f"),
                     "Dolar_Beklentisi": st.column_config.NumberColumn("Kur Tahmini", format="%.2f"),
                     "Alim_Gucu_Kaybi": st.column_config.NumberColumn("Kayıp %", format="%.2f"),
-                    "Reel_Kalan_TL": st.column_config.NumberColumn("Reel Kalan", format="%.2f")
+                    "Reel_Kalan_TL": st.column_config.NumberColumn("Reel Kalan", format="%.2f"),
+                    "IP": st.column_config.TextColumn("IP Adresi") # IP GİZLEME KALDIRILDI
                 }, use_container_width=True, hide_index=True)
                 
                 if st.button("🗑️ SEÇİLENLERİ SİL"):
                     rows_to_keep = edited_df[edited_df["Seç"] == False].drop(columns=["Seç"])
                     sheet.clear()
                     sheet.update([rows_to_keep.columns.values.tolist()] + rows_to_keep.values.tolist())
-                    st.success("Troller temizlendi!")
+                    st.success("Veriler güncellendi!")
                     st.rerun()
         except Exception as e: 
             st.error(f"Veri yükleme hatası: {e}")
