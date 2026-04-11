@@ -5,6 +5,7 @@ import plotly.express as px
 import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
+import uuid
 
 # --- 🔐 GOOGLE SHEETS MOTORU ---
 def get_gspread_client():
@@ -31,7 +32,7 @@ P_PS5, P_IPHONE, P_CLIO = 42999, 77999, 1795000
 
 st.set_page_config(page_title="LiraPulse: Gelecek Analizi", layout="wide")
 
-# --- 🎨 CSS: TASARIM VE ADİSYON KORUMASI ---
+# --- 🎨 CSS: TASARIM KORUMASI ---
 st.markdown("""<style>
     .main { background-color: #0d1117; }
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
@@ -80,9 +81,9 @@ alim_kaybi = round((1 - (1 / (1 + res_total/100))) * 100, 2)
 with col_out:
     st.markdown(f"""<div class="ozet-panel"><h3>Yıl Sonu Beklenti Analizi</h3><div style="display:flex; justify-content: space-around; align-items:center;"><div><small>Q1 Gerçekleşen</small><br><b style="font-size:24px; color:#00d4ff;">%{Q1_ENF}</b></div><div style="font-size:30px; color:#555;">+</div><div><small>Tahminin</small><br><b style="font-size:24px; color:#ffbd45;">%{s_enf:.2f}</b></div><div style="font-size:30px; color:#555;">=</div><div><small><b>Yıl Sonu Toplamı</b></small><br><b style="font-size:36px; color:#ff4b4b;">%{res_total:.2f}</b></div></div><hr style="border:0.5px solid #333;"><p>Tahmini Kur: <b>{tahmini_kur:.2f} TL</b></p></div>""", unsafe_allow_html=True)
     h1, h2, h3 = st.columns(3)
-    with h1: st.metric("🎮 PS5 (2026)", f"{P_PS5*(1+res_total/85):,.0f} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {P_PS5:,.0f} TL</p>', unsafe_allow_html=True)
-    with h2: st.metric("📱 iPhone (2026)", f"{P_IPHONE*(1+res_total/95):,.0f} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {P_IPHONE:,.0f} TL</p>', unsafe_allow_html=True)
-    with h3: st.metric("🚗 Clio (2026)", f"{P_CLIO*(1+res_total/100):,.0f} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: 1.795.000 TL</p>', unsafe_allow_html=True)
+    with h1: st.metric("🎮 PS5 (2026)", f"{P_PS5*(1+res_total/85):,.0f} TL")
+    with h2: st.metric("📱 iPhone (2026)", f"{P_IPHONE*(1+res_total/95):,.0f} TL")
+    with h3: st.metric("🚗 Clio (2026)", f"{P_CLIO*(1+res_total/100):,.0f} TL")
     st.divider()
     st.plotly_chart(go.Figure(go.Indicator(mode="gauge+number", value=alim_kaybi, title={'text': "Alım Gücü Kaybı (%)"}, gauge={'bar': {'color': "#ff4b4b"}})).update_layout(height=280, paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
 
@@ -97,80 +98,119 @@ g1, g2 = st.columns(2)
 with g1: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Gram Altın", title="Maaş Kaç Gram Altın?", color="Gram Altın", color_continuous_scale="YlOrBr"), use_container_width=True)
 with g2: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Dolar ($)", title="Maaş Kaç Dolar?", color="Dolar ($)", color_continuous_scale="Greens"), use_container_width=True)
 
-# --- 💾 EXCEL'E KAYIT (VİRGÜLLÜ) ---
+# --- 💾 EXCEL'E KAYIT (KİMLİK NUMARALI) ---
 if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_width=True):
     def f_tr(val): return "{:.2f}".format(val).replace(".", ",")
+    
+    # Her kayda özel, asla tekrarlanmayan 8 haneli kimlik (ID)
+    kayit_id = str(uuid.uuid4().hex[:8]).upper()
     reel_kalan = round(1000/(1+res_total/100), 2)
     zaman_damgasi = datetime.now().strftime("%d.%m.%Y %H:%M")
     
-    v = [zaman_damgasi, u_name, u_gender, f_tr(u_salary), u_prof, u_city, "0.0.0.0", f_tr(s_enf), f_tr(res_total), f_tr(tahmini_kur), f_tr(alim_kaybi), f_tr(reel_kalan)]
+    # 'kayit_id' değişkenini eski IP sütununun yerine koyuyoruz (6. İndeks)
+    v = [zaman_damgasi, u_name, u_gender, f_tr(u_salary), u_prof, u_city, kayit_id, f_tr(s_enf), f_tr(res_total), f_tr(tahmini_kur), f_tr(alim_kaybi), f_tr(reel_kalan)]
+    
     if save_to_sheets(v):
         st.balloons()
-        st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>Yıl Sonu Tahmini:</b> %{res_total:.2f}</p><p><b>1.000 TL Reel Değer:</b> {reel_kalan:.2f} TL</p><hr><center><i>Veri Google Sheets'e Mermi Gibi İşlendi.</i></center></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>Kimlik No:</b> {kayit_id}</p><p><b>Yıl Sonu Tahmini:</b> %{res_total:.2f}</p><hr><center><i>Veri Google Sheets'e Mermi Gibi İşlendi.</i></center></div>""", unsafe_allow_html=True)
 
-# --- 🔐 ADMIN: DİREKT EXCEL BAĞLANTISI (OTOMATİK ÇEKİM) ---
+# --- 🔐 ADMIN: TEK PATRON EXCEL ---
+if 'admin_data' not in st.session_state:
+    st.session_state['admin_data'] = []
+
 with st.expander("🔐 Admin Control Center"):
     if st.text_input("Şifre:", type="password", key="adm_pw") == "alper2026":
-        try:
-            client = get_gspread_client()
-            sheet = client.open("LiraPulse_Veri").sheet1
-            records = sheet.get_all_records()
-            
-            if records:
-                # KRİTİK TEMİZLİK: Excel'den ne gelirse gelsin noktaya çevir, sayı yap.
-                def clean_num(val):
-                    try: return float(str(val).replace(',', '.').strip())
-                    except: return 0.0
+        
+        # 1. VERİLERİ ÇEKME
+        if st.button("🔄 Verileri Excel'den Tazele"):
+            try:
+                client = get_gspread_client()
+                sheet = client.open("LiraPulse_Veri").sheet1
+                records = sheet.get_all_records()
+                
+                if records:
+                    def clean_num(val):
+                        try: return float(str(val).replace(',', '.').strip())
+                        except: return 0.0
 
-                clean_data = []
-                for i, row in enumerate(records):
-                    # Bazen sütun adları değişebiliyor, garantiye alalım
-                    t_col = 'Yil_Sonu_Toplam' if 'Yil_Sonu_Toplam' in row else ('Yil_Sonu_Toplar' if 'Yil_Sonu_Toplar' in row else None)
-                    enf_val = clean_num(row.get(t_col, 0)) if t_col else 0.0
+                    clean_data = []
+                    for row in records:
+                        t_col = 'Yil_Sonu_Toplam' if 'Yil_Sonu_Toplam' in row else ('Yil_Sonu_Toplar' if 'Yil_Sonu_Toplar' in row else None)
+                        enf_val = clean_num(row.get(t_col, 0)) if t_col else 0.0
+                        
+                        # Eski IP sütununun adı IP Adresi veya IP olabilir, hangisiyse onu ID olarak alıyoruz
+                        id_val = str(row.get("IP", row.get("IP Adresi", ""))).strip()
+                        
+                        clean_data.append({
+                            "Zaman": row.get("Zaman Damgası", ""), "Rumuz": row.get("Rumuz", ""), 
+                            "Cinsiyet": row.get("Cinsiyet", ""), "Maas": clean_num(row.get("Maas", 0)),
+                            "Profil": row.get("Profil", ""), "Sehir": row.get("Sehir", ""), 
+                            "Kayit_ID": id_val, "Yil_Sonu_Toplam": enf_val
+                        })
                     
-                    clean_data.append({
-                        "Zaman": row.get("Zaman Damgası", ""), "Rumuz": row.get("Rumuz", ""), 
-                        "Cinsiyet": row.get("Cinsiyet", ""), "Maas": clean_num(row.get("Maas", 0)),
-                        "Profil": row.get("Profil", ""), "Sehir": row.get("Sehir", ""), 
-                        "IP": row.get("IP", "0.0.0.0"), "Yil_Sonu_Toplam": enf_val,
-                        "Excel_Row": i + 2  # Excel'de 1. satır başlıktır
-                    })
-                
-                df_admin = pd.DataFrame(clean_data)
-                
-                st.write("### 📈 Sokağın Röntgenti")
-                s1, s2, s3 = st.columns(3)
-                s1.metric("Toplam Katılım", f"{len(df_admin)} Kişi")
-                s2.metric("Ort. Maaş", f"{df_admin['Maas'].mean():,.2f} TL")
-                s3.metric("Ort. Enflasyon", f"%{df_admin['Yil_Sonu_Toplam'].mean():.2f}")
-                
-                gr1, gr2, gr3 = st.columns(3)
-                with gr1: st.plotly_chart(px.pie(df_admin, names='Cinsiyet', title="Cinsiyet", hole=0.4), use_container_width=True)
-                with gr2: st.plotly_chart(px.pie(df_admin, names='Sehir', title="Şehir", hole=0.4), use_container_width=True)
-                with gr3: st.plotly_chart(px.pie(df_admin, names='Profil', title="Profil", hole=0.4), use_container_width=True)
-                
-                st.divider()
-                df_edit = df_admin.copy()
-                df_edit.insert(0, "Seç", False)
-                # Excel_Row sütununu gizleyerek göster
-                edited_df = st.data_editor(df_edit, column_config={
-                    "Seç": st.column_config.CheckboxColumn("Sil?", default=False), 
-                    "Maas": st.column_config.NumberColumn("Maaş", format="%.2f"),
-                    "Excel_Row": None 
-                }, use_container_width=True, hide_index=True)
-                
-                if st.button("🗑️ SEÇİLENLERİ SİL"):
-                    try:
-                        rows_to_del = sorted(edited_df[edited_df["Seç"] == True]["Excel_Row"].dropna().tolist(), reverse=True)
-                        if rows_to_del:
-                            for r_num in rows_to_del: 
-                                sheet.delete_rows(int(r_num))
-                            st.success(f"{len(rows_to_del)} veri Excel'den kazındı!")
-                            st.rerun() # Sayfayı yenile ki yeni Excel durumu gelsin
-                        else:
-                            st.warning("Silinecek veri seçmedin.")
-                    except Exception as e: st.error(f"Silme Hatası: {e}")
-            else:
-                st.info("Excel dosyasında henüz veri yok.")
-                
-        except Exception as e: st.error(f"Excel Bağlantı Hatası: {e}")
+                    st.session_state['admin_data'] = clean_data
+                    st.success("Excel'den taptaze veriler çekildi!")
+                else:
+                    st.session_state['admin_data'] = []
+                    st.info("Excel'de veri yok.")
+            except Exception as e: st.error(f"Excel Bağlantı Hatası: {e}")
+
+        # 2. VERİLERİ GÖSTERME VE SİLME
+        if len(st.session_state['admin_data']) > 0:
+            df_admin = pd.DataFrame(st.session_state['admin_data'])
+            
+            st.write("### 📈 Sokağın Röntgenti")
+            s1, s2, s3 = st.columns(3)
+            s1.metric("Toplam Katılım", f"{len(df_admin)} Kişi")
+            s2.metric("Ort. Maaş", f"{df_admin['Maas'].mean():,.2f} TL")
+            s3.metric("Ort. Enflasyon", f"%{df_admin['Yil_Sonu_Toplam'].mean():.2f}")
+            
+            gr1, gr2, gr3 = st.columns(3)
+            with gr1: st.plotly_chart(px.pie(df_admin, names='Cinsiyet', title="Cinsiyet", hole=0.4), use_container_width=True)
+            with gr2: st.plotly_chart(px.pie(df_admin, names='Sehir', title="Şehir", hole=0.4), use_container_width=True)
+            with gr3: st.plotly_chart(px.pie(df_admin, names='Profil', title="Profil", hole=0.4), use_container_width=True)
+            
+            st.divider()
+            df_edit = df_admin.copy()
+            df_edit.insert(0, "Seç", False)
+            
+            # Tabloda gösterim: Kayit_ID kalsın ki kimin silineceğini görebilesin
+            edited_df = st.data_editor(df_edit, column_config={
+                "Seç": st.column_config.CheckboxColumn("Sil?", default=False), 
+                "Maas": st.column_config.NumberColumn("Maaş", format="%.2f"),
+                "Kayit_ID": st.column_config.TextColumn("Kimlik No (ID)")
+            }, use_container_width=True, hide_index=True)
+            
+            if st.button("🗑️ SEÇİLENLERİ EXCEL'DEN KAZI"):
+                try:
+                    # Seçilenlerin Kimlik Numaralarını al
+                    secilen_idler = edited_df[edited_df["Seç"] == True]["Kayit_ID"].dropna().tolist()
+                    
+                    if secilen_idler:
+                        client = get_gspread_client()
+                        sheet = client.open("LiraPulse_Veri").sheet1
+                        
+                        # Excel'deki bütün satırları ham olarak çek
+                        all_vals = sheet.get_all_values()
+                        
+                        # Hangi satırlarda bu Kimlik Numaraları var bul
+                        rows_to_del = []
+                        for i, row_data in enumerate(all_vals):
+                            if i == 0: continue # Başlık satırını atla
+                            # Index 6, bizim Excel'deki 'IP' (yani yeni ID) sütunumuz
+                            if len(row_data) > 6 and str(row_data[6]).strip() in secilen_idler:
+                                rows_to_del.append(i + 1) # gspread satırları 1'den başlar
+                        
+                        # Satır kaymalarını önlemek için Tersten (aşağıdan yukarıya) sil
+                        rows_to_del.sort(reverse=True)
+                        for r_num in rows_to_del:
+                            sheet.delete_rows(int(r_num))
+                            
+                        st.success(f"{len(rows_to_del)} veri kimlik numarasıyla tam isabet kazındı!")
+                        
+                        # Paneli temizle ki kullanıcı tekrar Tazele butonuna bassın
+                        st.session_state['admin_data'] = []
+                        st.rerun()
+                    else:
+                        st.warning("Önce tablodan silinecekleri seçmelisin.")
+                except Exception as e: st.error(f"Silme Hatası: {e}")
