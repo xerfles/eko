@@ -25,6 +25,10 @@ def save_to_sheets(veri):
         st.error(f"Kayıt Hatası: {e}")
         return False
 
+# --- 🛰️ CANLI HAFIZA SİSTEMİ (SESSION STATE) ---
+if 'live_data' not in st.session_state:
+    st.session_state.live_data = []
+
 # --- 📊 PİYASA VERİLERİ (GÜNCEL) ---
 GUNCEL_DOLAR, Q1_ENF, TCMB_FAIZ, TCMB_2026_HEDEF = 44.92, 14.40, 37.0, 21.0
 P_PS5, P_IPHONE, P_CLIO = 42999, 77999, 1795000
@@ -79,16 +83,12 @@ alim_kaybi = round((1 - (1 / (1 + res_total/100))) * 100, 2)
 
 with col_out:
     st.markdown(f"""<div class="ozet-panel"><h3>Yıl Sonu Beklenti Analizi</h3><div style="display:flex; justify-content: space-around; align-items:center;"><div><small>Q1 Gerçekleşen</small><br><b style="font-size:24px; color:#00d4ff;">%{Q1_ENF}</b></div><div style="font-size:30px; color:#555;">+</div><div><small>Tahminin</small><br><b style="font-size:24px; color:#ffbd45;">%{s_enf:.2f}</b></div><div style="font-size:30px; color:#555;">=</div><div><small><b>Yıl Sonu Toplamı</b></small><br><b style="font-size:36px; color:#ff4b4b;">%{res_total:.2f}</b></div></div><hr style="border:0.5px solid #333;"><p>Tahmini Kur: <b>{tahmini_kur:.2f} TL</b></p></div>""", unsafe_allow_html=True)
-    
     h1, h2, h3 = st.columns(3)
     with h1: st.metric("🎮 PS5 (2026)", f"{P_PS5*(1+res_total/85):,.0f} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {P_PS5:,.0f} TL</p>', unsafe_allow_html=True)
     with h2: st.metric("📱 iPhone (2026)", f"{P_IPHONE*(1+res_total/95):,.0f} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {P_IPHONE:,.0f} TL</p>', unsafe_allow_html=True)
     with h3: st.metric("🚗 Clio (2026)", f"{P_CLIO*(1+res_total/100):,.0f} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: 1.795.000 TL</p>', unsafe_allow_html=True)
-    
     st.divider()
-    c_g, c_e = st.columns(2)
-    with c_g: st.plotly_chart(go.Figure(go.Indicator(mode="gauge+number", value=alim_kaybi, title={'text': "Alım Gücü Kaybı (%)"}, gauge={'bar': {'color': "#ff4b4b"}})).update_layout(height=280, paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
-    with c_e: st.write("### 📉 1.000 TL Akıbeti"); st.title(f"{1000/(1+res_total/100):.2f} TL")
+    st.plotly_chart(go.Figure(go.Indicator(mode="gauge+number", value=alim_kaybi, title={'text': "Alım Gücü Kaybı (%)"}, gauge={'bar': {'color': "#ff4b4b"}})).update_layout(height=280, paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
 
 st.divider()
 
@@ -102,62 +102,85 @@ with g1: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Gram Altın", title="Maaş
 with g2: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Dolar ($)", title="Maaş Kaç Dolar?", color="Dolar ($)", color_continuous_scale="Greens"), use_container_width=True)
 
 if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_width=True):
-    # EXCEL'E YAZARKEN VİRGÜL KULLAN
     def f_tr(val): return "{:.2f}".format(val).replace(".", ",")
-    v = [datetime.now().strftime("%d.%m.%Y %H:%M"), u_name, u_gender, f_tr(u_salary), u_prof, u_city, "0.0.0.0", f_tr(s_enf), f_tr(res_total), f_tr(tahmini_kur), f_tr(alim_kaybi), f_tr(1000/(1+res_total/100))]
+    
+    # Canlı Hafızaya (Session State) Saf Sayı Olarak Kaydet
+    live_entry = {
+        "Zaman": datetime.now().strftime("%d.%m.%Y %H:%M"),
+        "Rumuz": u_name, "Cinsiyet": u_gender, "Maas": u_salary,
+        "Profil": u_prof, "Sehir": u_city, "IP": "0.0.0.0",
+        "Senin_Tahminin": s_enf, "Yil_Sonu_Toplam": res_total,
+        "Dolar_Beklentisi": tahmini_kur, "Alim_Gucu_Kaybi": alim_kaybi,
+        "Reel_Kalan": 1000/(1+res_total/100)
+    }
+    st.session_state.live_data.append(live_entry)
+    
+    # Excel'e Virgüllü Olarak Kaydet
+    v = [live_entry["Zaman"], u_name, u_gender, f_tr(u_salary), u_prof, u_city, "0.0.0.0", f_tr(s_enf), f_tr(res_total), f_tr(tahmini_kur), f_tr(alim_kaybi), f_tr(live_entry["Reel_Kalan"])]
     if save_to_sheets(v):
         st.balloons()
         st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>Profil:</b> {u_prof}</p><p><b>Yıl Sonu Tahmini:</b> %{res_total:.2f}</p><p><b>1.000 TL Reel Değer:</b> {1000/(1+res_total/100):.2f} TL</p><hr><center><i>Veri Google Sheets'e Mermi Gibi İşlendi.</i></center></div>""", unsafe_allow_html=True)
 
-# --- 🔐 ADMIN: SÜPER TEMİZLEYİCİ BURADA ---
+# --- 🔐 ADMIN: CANLI HAFIZADAN BESLENEN PANEL ---
 with st.expander("🔐 Admin Control Center"):
     if st.text_input("Şifre:", type="password", key="adm_pw") == "alper2026":
-        try:
-            client = get_gspread_client()
-            sheet = client.open("LiraPulse_Veri").sheet1
-            df_cloud = pd.DataFrame(sheet.get_all_records())
-            
-            if not df_cloud.empty:
-                # KRİTİK TEMİZLİK: Virgülleri Noktaya Çevir, Boşlukları Sil, Sayıya Zorla
+        
+        # EXCEL'DEN ÇEKME BUTONU (Sadece Hafıza Sıfırlanırsa Lazım)
+        if st.button("🔄 Verileri Excel'den Tazele (Geçmişi Çek)"):
+            try:
+                client = get_gspread_client()
+                sheet = client.open("LiraPulse_Veri").sheet1
+                df_cloud = pd.DataFrame(sheet.get_all_records())
+                
                 def clean_num(val):
-                    try: 
-                        # Önce metne çevir, virgülü noktaya döndür, gereksiz boşlukları at
-                        s = str(val).replace(',', '.').strip()
-                        return float(s)
+                    try: return float(str(val).replace(',', '.'))
                     except: return 0.0
 
-                df_cloud['Maas'] = df_cloud['Maas'].apply(clean_num)
-                target_col = 'Yil_Sonu_Toplam' if 'Yil_Sonu_Toplam' in df_cloud.columns else 'Yil_Sonu_Toplar'
-                df_cloud['Clean_Enf'] = df_cloud[target_col].apply(clean_num)
+                # Excel Verisini Saf Sayıya Çevir ve Hafızaya At
+                new_live_data = []
+                for _, row in df_cloud.iterrows():
+                    target_col = 'Yil_Sonu_Toplam' if 'Yil_Sonu_Toplam' in row else 'Yil_Sonu_Toplar'
+                    new_live_data.append({
+                        "Zaman": row.get("Zaman Damgası", ""), "Rumuz": row.get("Rumuz", ""),
+                        "Cinsiyet": row.get("Cinsiyet", ""), "Maas": clean_num(row.get("Maas", 0)),
+                        "Profil": row.get("Profil", ""), "Sehir": row.get("Sehir", ""),
+                        "IP": row.get("IP", "0.0.0.0"), "Senin_Tahminin": clean_num(row.get("Senin_Tahminin", 0)),
+                        "Yil_Sonu_Toplam": clean_num(row.get(target_col, 0)),
+                        "Dolar_Beklentisi": clean_num(row.get("Dolar_Beklentisi", 0)),
+                        "Alim_Gucu_Kaybi": clean_num(row.get("Alim_Gucu_Kaybi", 0)),
+                        "Reel_Kalan": clean_num(row.get("Reel_Kalan_TL", 0))
+                    })
+                st.session_state.live_data = new_live_data
+                st.success("Tüm geçmiş Excel'den mermi gibi çekildi!")
+            except Exception as e: st.error(f"Hata: {e}")
 
-                st.write("### 📈 Sokağın Röntgenti")
-                s1, s2, s3 = st.columns(3)
-                s1.metric("Toplam Katılım", f"{len(df_cloud)} Kişi")
-                s2.metric("Ort. Maaş", f"{df_cloud['Maas'].mean():,.2f} TL")
-                # Filtrelenmiş ortalama
-                clean_data = df_cloud[df_cloud['Clean_Enf'] < 1000]['Clean_Enf']
-                s3.metric("Ort. Enflasyon", f"%{clean_data.mean():.2f}")
-                
-                gr1, gr2, gr3 = st.columns(3)
-                with gr1: st.plotly_chart(px.pie(df_cloud, names='Cinsiyet', title="Cinsiyet", hole=0.4), use_container_width=True)
-                with gr2: st.plotly_chart(px.pie(df_cloud, names='Sehir', title="Şehir", hole=0.4), use_container_width=True)
-                with gr3: st.plotly_chart(px.pie(df_cloud, names='Profil', title="Profil", hole=0.4), use_container_width=True)
-                
-                st.divider()
-                st.write("### 🧹 Veri Temizliği (Checkbox Aktif)")
-                df_edit = df_cloud.drop(columns=['Clean_Enf'])
-                df_edit.insert(0, "Seç", False)
-                edited_df = st.data_editor(df_edit, column_config={
-                    "Seç": st.column_config.CheckboxColumn("Sil?", default=False),
-                    "Maas": st.column_config.NumberColumn("Maaş", format="%.2f"),
-                    target_col: st.column_config.NumberColumn("Enflasyon", format="%.2f"),
-                    "IP": st.column_config.TextColumn("Gerçek IP")
-                }, use_container_width=True, hide_index=True)
-                
-                if st.button("🗑️ SEÇİLENLERİ SİL"):
-                    rows_to_keep = edited_df[edited_df["Seç"] == False].drop(columns=["Seç"])
-                    sheet.clear()
-                    sheet.update([rows_to_keep.columns.values.tolist()] + rows_to_keep.values.tolist())
-                    st.success("Troller temizlendi!")
-                    st.rerun()
-        except Exception as e: st.error(f"Hata: {e}")
+        # CANLI PANEL GÖRÜNÜMÜ
+        if st.session_state.live_data:
+            df_admin = pd.DataFrame(st.session_state.live_data)
+            
+            st.write("### 📈 Sokağın Röntgenti (Canlı Hafıza)")
+            s1, s2, s3 = st.columns(3)
+            s1.metric("Toplam Katılım", f"{len(df_admin)} Kişi")
+            s2.metric("Ort. Maaş", f"{df_admin['Maas'].mean():,.2f} TL")
+            s3.metric("Ort. Enflasyon", f"%{df_admin['Yil_Sonu_Toplam'].mean():.2f}")
+            
+            gr1, gr2, gr3 = st.columns(3)
+            with gr1: st.plotly_chart(px.pie(df_admin, names='Cinsiyet', title="Cinsiyet", hole=0.4), use_container_width=True)
+            with gr2: st.plotly_chart(px.pie(df_admin, names='Sehir', title="Şehir", hole=0.4), use_container_width=True)
+            with gr3: st.plotly_chart(px.pie(df_admin, names='Profil', title="Profil", hole=0.4), use_container_width=True)
+            
+            st.divider()
+            st.write("### 🧹 Veri Temizliği (Checkbox Aktif)")
+            df_edit = df_admin.copy()
+            df_edit.insert(0, "Seç", False)
+            edited_df = st.data_editor(df_edit, column_config={
+                "Seç": st.column_config.CheckboxColumn("Sil?", default=False),
+                "Maas": st.column_config.NumberColumn("Maaş", format="%.2f"),
+                "Yil_Sonu_Toplam": st.column_config.NumberColumn("Enflasyon", format="%.2f"),
+                "IP": st.column_config.TextColumn("IP Adresi")
+            }, use_container_width=True, hide_index=True)
+            
+            if st.button("🗑️ SEÇİLENLERİ SİL"):
+                st.info("Hafızadan silindi. Kalıcı silme için Google Sheets'ten manuel silin.")
+        else:
+            st.info("Henüz canlı veri yok. Geçmişi çekmek için yukarıdaki butona bas.")
