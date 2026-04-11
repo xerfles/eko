@@ -200,3 +200,40 @@ with st.expander("🔐 LiraPulse Intelligence Admin Control Center"):
             
             if st.button("🔴 VERİTABANINI SIFIRLA", key="btn_rst_v24_2"): 
                 os.remove(DB_FILE); st.rerun()
+import streamlit as st
+import pandas as pd
+import gspread
+from google.oauth2.service_account import Credentials
+from datetime import datetime
+
+# --- GOOGLE BAĞLANTISI ---
+def get_client():
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
+    return gspread.authorize(creds)
+
+st.title("🚀 LiraPulse Bulut Testi")
+
+# Veri Girişi
+u_name = st.text_input("Rumuz:")
+u_val = st.slider("Enflasyon Beklentiniz (%):", 0, 100, 50)
+
+if st.button("Buluta Gönder"):
+    try:
+        client = get_client()
+        sheet = client.open("LiraPulse_Veri").sheet1
+        yeni_satir = [datetime.now().strftime("%d.%m.%Y %H:%M"), u_name, "", 0, "", "", "0.0.0.0", 0, u_val, 0, 0, 0]
+        sheet.append_row(yeni_satir)
+        st.success("✅ Veri Excel'e uçtu! Kontrol et kanka.")
+    except Exception as e:
+        st.error(f"❌ Hata çıktı: {e}")
+
+# Admin Paneli
+if st.checkbox("Verileri Göster"):
+    try:
+        client = get_client()
+        sheet = client.open("LiraPulse_Veri").sheet1
+        df = pd.DataFrame(sheet.get_all_records())
+        st.dataframe(df)
+    except:
+        st.write("Henüz veri yok.")
