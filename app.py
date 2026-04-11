@@ -48,6 +48,7 @@ st.markdown("""<style>
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; }
     .receipt-box { background-color: #fff; color: #333 !important; padding: 20px; border-radius: 5px; font-family: 'Courier New', monospace; border: 2px dashed #333; margin: 20px auto; max-width: 450px; line-height: 1.6; }
+    .receipt-box b, .receipt-box center, .receipt-box p { color: #333 !important; }
     </style>""", unsafe_allow_html=True)
 
 if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
@@ -95,7 +96,7 @@ if st.button("💾 ANALİZİ KAYDET VE ADİSYONU AL", use_container_width=True):
         if s.endswith(",00"): s = s[:-3]
         return f"'{s}"
     kayit_id = str(uuid.uuid4().hex[:8]).upper()
-    v = [datetime.now().strftime("%d.%m.%Y %H:%M"), u_name, "", f_tr(u_salary), u_prof, u_city, kayit_id, f_tr(s_enf), f_tr(res_total), f_tr(tahmini_kur), f_tr(alim_kaybi), f_tr(1000/(1+res_total/100))]
+    v = [datetime.now().strftime("%d.%m.%Y %H:%M"), u_name, "", f_tr(u_salary), u_prof, u_city, kayit_id, f_tr(s_enf), f_tr(res_total), f_tr(tahmini_kur), f_tr(alim_kaybi), f_tr(round(1000/(1+res_total/100), 2))]
     if save_to_sheets(v):
         st.balloons()
         st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>ID:</b> {kayit_id}</p><p><b>Enflasyon:</b> %{tr_format(res_total)}</p><p><b>Dolar:</b> {tr_format(tahmini_kur)} TL</p></div>""", unsafe_allow_html=True)
@@ -135,11 +136,10 @@ with st.expander("🔐 Admin Control Center"):
                             "Maas": clean_num(row.get(col_maas, 0)),
                             "Kayit_ID": str(row.get(col_id, "")).strip(), 
                             "Enflasyon": clean_num(row.get(col_enf, 0)),
-                            "Dolar": clean_num(row.get(col_dol, 0)),
-                            "Excel_Row": i + 2
+                            "Dolar_Beklentisi": clean_num(row.get(col_dol, 0))
                         })
                     st.session_state['admin_data'] = clean_data
-                    st.success("Veriler çekildi!")
+                    st.success("Veriler Excel'den çekildi!")
                 else: st.info("Excel'de veri yok.")
             except Exception as e: st.error(f"Hata: {e}")
 
@@ -150,11 +150,17 @@ with st.expander("🔐 Admin Control Center"):
             s1.metric("Toplam Katılım", f"{len(df_admin)} Kişi")
             s2.metric("Ort. Maaş", f"{tr_format(df_admin['Maas'].mean())} TL")
             s3.metric("Ort. Enflasyon", f"%{tr_format(df_admin['Enflasyon'].mean())}")
-            s4.metric("Ort. Dolar Beklentisi", f"{tr_format(df_admin['Dolar'].mean())} TL")
+            s4.metric("Ort. Dolar", f"{tr_format(df_admin['Dolar_Beklentisi'].mean())} TL")
             
             st.divider()
             df_edit = df_admin.copy(); df_edit.insert(0, "Seç", False)
-            edited_df = st.data_editor(df_edit, column_config={"Seç": st.column_config.CheckboxColumn("Sil?", default=False), "Excel_Row": None, "Kayit_ID": None}, use_container_width=True, hide_index=True)
+            edited_df = st.data_editor(df_edit, column_config={
+                "Seç": st.column_config.CheckboxColumn("Sil?", default=False),
+                "Maas": st.column_config.NumberColumn("Maaş", format="%.0f"),
+                "Enflasyon": st.column_config.NumberColumn("Enf", format="%.2f"),
+                "Dolar_Beklentisi": st.column_config.NumberColumn("Dolar", format="%.2f"),
+                "Kayit_ID": None # ID'yi gizle ama arkada kalsın
+            }, use_container_width=True, hide_index=True)
             
             if st.button("🗑️ SEÇİLENLERİ EXCEL'DEN SİL"):
                 try:
