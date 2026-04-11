@@ -69,11 +69,11 @@ with col_in:
     u_city = st.selectbox("Şehir:", ["Kırklareli", "İstanbul", "Ankara", "İzmir", "Diğer"])
     
     st.write("🔮 **Senaryo Seç**")
-    s1, s2, s3, s4, s5, s6 = st.columns(6)
+    s1, s2, s3, s4 = st.columns(4)
     if s1.button("🏦 TCMB"): st.session_state.update({'d_val': 5, 'g_val': 8, 'k_val': 7, 'u_val': 6}); st.rerun()
     if s2.button("📉 TÜİK"): st.session_state.update({'d_val': 12, 'g_val': 22, 'k_val': 20, 'u_val': 16}); st.rerun()
     if s3.button("📊 Realist"): st.session_state.update({'d_val': 35, 'g_val': 48, 'k_val': 50, 'u_val': 42}); st.rerun()
-    if s6.button("🌋 Kriz"): st.session_state.update({'d_val': 100, 'g_val': 120, 'k_val': 130, 'u_val': 110}); st.rerun()
+    if s4.button("🌋 Kriz"): st.session_state.update({'d_val': 100, 'g_val': 120, 'k_val': 130, 'u_val': 110}); st.rerun()
     
     d_a = st.slider("💵 Dolar Artışı (%)", 0, 150, key='d_val')
     g_a = st.slider("🛒 Gıda Artışı (%)", 0, 150, key='g_val')
@@ -103,23 +103,18 @@ if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_wi
         s = f"{val:.2f}".replace(".", ",")
         if s.endswith(",00"): s = s[:-3]
         return f"'{s}"
-    
     kayit_id = str(uuid.uuid4().hex[:8]).upper()
     reel_kalan = round(1000/(1+res_total/100), 2)
-    zaman_damgasi = datetime.now().strftime("%d.%m.%Y %H:%M")
-    
-    v = [zaman_damgasi, u_name, u_gender, f_tr(u_salary), u_prof, u_city, kayit_id, f_tr(s_enf), f_tr(res_total), f_tr(tahmini_kur), f_tr(alim_kaybi), f_tr(reel_kalan)]
-    
+    v = [datetime.now().strftime("%d.%m.%Y %H:%M"), u_name, u_gender, f_tr(u_salary), u_prof, u_city, kayit_id, f_tr(s_enf), f_tr(res_total), f_tr(tahmini_kur), f_tr(alim_kaybi), f_tr(reel_kalan)]
     if save_to_sheets(v):
         st.balloons()
-        st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>ID:</b> {kayit_id}</p><p><b>Yıl Sonu Enflasyon:</b> %{tr_format(res_total)}</p><p><b>Dolar Beklentisi:</b> {tr_format(tahmini_kur)} TL</p><hr><center><i>Veri Google Sheets'e Mermi Gibi İşlendi.</i></center></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>ID:</b> {kayit_id}</p><p><b>Tahmin Edilen Enflasyon:</b> %{tr_format(res_total)}</p><p><b>Dolar Beklentisi:</b> {tr_format(tahmini_kur)} TL</p><hr><center><i>Veri Google Sheets'e Mermi Gibi İşlendi.</i></center></div>""", unsafe_allow_html=True)
 
 # --- 🔐 ADMIN PANELİ ---
 if 'admin_data' not in st.session_state: st.session_state['admin_data'] = []
 
 with st.expander("🔐 Admin Control Center"):
     if st.text_input("Şifre:", type="password", key="adm_pw") == "alper2026":
-        
         if st.button("🔄 Verileri Excel'den Tazele"):
             try:
                 client = get_gspread_client()
@@ -138,14 +133,18 @@ with st.expander("🔐 Admin Control Center"):
 
                     clean_data = []
                     for i, row in enumerate(records):
-                        t_col = 'Yil_Sonu_Toplam' if 'Yil_Sonu_Toplam' in row else ('Yil_Sonu_Toplar' if 'Yil_Sonu_Toplar' in row else None)
+                        # AKILLI BAŞLIK BULUCU
+                        enf_col = next((k for k in row.keys() if 'Toplam' in k or 'Enf' in k), 'Enflasyon')
+                        dol_col = next((k for k in row.keys() if 'Dolar' in k), 'Dolar')
+                        id_col = next((k for k in row.keys() if 'IP' in k or 'ID' in k), 'Kayit_ID')
+                        
                         clean_data.append({
                             "Tarih": str(row.get("Tarih", row.get("Zaman Damgası", ""))), 
                             "Katilimci": str(row.get("Katilimci", row.get("Rumuz", ""))), 
                             "Maas": clean_num(row.get("Maas", 0)),
-                            "Kayit_ID": str(row.get("IP", row.get("IP Adresi", row.get("Kimlik No (ID)", "")))).strip(), 
-                            "Enflasyon": clean_num(row.get(t_col, 0)),
-                            "Dolar": clean_num(row.get("Dolar_Beklentisi", 0)), # Dolar kolonunu buradan çekiyoruz
+                            "Kayit_ID": str(row.get(id_col, "")).strip(), 
+                            "Enflasyon": clean_num(row.get(enf_col, 0)),
+                            "Dolar": clean_num(row.get(dol_col, 0)),
                             "Excel_Row": i + 2
                         })
                     st.session_state['admin_data'] = clean_data
@@ -155,17 +154,16 @@ with st.expander("🔐 Admin Control Center"):
 
         if len(st.session_state['admin_data']) > 0:
             df_admin = pd.DataFrame(st.session_state['admin_data'])
-            
             st.write("### 📈 Sokağın Röntgenti")
-            s1, s2, s3, s4 = st.columns(4) # 4 sütun yaptık
+            s1, s2, s3, s4 = st.columns(4)
             s1.metric("Toplam Katılım", f"{len(df_admin)} Kişi")
             s2.metric("Ort. Maaş", f"{tr_format(df_admin['Maas'].mean())} TL")
             s3.metric("Ort. Enflasyon", f"%{tr_format(df_admin['Enflasyon'].mean())}")
-            s4.metric("Ort. Dolar Beklentisi", f"{tr_format(df_admin['Dolar'].mean())} TL") # YENİ METRİK BURADA
+            s4.metric("Ort. Dolar", f"{tr_format(df_admin['Dolar'].mean())} TL")
             
             st.divider()
             df_edit = df_admin.copy(); df_edit.insert(0, "Seç", False)
-            edited_df = st.data_editor(df_edit, column_config={"Seç": st.column_config.CheckboxColumn("Sil?", default=False), "Maas": st.column_config.NumberColumn("Maaş", format="%.0f"), "Enflasyon": st.column_config.NumberColumn("Enf", format="%.2f"), "Dolar": st.column_config.NumberColumn("Dolar", format="%.2f"), "Excel_Row": None}, use_container_width=True, hide_index=True)
+            edited_df = st.data_editor(df_edit, column_config={"Seç": st.column_config.CheckboxColumn("Sil?", default=False), "Maas": st.column_config.NumberColumn("Maaş", format="%.0f"), "Enflasyon": st.column_config.NumberColumn("Enf", format="%.2f"), "Excel_Row": None}, use_container_width=True, hide_index=True)
             
             if st.button("🗑️ SEÇİLENLERİ EXCEL'DEN KAZI"):
                 try:
@@ -173,9 +171,11 @@ with st.expander("🔐 Admin Control Center"):
                     if secilen_idler:
                         client = get_gspread_client(); sheet = client.open("LiraPulse_Veri").sheet1; all_vals = sheet.get_all_values()
                         rows_to_del = []
+                        # Excel'deki ID sütununu bul (genelde 7. sütun/index 6)
                         for i, row_data in enumerate(all_vals):
                             if i == 0: continue
-                            if len(row_data) > 6 and str(row_data[6]).strip() in secilen_idler: rows_to_del.append(i + 1)
+                            if any(str(cell).strip() in secilen_idler for cell in row_data):
+                                rows_to_del.append(i + 1)
                         rows_to_del.sort(reverse=True)
                         for r_num in rows_to_del: sheet.delete_rows(int(r_num))
                         st.success(f"{len(rows_to_del)} veri silindi!"); st.session_state['admin_data'] = []; st.rerun()
