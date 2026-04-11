@@ -74,8 +74,8 @@ if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val
 if 'admin_data' not in st.session_state: st.session_state['admin_data'] = []
 
 with st.sidebar.expander("🔐 Admin Control Center"):
-    # Şifreyi burada kontrol edip, panelin grafiklerini en altta göstereceğiz
-    if st.text_input("Şifre:", type="password", key="adm_pw") == "alper2026":
+    # ŞİFRE ARTIK KODDA DEĞİL, GİZLİ KASADAN (SECRETS) ÇEKİLİYOR
+    if st.text_input("Şifre:", type="password", key="adm_pw") == st.secrets["ADMIN_PASSWORD"]:
         st.success("Giriş Başarılı! İstatistikler sayfanın en altındadır.")
         if st.button("🔄 Verileri Excel'den Tazele", use_container_width=True):
             try:
@@ -297,7 +297,8 @@ if st.button("💾 ANALİZİ KAYDET VE ADİSYONU AL", use_container_width=True):
         """, unsafe_allow_html=True)
 
 # --- 🔐 ADMIN DASHBOARD (EN ALTTA, SADECE GİRİŞ YAPILINCA ÇIKAR) ---
-if st.session_state.get("adm_pw") == "alper2026":
+# ŞİFRE KONTROLÜ BURADA DA GİZLİ KASADAN (SECRETS) YAPILIYOR
+if st.session_state.get("adm_pw") == st.secrets["ADMIN_PASSWORD"]:
     st.divider()
     st.subheader("⚙️ Yönetici Paneli: Veri ve İstatistikler")
     if len(st.session_state['admin_data']) > 0:
