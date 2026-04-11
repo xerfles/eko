@@ -70,35 +70,6 @@ tm3.metric("🏦 TCMB Faiz", f"%{TCMB_FAIZ}")
 tm4.metric("🎯 TCMB Hedef", f"%{TCMB_2026_HEDEF}")
 st.divider()
 
-# --- ⚔️ YENİ BÖLÜM: YIL YIL ENFLASYON VS YATIRIM ARAÇLARI (2020-2025) ---
-st.subheader("⚔️ Yıl Yıl Yüzleşme: Enflasyonu Yenenler ve Yenilenler")
-st.markdown("<small style='color:#aaa;'>Hangi yıl kim kazandırdı, kim kaybettirdi? (Yıllık % Getiriler)</small>", unsafe_allow_html=True)
-
-df_yatirim = pd.DataFrame({
-    "Yıl": ["2020", "2021", "2022", "2023", "2024", "2025 (Tahmin)"],
-    "Enflasyon (%)": [14.6, 36.0, 64.2, 64.7, 45.0, 25.0],
-    "TL Mevduat (%)": [12.0, 17.0, 16.0, 35.0, 50.0, 40.0],
-    "Dolar (%)": [24.0, 78.0, 40.0, 57.0, 25.0, 15.0],
-    "Gram Altın (%)": [56.0, 70.0, 43.0, 78.0, 40.0, 20.0],
-    "BIST 100 (%)": [29.0, 25.0, 196.0, 35.0, 45.0, 30.0]
-})
-
-df_melted = df_yatirim.melt(id_vars=["Yıl"], var_name="Araç", value_name="Getiri (%)")
-
-fig_yatirim = px.bar(df_melted, x="Yıl", y="Getiri (%)", color="Araç", barmode="group",
-                     color_discrete_map={
-                         "Enflasyon (%)": "#ff4b4b", # Kırmızı
-                         "TL Mevduat (%)": "#888888", # Gri
-                         "Dolar (%)": "#28a745", # Yeşil
-                         "Gram Altın (%)": "#ffbd45", # Sarı
-                         "BIST 100 (%)": "#00d4ff" # Mavi
-                     })
-fig_yatirim.update_layout(height=400, paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}, 
-                          legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-                          margin=dict(l=0, r=0, t=30, b=0))
-st.plotly_chart(fig_yatirim, use_container_width=True)
-st.divider()
-
 col_in, col_out = st.columns([1.2, 2])
 
 with col_in:
@@ -153,7 +124,6 @@ with col_out:
     
     st.write("") 
     
-    # --- PS5, IPHONE, CLIO ---
     h1, h2, h3 = st.columns(3)
     with h1: st.metric("🎮 PS5 (2026)", f"{tr_format(P_PS5*(1+res_total/85), 0)} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {tr_format(P_PS5, 0)} TL</p>', unsafe_allow_html=True)
     with h2: st.metric("📱 iPhone (2026)", f"{tr_format(P_IPHONE*(1+res_total/95), 0)} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {tr_format(P_IPHONE, 0)} TL</p>', unsafe_allow_html=True)
@@ -161,7 +131,6 @@ with col_out:
     
     st.divider()
     
-    # --- KADRAN VE 1000 TL AKIBETİ ---
     c_g, c_e = st.columns(2)
     with c_g: 
         st.plotly_chart(go.Figure(go.Indicator(
@@ -185,6 +154,50 @@ with col_out:
 
 st.divider()
 
+# --- ⚔️ YENİ BÖLÜM: YIL YIL ENFLASYON VS YATIRIM TABLOSU ---
+st.subheader("⚔️ 2020-2025: Enflasyonu Yenenler ve Yenilenler")
+st.markdown("<small style='color:#aaa;'>Grafikler yerine net rakamlar. Yeşil yananlar enflasyonu tokatladı, kırmızı yananlar enflasyona ezildi.</small>", unsafe_allow_html=True)
+
+df_yatirim = pd.DataFrame({
+    "Yıl": ["2020", "2021", "2022", "2023", "2024", "2025 (Tahmin)"],
+    "Enflasyon (%)": [14.6, 36.0, 64.2, 64.7, 45.0, 25.0],
+    "TL Mevduat (%)": [12.0, 17.0, 16.0, 35.0, 50.0, 40.0],
+    "Dolar (%)": [24.0, 78.0, 40.0, 57.0, 25.0, 15.0],
+    "Gram Altın (%)": [56.0, 70.0, 43.0, 78.0, 40.0, 20.0],
+    "BIST 100 (%)": [29.0, 25.0, 196.0, 35.0, 45.0, 30.0]
+})
+
+# Renklendirme Motoru: Enflasyondan büyükse yeşil, küçükse kırmızı
+def color_cells(row):
+    enf = row["Enflasyon (%)"]
+    colors = [''] * len(row)
+    for i, col in enumerate(row.index):
+        if col not in ["Yıl", "Enflasyon (%)"]:
+            if row[col] > enf:
+                colors[i] = 'color: #28a745; font-weight: bold;' # Yeşil
+            elif row[col] < enf:
+                colors[i] = 'color: #ff4b4b; font-weight: bold;' # Kırmızı
+            else:
+                colors[i] = 'color: white;'
+        elif col == "Enflasyon (%)":
+            colors[i] = 'color: white; font-weight: bold; background-color: rgba(255,255,255,0.05);'
+        else:
+            colors[i] = 'font-weight: bold;'
+    return colors
+
+# Tabloyu Formatla ve Ekrana Bas
+styled_df = df_yatirim.style.apply(color_cells, axis=1).format({
+    "Enflasyon (%)": "{:.1f}%",
+    "TL Mevduat (%)": "{:.1f}%",
+    "Dolar (%)": "{:.1f}%",
+    "Gram Altın (%)": "{:.1f}%",
+    "BIST 100 (%)": "{:.1f}%"
+})
+
+st.dataframe(styled_df, use_container_width=True, hide_index=True)
+
+st.divider()
+
 # --- 🕰️ ZAMAN MAKİNESİ ---
 st.subheader("🕰️ Zaman Makinesi: Asgari Ücretin Erimesi (2000-2025)")
 yillar_nost = [str(y) for y in range(2000, 2026)]; altin_nost = [24.5, 11.2, 12.5, 13.1, 17.8, 18.2, 15.1, 14.8, 14.1, 11.8, 10.5, 8.5, 8.0, 9.5, 10.5, 10.1, 10.4, 9.6, 7.5, 7.8, 5.1, 5.6, 5.3, 6.5, 6.8, 4.5]
@@ -204,8 +217,10 @@ if st.button("💾 ANALİZİ KAYDET VE ADİSYONU AL", use_container_width=True):
     
     if save_to_sheets(v):
         st.balloons()
-        t_kahvalti = 400
-        t_aksam = 600
+        
+        t_kahvalti = 400 
+        t_aksam = 600    
+        
         y_kahvalti = t_kahvalti * (1 + res_total/100)
         y_aksam = t_aksam * (1 + res_total/100)
         y_toplam = y_kahvalti + y_aksam
