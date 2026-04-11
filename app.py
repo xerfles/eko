@@ -38,8 +38,8 @@ st.markdown("""<style>
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; }
     .bugun-etiket { color: #ffbd45; font-size: 13px; text-align: center; margin-top: -10px; font-weight: bold; }
-    .receipt-box { background-color: #fff; color: #333 !important; padding: 20px; border-radius: 5px; font-family: 'Courier New', monospace; border: 2px dashed #333; margin: 20px auto; max-width: 450px; }
-    .receipt-box b, .receipt-box center, .receipt-box p, .receipt-box hr { color: #333 !important; border-color: #333 !important; }
+    .receipt-box { background-color: #fff; color: #333 !important; padding: 20px; border-radius: 5px; font-family: 'Courier New', monospace; border: 2px dashed #333; margin: 20px auto; max-width: 450px; line-height: 1.6; }
+    .receipt-box b, .receipt-box center, .receipt-box p { color: #333 !important; }
     </style>""", unsafe_allow_html=True)
 
 if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
@@ -73,10 +73,10 @@ with col_in:
 # --- 🧮 HESAPLAMA ---
 weights = {"Öğrenci": [0.25, 0.20, 0.40, 0.15], "Mavi Yaka": [0.10, 0.45, 0.30, 0.15], "Beyaz Yaka": [0.20, 0.25, 0.35, 0.20], "Emekli": [0.05, 0.55, 0.30, 0.10], "Kamu Personeli": [0.15, 0.30, 0.35, 0.20]}
 w = weights[u_prof]
-s_enf = (d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3])
-res_total = Q1_ENF + s_enf
-tahmini_kur = GUNCEL_DOLAR * (1 + d_a/100)
-alim_kaybi = (1 - (1 / (1 + res_total/100))) * 100
+s_enf = round((d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3]), 2)
+res_total = round(Q1_ENF + s_enf, 2)
+tahmini_kur = round(GUNCEL_DOLAR * (1 + d_a/100), 2)
+alim_kaybi = round((1 - (1 / (1 + res_total/100))) * 100, 2)
 
 with col_out:
     st.markdown(f"""<div class="ozet-panel"><h3 style="color:#888; margin-bottom:5px;">Yıl Sonu Beklenti Analizi</h3><div style="display:flex; justify-content: space-around; align-items:center;"><div><small>Q1 Gerçekleşen</small><br><b style="font-size:24px; color:#00d4ff;">%{Q1_ENF}</b></div><div style="font-size:30px; color:#555;">+</div><div><small>Senin Tahminin</small><br><b style="font-size:24px; color:#ffbd45;">%{s_enf:.2f}</b></div><div style="font-size:30px; color:#555;">=</div><div><small><b>Yıl Sonu Toplamı</b></small><br><b style="font-size:36px; color:#ff4b4b;">%{res_total:.2f}</b></div></div><hr style="border:0.5px solid #333;"><p style="margin:0; font-size:18px;">Tahmini Kur: <span style="color:#00d4ff; font-weight:bold;">{tahmini_kur:.2f} TL</span></p></div>""", unsafe_allow_html=True)
@@ -88,8 +88,8 @@ with col_out:
     
     st.divider()
     c_g, c_e = st.columns(2)
-    with c_g: st.plotly_chart(go.Figure(go.Indicator(mode="gauge+number", value=alim_kaybi, title={'text': "Alım Gücü Kaybı (%)"}, gauge={'bar': {'color': "#ff4b4b"}})).update_layout(height=280, paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
-    with c_e: st.write("### 📉 1.000 TL Akıbeti"); st.title(f"{1000/(1+res_total/100):.2f} TL")
+    with c_g: st.plotly_chart(go.Figure(go.Indicator(mode="gauge+number", value=alim_kaybi, title={'text': "Alım Gücü Kayabı (%)"}, gauge={'bar': {'color': "#ff4b4b"}})).update_layout(height=280, paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
+    with c_e: st.write("### 📉 1.000 TL Akıbeti"); st.title(f"{round(1000/(1+res_total/100), 2):.2f} TL")
 
 st.divider()
 
@@ -102,13 +102,11 @@ g1, g2 = st.columns(2)
 with g1: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Gram Altın", title="Maaş Kaç Gram Altın?", color="Gram Altın", color_continuous_scale="YlOrBr"), use_container_width=True)
 with g2: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Dolar ($)", title="Maaş Kaç Dolar?", color="Dolar ($)", color_continuous_scale="Greens"), use_container_width=True)
 
-# --- 💾 KAYIT VE ADİSYON ---
 if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_width=True):
-    # Excel formatı: %24.44 gibi (Virgülle ayrılmış metin olarak)
     v = [datetime.now().strftime("%d.%m.%Y %H:%M"), u_name, u_gender, str(round(u_salary, 2)).replace(".",","), u_prof, u_city, "0.0.0.0", str(round(s_enf, 2)).replace(".",","), str(round(res_total, 2)).replace(".",","), str(round(tahmini_kur, 2)).replace(".",","), str(round(alim_kaybi, 2)).replace(".",","), str(round(1000/(1+res_total/100), 2)).replace(".",",")]
     if save_to_sheets(v):
         st.balloons()
-        st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>Profil:</b> {u_prof}</p><p><b>Yıl Sonu Tahmini:</b> %{res_total:.2f}</p><p><b>Alım Gücü Kaybı:</b> %{alim_kaybi:.2f}</p><p><b>1.000 TL Reel Değer:</b> {1000/(1+res_total/100):.2f} TL</p><hr><center><i>Veri Google Sheets'e Mermi Gibi İşlendi.</i></center></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>Profil:</b> {u_prof}</p><p><b>Tahmin Edilen Enflasyon:</b> %{res_total:.2f}</p><p><b>1.000 TL Reel Değeri:</b> {round(1000/(1+res_total/100), 2):.2f} TL</p><hr><center><i>Veri Google Sheets'e Mermi Gibi İşlendi.</i></center></div>""", unsafe_allow_html=True)
 
 # --- 🔐 ADMIN ---
 with st.expander("🔐 Admin Control Center"):
@@ -119,14 +117,13 @@ with st.expander("🔐 Admin Control Center"):
             df_cloud = pd.DataFrame(sheet.get_all_records())
             
             if not df_cloud.empty:
-                def clean_num(val):
+                def parse_tr_float(val):
                     try: return float(str(val).replace(',', '.'))
                     except: return 0.0
 
-                # Sayısal sütunları temizle
-                df_cloud['Maas'] = df_cloud['Maas'].apply(clean_num)
+                df_cloud['Maas'] = df_cloud['Maas'].apply(parse_tr_float)
                 target_col = 'Yil_Sonu_Toplam' if 'Yil_Sonu_Toplam' in df_cloud.columns else 'Yil_Sonu_Toplar'
-                df_cloud['Clean_Enf'] = df_cloud[target_col].apply(clean_num)
+                df_cloud['Clean_Enf'] = df_cloud[target_col].apply(parse_tr_float)
 
                 st.write("### 📈 Sokağın Röntgenti")
                 s1, s2, s3 = st.columns(3)
@@ -140,10 +137,9 @@ with st.expander("🔐 Admin Control Center"):
                 with gr3: st.plotly_chart(px.pie(df_cloud, names='Profil', title="Profil", hole=0.4), use_container_width=True)
                 
                 st.divider()
-                st.write("### 🧹 Veri Temizliği (Checkbox Aktif)")
+                st.write("### 🧹 Veri Temizliği")
                 df_edit = df_cloud.drop(columns=['Clean_Enf'])
                 df_edit.insert(0, "Seç", False)
-                
                 edited_df = st.data_editor(df_edit, column_config={
                     "Seç": st.column_config.CheckboxColumn("Sil?", default=False),
                     "Maas": st.column_config.NumberColumn("Maaş", format="%.2f"),
