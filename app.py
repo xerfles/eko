@@ -73,7 +73,6 @@ with col_in:
     st.subheader("🕵️ Analist Girişi")
     u_name = st.text_input("Rumuz:", "Analist_01")
     
-    # Cinsiyet ve Maaş yan yana
     c_col1, c_col2 = st.columns(2)
     with c_col1: u_gender = st.selectbox("Cinsiyet:", ["Erkek", "Kadın", "Belirtmek İstemiyorum"])
     with c_col2: u_salary = st.number_input("Aylık Maaş (TL):", value=22102)
@@ -106,8 +105,19 @@ alim_kaybi = round((1 - (1 / (1 + res_total/100))) * 100, 2)
 reel_deger = round(1000/(1+res_total/100), 2)
 
 with col_out:
-    # --- YIL SONU ANALİZİ (Tertemiz, Karmaşasız) ---
-    st.markdown(f"""<div class="ozet-panel"><h3 style="color:#aaa;">Yıl Sonu Beklenti Analizi</h3><b style="font-size:42px; color:#ff4b4b;">%{tr_format(res_total)}</b><br><p style="font-size:14px; color:#ccc; margin-top:10px;">Tahmini Kur: <b>{tr_format(tahmini_kur)} TL</b></p></div>""", unsafe_allow_html=True)
+    # --- YIL SONU ANALİZİ (İSTEDİĞİN GİBİ SAĞDAKİ MATEMATİKLİ YAPI) ---
+    st.markdown(f"""<div class="ozet-panel">
+        <h3 style="color:#aaa; margin-bottom: 20px;">Yıl Sonu Beklenti Analizi</h3>
+        <div style="display:flex; justify-content: space-around; align-items:center; margin-bottom: 15px;">
+            <div><small style="color:#ccc;">Q1 Gerçekleşen</small><br><b style="font-size:24px; color:#00d4ff;">%{tr_format(Q1_ENF)}</b></div>
+            <div style="font-size:30px; color:#555;">+</div>
+            <div><small style="color:#ccc;">Senin Tahminin</small><br><b style="font-size:24px; color:#ffbd45;">%{tr_format(s_enf)}</b></div>
+            <div style="font-size:30px; color:#555;">=</div>
+            <div><small style="color:#ccc;"><b>Yıl Sonu Toplamı</b></small><br><b style="font-size:36px; color:#ff4b4b;">%{tr_format(res_total)}</b></div>
+        </div>
+        <hr style="border:0.5px solid #333;">
+        <p style="font-size:16px; color:#ccc; margin-top:10px;">Tahmini Kur: <b>{tr_format(tahmini_kur)} TL</b></p>
+    </div>""", unsafe_allow_html=True)
     
     st.write("") # Boşluk
     
@@ -137,7 +147,7 @@ yillar = [str(y) for y in range(2000, 2026)]; altin = [24.5, 11.2, 12.5, 13.1, 1
 dolar = [126, 92, 115, 150, 222, 261, 265, 315, 385, 352, 395, 393, 410, 420, 406, 365, 430, 385, 330, 355, 330, 315, 330, 430, 520, 485]
 df_nost = pd.DataFrame({"Yıl": yillar, "Gram Altın": altin, "Dolar ($)": dolar})
 g1, g2 = st.columns(2)
-with g1: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Gram Altın", title="Maaş Kaç Gram Altın?", color="Gram Altın", color_continuous_scale="Blues"), use_container_width=True) # Renkleri resme göre mavi-yeşil tonlarına çektik
+with g1: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Gram Altın", title="Maaş Kaç Gram Altın?", color="Gram Altın", color_continuous_scale="Blues"), use_container_width=True)
 with g2: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Dolar ($)", title="Maaş Kaç Dolar?", color="Dolar ($)", color_continuous_scale="Greens"), use_container_width=True)
 
 if st.button("💾 ANALİZİ KAYDET VE ADİSYONU AL", use_container_width=True):
@@ -151,7 +161,7 @@ if st.button("💾 ANALİZİ KAYDET VE ADİSYONU AL", use_container_width=True):
         # --- ADİSYON ---
         st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>ID:</b> {kayit_id}</p><p><b>Tahmini Enflasyon:</b> %{tr_format(res_total)}</p><p><b>Dolar Beklentisi:</b> {tr_format(tahmini_kur)} TL</p><p><b>1.000 TL Reel Değer:</b> {tr_format(reel_deger)} TL</p><hr><center><i>Veri Google Sheets'e Mermi Gibi İşlendi.</i></center></div>""", unsafe_allow_html=True)
 
-# --- 🔐 ADMIN PANELİ (ZIRHLI MİMARİ KORUNDU) ---
+# --- 🔐 ADMIN PANELİ ---
 if 'admin_data' not in st.session_state: st.session_state['admin_data'] = []
 
 with st.expander("🔐 Admin Control Center"):
@@ -172,7 +182,6 @@ with st.expander("🔐 Admin Control Center"):
                         except: return 0.0
                     
                     new_data = []
-                    # Sütun isimlerine değil sıralamasına (index) bakıyoruz. Hata imkansız.
                     for i in range(1, len(vals)):
                         row = vals[i]
                         new_data.append({
