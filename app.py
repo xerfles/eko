@@ -32,7 +32,7 @@ P_PS5, P_IPHONE, P_CLIO = 42999, 77999, 1795000
 
 st.set_page_config(page_title="LiraPulse: Gelecek Analizi", layout="wide")
 
-# --- 🎨 CSS: TASARIM KORUMASI ---
+# --- 🎨 CSS ---
 st.markdown("""<style>
     .main { background-color: #0d1117; }
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
@@ -98,16 +98,15 @@ g1, g2 = st.columns(2)
 with g1: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Gram Altın", title="Maaş Kaç Gram Altın?", color="Gram Altın", color_continuous_scale="YlOrBr"), use_container_width=True)
 with g2: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Dolar ($)", title="Maaş Kaç Dolar?", color="Dolar ($)", color_continuous_scale="Greens"), use_container_width=True)
 
-# --- 💾 EXCEL'E KAYIT (KİMLİK NUMARALI) ---
+# --- 💾 EXCEL'E KAYIT ---
 if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_width=True):
-    def f_tr(val): return "{:.2f}".format(val).replace(".", ",")
+    # KRİTİK HİLE: Başına tek tırnak koyuyoruz ki Excel bunu metin olarak algılasın, sayıyı bozmasın!
+    def f_tr(val): return f"'{val:.2f}".replace(".", ",")
     
-    # Her kayda özel, asla tekrarlanmayan 8 haneli kimlik (ID)
     kayit_id = str(uuid.uuid4().hex[:8]).upper()
     reel_kalan = round(1000/(1+res_total/100), 2)
     zaman_damgasi = datetime.now().strftime("%d.%m.%Y %H:%M")
     
-    # 'kayit_id' değişkenini eski IP sütununun yerine koyuyoruz (6. İndeks)
     v = [zaman_damgasi, u_name, u_gender, f_tr(u_salary), u_prof, u_city, kayit_id, f_tr(s_enf), f_tr(res_total), f_tr(tahmini_kur), f_tr(alim_kaybi), f_tr(reel_kalan)]
     
     if save_to_sheets(v):
@@ -121,7 +120,6 @@ if 'admin_data' not in st.session_state:
 with st.expander("🔐 Admin Control Center"):
     if st.text_input("Şifre:", type="password", key="adm_pw") == "alper2026":
         
-        # 1. VERİLERİ ÇEKME
         if st.button("🔄 Verileri Excel'den Tazele"):
             try:
                 client = get_gspread_client()
@@ -130,7 +128,10 @@ with st.expander("🔐 Admin Control Center"):
                 
                 if records:
                     def clean_num(val):
-                        try: return float(str(val).replace(',', '.').strip())
+                        try: 
+                            # Excel'den gelen tırnakları ve virgülleri temizle, noktaya çevir
+                            cleaned = str(val).replace("'", "").replace(',', '.').strip()
+                            return float(cleaned)
                         except: return 0.0
 
                     clean_data = []
@@ -138,24 +139,27 @@ with st.expander("🔐 Admin Control Center"):
                         t_col = 'Yil_Sonu_Toplam' if 'Yil_Sonu_Toplam' in row else ('Yil_Sonu_Toplar' if 'Yil_Sonu_Toplar' in row else None)
                         enf_val = clean_num(row.get(t_col, 0)) if t_col else 0.0
                         
-                        # Eski IP sütununun adı IP Adresi veya IP olabilir, hangisiyse onu ID olarak alıyoruz
                         id_val = str(row.get("IP", row.get("IP Adresi", ""))).strip()
                         
                         clean_data.append({
-                            "Zaman": row.get("Zaman Damgası", ""), "Rumuz": row.get("Rumuz", ""), 
-                            "Cinsiyet": row.get("Cinsiyet", ""), "Maas": clean_num(row.get("Maas", 0)),
-                            "Profil": row.get("Profil", ""), "Sehir": row.get("Sehir", ""), 
-                            "Kayit_ID": id_val, "Yil_Sonu_Toplam": enf_val
+                            # Senin Excel'indeki gerçek başlık isimleriyle eşleştirdik!
+                            "Tarih": row.get("Tarih", row.get("Zaman Damgası", "")), 
+                            "Katilimci": row.get("Katilimci", row.get("Rumuz", "")), 
+                            "Cinsiyet": row.get("Cinsiyet", ""), 
+                            "Maas": clean_num(row.get("Maas", 0)),
+                            "Profil": row.get("Profil", ""), 
+                            "Sehir": row.get("Sehir", ""), 
+                            "Kayit_ID": id_val, 
+                            "Yil_Sonu_Toplam": enf_val
                         })
                     
                     st.session_state['admin_data'] = clean_data
-                    st.success("Excel'den taptaze veriler çekildi!")
+                    st.success("Excel'den taptaze ve hatasız veriler çekildi!")
                 else:
                     st.session_state['admin_data'] = []
                     st.info("Excel'de veri yok.")
             except Exception as e: st.error(f"Excel Bağlantı Hatası: {e}")
 
-        # 2. VERİLERİ GÖSTERME VE SİLME
         if len(st.session_state['admin_data']) > 0:
             df_admin = pd.DataFrame(st.session_state['admin_data'])
             
@@ -174,7 +178,6 @@ with st.expander("🔐 Admin Control Center"):
             df_edit = df_admin.copy()
             df_edit.insert(0, "Seç", False)
             
-            # Tabloda gösterim: Kayit_ID kalsın ki kimin silineceğini görebilesin
             edited_df = st.data_editor(df_edit, column_config={
                 "Seç": st.column_config.CheckboxColumn("Sil?", default=False), 
                 "Maas": st.column_config.NumberColumn("Maaş", format="%.2f"),
@@ -183,32 +186,24 @@ with st.expander("🔐 Admin Control Center"):
             
             if st.button("🗑️ SEÇİLENLERİ EXCEL'DEN KAZI"):
                 try:
-                    # Seçilenlerin Kimlik Numaralarını al
                     secilen_idler = edited_df[edited_df["Seç"] == True]["Kayit_ID"].dropna().tolist()
                     
                     if secilen_idler:
                         client = get_gspread_client()
                         sheet = client.open("LiraPulse_Veri").sheet1
-                        
-                        # Excel'deki bütün satırları ham olarak çek
                         all_vals = sheet.get_all_values()
                         
-                        # Hangi satırlarda bu Kimlik Numaraları var bul
                         rows_to_del = []
                         for i, row_data in enumerate(all_vals):
-                            if i == 0: continue # Başlık satırını atla
-                            # Index 6, bizim Excel'deki 'IP' (yani yeni ID) sütunumuz
+                            if i == 0: continue
                             if len(row_data) > 6 and str(row_data[6]).strip() in secilen_idler:
-                                rows_to_del.append(i + 1) # gspread satırları 1'den başlar
+                                rows_to_del.append(i + 1)
                         
-                        # Satır kaymalarını önlemek için Tersten (aşağıdan yukarıya) sil
                         rows_to_del.sort(reverse=True)
                         for r_num in rows_to_del:
                             sheet.delete_rows(int(r_num))
                             
                         st.success(f"{len(rows_to_del)} veri kimlik numarasıyla tam isabet kazındı!")
-                        
-                        # Paneli temizle ki kullanıcı tekrar Tazele butonuna bassın
                         st.session_state['admin_data'] = []
                         st.rerun()
                     else:
