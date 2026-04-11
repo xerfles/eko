@@ -25,11 +25,11 @@ def save_to_sheets(veri):
         st.error(f"Kayıt Hatası: {e}")
         return False
 
-# --- 🛰️ CANLI HAFIZA SİSTEMİ (SESSION STATE) ---
+# --- 🛰️ CANLI HAFIZA ---
 if 'live_data' not in st.session_state:
     st.session_state['live_data'] = []
 
-# --- 📊 PİYASA VERİLERİ (11 Nisan 2026) ---
+# --- 📊 PİYASA VERİLERİ (GÜNCEL) ---
 GUNCEL_DOLAR, Q1_ENF, TCMB_FAIZ, TCMB_2026_HEDEF = 44.92, 14.40, 37.0, 21.0
 P_PS5, P_IPHONE, P_CLIO = 42999, 77999, 1795000
 
@@ -110,10 +110,10 @@ if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_wi
         "Profil": u_prof, "Sehir": u_city, "IP": "0.0.0.0",
         "Senin_Tahminin": s_enf, "Yil_Sonu_Toplam": res_total,
         "Dolar_Beklentisi": tahmini_kur, "Alim_Gucu_Kaybi": alim_kaybi,
-        "Reel_Kalan": round(1000/(1+res_total/100), 2)
+        "Reel_Kalan": round(1000/(1+res_total/100), 2),
+        "Excel_Row": None # Yeni kayıt henüz Excel'de değil
     }
     
-    # --- 🛡️ ATTRIBUTE ERROR KORUMASI ---
     if not isinstance(st.session_state['live_data'], list):
         st.session_state['live_data'] = []
     
@@ -124,7 +124,7 @@ if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_wi
         st.balloons()
         st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>Yıl Sonu Tahmini:</b> %{res_total:.2f}</p><p><b>1.000 TL Reel Değer:</b> {live_entry['Reel_Kalan']:.2f} TL</p><hr><center><i>Veri Google Sheets'e Mermi Gibi İşlendi.</i></center></div>""", unsafe_allow_html=True)
 
-# --- 🔐 ADMIN: HATASIZ CANLI PANEL ---
+# --- 🔐 ADMIN: TAM SENKRONİZE TEMİZLİK ---
 with st.expander("🔐 Admin Control Center"):
     if st.text_input("Şifre:", type="password", key="adm_pw") == "alper2026":
         
@@ -132,14 +132,14 @@ with st.expander("🔐 Admin Control Center"):
             try:
                 client = get_gspread_client()
                 sheet = client.open("LiraPulse_Veri").sheet1
-                df_cloud = pd.DataFrame(sheet.get_all_records())
+                records = sheet.get_all_records()
                 
                 def clean_num(val):
                     try: return float(str(val).replace(',', '.'))
                     except: return 0.0
 
                 new_data = []
-                for _, row in df_cloud.iterrows():
+                for i, row in enumerate(records):
                     target_col = 'Yil_Sonu_Toplam' if 'Yil_Sonu_Toplam' in row else 'Yil_Sonu_Toplar'
                     new_data.append({
                         "Zaman": row.get("Zaman Damgası", ""), "Rumuz": row.get("Rumuz", ""),
@@ -149,14 +149,14 @@ with st.expander("🔐 Admin Control Center"):
                         "Yil_Sonu_Toplam": clean_num(row.get(target_col, 0)),
                         "Dolar_Beklentisi": clean_num(row.get("Dolar_Beklentisi", 0)),
                         "Alim_Gucu_Kaybi": clean_num(row.get("Alim_Gucu_Kaybi", 0)),
-                        "Reel_Kalan": clean_num(row.get("Reel_Kalan_TL", 0))
+                        "Reel_Kalan": clean_num(row.get("Reel_Kalan_TL", 0)),
+                        "Excel_Row": i + 2 # Google Sheets'te 1. satır başlıktır, veri 2'den başlar
                     })
                 st.session_state['live_data'] = new_data
-                st.success("Veriler mermi gibi çekildi!")
+                st.success("Excel mermi gibi çekildi!")
                 st.rerun()
             except Exception as e: st.error(f"Hata: {e}")
 
-        # --- 🛡️ LİSTE KONTROLÜ ---
         live_list = st.session_state.get('live_data', [])
         if isinstance(live_list, list) and len(live_list) > 0:
             df_admin = pd.DataFrame(live_list)
@@ -178,10 +178,28 @@ with st.expander("🔐 Admin Control Center"):
             edited_df = st.data_editor(df_edit, column_config={
                 "Seç": st.column_config.CheckboxColumn("Sil?", default=False),
                 "Maas": st.column_config.NumberColumn("Maaş", format="%.2f"),
-                "Yil_Sonu_Toplam": st.column_config.NumberColumn("Enflasyon", format="%.2f")
+                "Excel_Row": None # Row numarasını kullanıcı görmesin
             }, use_container_width=True, hide_index=True)
             
-            if st.button("🗑️ SEÇİLENLERİ SİL"):
-                st.info("Hafızadan temizlendi. Kalıcı silme Excel üzerinden yapılmalı.")
+            if st.button("🗑️ SEÇİLENLERİ SİL (KÖKTEN TEMİZLİK)"):
+                try:
+                    # Silineceklerin Excel satır numaralarını al
+                    rows_to_delete = sorted(edited_df[edited_df["Seç"] == True]["Excel_Row"].dropna().tolist(), reverse=True)
+                    
+                    if rows_to_delete:
+                        client = get_gspread_client()
+                        sheet = client.open("LiraPulse_Veri").sheet1
+                        
+                        # Excel'den Tersten Sil (Kayma olmaması için)
+                        for r_num in rows_to_delete:
+                            sheet.delete_rows(int(r_num))
+                        
+                        st.success(f"{len(rows_to_delete)} veri Excel'den kazındı!")
+                    
+                    # Canlı hafızayı güncelle
+                    st.session_state['live_data'] = edited_df[edited_df["Seç"] == False].drop(columns=["Seç"]).to_dict('records')
+                    st.rerun()
+                    
+                except Exception as e: st.error(f"Silme Hatası: {e}")
         else:
             st.info("Henüz veri yok. Geçmişi çekmek için butona bas.")
