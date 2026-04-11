@@ -53,8 +53,6 @@ st.markdown("""<style>
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; }
     .bugun-etiket { color: #ffbd45; font-size: 13px; text-align: center; margin-top: -10px; font-weight: bold; }
     .ekmek-text { color: #ffbd45; font-size: 14px; font-weight: bold; margin-bottom: 20px; }
-    .receipt-box { background-color: #fff; color: #333 !important; padding: 30px; border-radius: 10px; font-family: 'Courier New', monospace; border: 3px dashed #333; margin: 20px auto; max-width: 500px; line-height: 1.8; text-align: left; }
-    .receipt-box b, .receipt-box center, .receipt-box p, .receipt-box hr { color: #333 !important; border-color: #333 !important; }
     </style>""", unsafe_allow_html=True)
 
 if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
@@ -108,7 +106,7 @@ alim_kaybi = round((1 - (1 / (1 + res_total/100))) * 100, 2)
 reel_deger = round(1000/(1+res_total/100), 2)
 
 with col_out:
-    # --- YIL SONU ANALİZİ ---
+    # --- YIL SONU ANALİZİ (MATEMATİKLİ YAPI) ---
     st.markdown(f"""<div class="ozet-panel">
         <h3 style="color:#aaa; margin-bottom: 20px;">Yıl Sonu Beklenti Analizi</h3>
         <div style="display:flex; justify-content: space-around; align-items:center; margin-bottom: 15px;">
@@ -154,29 +152,30 @@ with col_out:
 
 st.divider()
 
-# --- ⚔️ YENİ BÖLÜM: YIL YIL ENFLASYON VS YATIRIM TABLOSU ---
+# --- ⚔️ YENİ BÖLÜM: YIL YIL ENFLASYON VS YATIRIM TABLOSU (TAHVİL VE EMLAK EKLENDİ) ---
 st.subheader("⚔️ 2020-2025: Enflasyonu Yenenler ve Yenilenler")
-st.markdown("<small style='color:#aaa;'>Grafikler yerine net rakamlar. Yeşil yananlar enflasyonu tokatladı, kırmızı yananlar enflasyona ezildi.</small>", unsafe_allow_html=True)
+st.markdown("<small style='color:#aaa;'>Yeşil yananlar enflasyonu tokatladı, kırmızı yananlar enflasyona ezildi.</small>", unsafe_allow_html=True)
 
 df_yatirim = pd.DataFrame({
     "Yıl": ["2020", "2021", "2022", "2023", "2024", "2025 (Tahmin)"],
-    "Enflasyon (%)": [14.6, 36.0, 64.2, 64.7, 45.0, 25.0],
-    "TL Mevduat (%)": [12.0, 17.0, 16.0, 35.0, 50.0, 40.0],
-    "Dolar (%)": [24.0, 78.0, 40.0, 57.0, 25.0, 15.0],
-    "Gram Altın (%)": [56.0, 70.0, 43.0, 78.0, 40.0, 20.0],
-    "BIST 100 (%)": [29.0, 25.0, 196.0, 35.0, 45.0, 30.0]
+    "Enflasyon (%)": [14.6, 36.1, 64.3, 64.8, 44.8, 25.0],
+    "TL Mevduat (%)": [12.0, 17.5, 16.0, 36.0, 51.0, 42.0],
+    "Dolar (%)": [24.8, 78.5, 40.2, 57.3, 25.1, 18.0],
+    "Gram Altın (%)": [55.9, 71.2, 42.8, 78.4, 40.5, 22.0],
+    "BIST 100 (%)": [29.1, 25.8, 196.6, 35.1, 46.2, 32.0],
+    "Devlet Tahvili (%)": [11.2, 16.8, 14.5, 28.2, 43.5, 36.0], # YENİ
+    "Emlak/Konut (%)": [30.4, 59.6, 168.0, 84.1, 38.2, 28.0]   # YENİ
 })
 
-# Renklendirme Motoru: Enflasyondan büyükse yeşil, küçükse kırmızı
 def color_cells(row):
     enf = row["Enflasyon (%)"]
     colors = [''] * len(row)
     for i, col in enumerate(row.index):
         if col not in ["Yıl", "Enflasyon (%)"]:
             if row[col] > enf:
-                colors[i] = 'color: #28a745; font-weight: bold;' # Yeşil
+                colors[i] = 'color: #28a745; font-weight: bold;'
             elif row[col] < enf:
-                colors[i] = 'color: #ff4b4b; font-weight: bold;' # Kırmızı
+                colors[i] = 'color: #ff4b4b; font-weight: bold;'
             else:
                 colors[i] = 'color: white;'
         elif col == "Enflasyon (%)":
@@ -185,13 +184,9 @@ def color_cells(row):
             colors[i] = 'font-weight: bold;'
     return colors
 
-# Tabloyu Formatla ve Ekrana Bas
 styled_df = df_yatirim.style.apply(color_cells, axis=1).format({
-    "Enflasyon (%)": "{:.1f}%",
-    "TL Mevduat (%)": "{:.1f}%",
-    "Dolar (%)": "{:.1f}%",
-    "Gram Altın (%)": "{:.1f}%",
-    "BIST 100 (%)": "{:.1f}%"
+    "Enflasyon (%)": "{:.1f}%", "TL Mevduat (%)": "{:.1f}%", "Dolar (%)": "{:.1f}%",
+    "Gram Altın (%)": "{:.1f}%", "BIST 100 (%)": "{:.1f}%", "Devlet Tahvili (%)": "{:.1f}%", "Emlak/Konut (%)": "{:.1f}%"
 })
 
 st.dataframe(styled_df, use_container_width=True, hide_index=True)
@@ -211,18 +206,13 @@ if st.button("💾 ANALİZİ KAYDET VE ADİSYONU AL", use_container_width=True):
     def f_tr(val):
         s = f"{val:.2f}".replace(".", ",")
         return f"'{s[:-3]}" if s.endswith(",00") else f"'{s}"
-    
     kayit_id = str(uuid.uuid4().hex[:8]).upper()
     v = [datetime.now().strftime("%d.%m.%Y %H:%M"), u_name, u_gender, f_tr(u_salary), u_prof, u_city, kayit_id, f_tr(s_enf), f_tr(res_total), f_tr(tahmini_kur), f_tr(alim_kaybi), f_tr(reel_deger)]
     
     if save_to_sheets(v):
         st.balloons()
-        
-        t_kahvalti = 400 
-        t_aksam = 600    
-        
-        y_kahvalti = t_kahvalti * (1 + res_total/100)
-        y_aksam = t_aksam * (1 + res_total/100)
+        y_kahvalti = 400 * (1 + res_total/100)
+        y_aksam = 600 * (1 + res_total/100)
         y_toplam = y_kahvalti + y_aksam
 
         st.markdown(f"""
@@ -248,9 +238,7 @@ with st.expander("🔐 Admin Control Center"):
     if st.text_input("Şifre:", type="password", key="adm_pw") == "alper2026":
         if st.button("🔄 Verileri Excel'den Tazele"):
             try:
-                client = get_gspread_client()
-                sheet = client.open("LiraPulse_Veri").sheet1
-                vals = sheet.get_all_values()
+                client = get_gspread_client(); sheet = client.open("LiraPulse_Veri").sheet1; vals = sheet.get_all_values()
                 if len(vals) > 1:
                     def clean_num(val):
                         try:
@@ -260,40 +248,25 @@ with st.expander("🔐 Admin Control Center"):
                             elif ',' in s: s = s.replace(',', '.')
                             return float(s)
                         except: return 0.0
-                    
                     new_data = []
                     for i in range(1, len(vals)):
                         row = vals[i]
-                        new_data.append({
-                            "Tarih": row[0] if len(row) > 0 else "", "Analist": row[1] if len(row) > 1 else "",
-                            "Cinsiyet": row[2] if len(row) > 2 else "", "Maas": clean_num(row[3]) if len(row) > 3 else 0.0,
-                            "Profil": row[4] if len(row) > 4 else "", "Sehir": row[5] if len(row) > 5 else "",
-                            "Kayit_ID": str(row[6]).strip() if len(row) > 6 else "", "Enflasyon": clean_num(row[8]) if len(row) > 8 else 0.0,
-                            "Dolar": clean_num(row[9]) if len(row) > 9 else 0.0, "Reel": clean_num(row[11]) if len(row) > 11 else 0.0
-                        })
-                    st.session_state['admin_data'] = new_data
-                    st.success("Veriler Excel'den çekildi!")
+                        new_data.append({"Tarih": row[0], "Analist": row[1], "Cinsiyet": row[2], "Maas": clean_num(row[3]), "Profil": row[4], "Sehir": row[5], "Kayit_ID": str(row[6]), "Enflasyon": clean_num(row[8]), "Dolar": clean_num(row[9]), "Reel": clean_num(row[11])})
+                    st.session_state['admin_data'] = new_data; st.success("Çekildi!")
                 else: st.info("Excel boş.")
             except Exception as e: st.error(f"Hata: {e}")
 
         if len(st.session_state['admin_data']) > 0:
             df = pd.DataFrame(st.session_state['admin_data'])
             s1, s2, s3, s4 = st.columns(4)
-            s1.metric("Toplam Katılım", f"{len(df)} Kişi")
-            s2.metric("Ort. Maaş", f"{tr_format(df['Maas'].mean())} TL")
-            s3.metric("Ort. Enflasyon", f"%{tr_format(df['Enflasyon'].mean())}")
-            s4.metric("Ort. Dolar", f"{tr_format(df['Dolar'].mean())} TL")
-            
-            if not df.empty and len(df) > 0:
-                g1, g2, g3 = st.columns(3)
-                with g1: st.plotly_chart(px.pie(df, names='Cinsiyet', title="Cinsiyet Dağılımı", hole=0.4), use_container_width=True)
-                with g2: st.plotly_chart(px.pie(df, names='Sehir', title="Şehir Dağılımı", hole=0.4), use_container_width=True)
-                with g3: st.plotly_chart(px.pie(df, names='Profil', title="Harcama Sepeti", hole=0.4), use_container_width=True)
-            
+            s1.metric("Toplam Katılım", f"{len(df)} Kişi"); s2.metric("Ort. Maaş", f"{tr_format(df['Maas'].mean())} TL"); s3.metric("Ort. Enflasyon", f"%{tr_format(df['Enflasyon'].mean())}"); s4.metric("Ort. Dolar", f"{tr_format(df['Dolar'].mean())} TL")
+            g1, g2, g3 = st.columns(3)
+            with g1: st.plotly_chart(px.pie(df, names='Cinsiyet', title="Cinsiyet Dağılımı", hole=0.4), use_container_width=True)
+            with g2: st.plotly_chart(px.pie(df, names='Sehir', title="Şehir Dağılımı", hole=0.4), use_container_width=True)
+            with g3: st.plotly_chart(px.pie(df, names='Profil', title="Harcama Sepeti", hole=0.4), use_container_width=True)
             st.divider()
             df_edit = df.copy(); df_edit.insert(0, "Seç", False)
             edited_df = st.data_editor(df_edit, column_config={"Seç": st.column_config.CheckboxColumn("Sil?", default=False), "Maas": st.column_config.NumberColumn("Maaş", format="%.0f")}, use_container_width=True, hide_index=True)
-            
             if st.button("🗑️ SEÇİLENLERİ SİL"):
                 sec_idler = edited_df[edited_df["Seç"] == True]["Kayit_ID"].tolist()
                 if sec_idler:
