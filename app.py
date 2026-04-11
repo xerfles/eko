@@ -25,11 +25,11 @@ def save_to_sheets(veri):
         st.error(f"Kayıt Hatası: {e}")
         return False
 
-# --- 🛰️ CANLI HAFIZA SİSTEMİ (SAF LİSTE) ---
+# --- 🛰️ CANLI HAFIZA SİSTEMİ (SESSION STATE) ---
 if 'live_data' not in st.session_state:
     st.session_state['live_data'] = []
 
-# --- 📊 PİYASA VERİLERİ ---
+# --- 📊 PİYASA VERİLERİ (11 Nisan 2026) ---
 GUNCEL_DOLAR, Q1_ENF, TCMB_FAIZ, TCMB_2026_HEDEF = 44.92, 14.40, 37.0, 21.0
 P_PS5, P_IPHONE, P_CLIO = 42999, 77999, 1795000
 
@@ -110,15 +110,19 @@ if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_wi
         "Profil": u_prof, "Sehir": u_city, "IP": "0.0.0.0",
         "Senin_Tahminin": s_enf, "Yil_Sonu_Toplam": res_total,
         "Dolar_Beklentisi": tahmini_kur, "Alim_Gucu_Kaybi": alim_kaybi,
-        "Reel_Kalan": 1000/(1+res_total/100)
+        "Reel_Kalan": round(1000/(1+res_total/100), 2)
     }
-    # BURASI DÜZELTİLDİ: Liste işlemleri güvenli hale getirildi
+    
+    # --- 🛡️ ATTRIBUTE ERROR KORUMASI ---
+    if not isinstance(st.session_state['live_data'], list):
+        st.session_state['live_data'] = []
+    
     st.session_state['live_data'].append(live_entry)
     
     v = [live_entry["Zaman"], u_name, u_gender, f_tr(u_salary), u_prof, u_city, "0.0.0.0", f_tr(s_enf), f_tr(res_total), f_tr(tahmini_kur), f_tr(alim_kaybi), f_tr(live_entry["Reel_Kalan"])]
     if save_to_sheets(v):
         st.balloons()
-        st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>Yıl Sonu Tahmini:</b> %{res_total:.2f}</p><p><b>1.000 TL Reel Değer:</b> {1000/(1+res_total/100):.2f} TL</p><hr><center><i>Veri Google Sheets'e Mermi Gibi İşlendi.</i></center></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>Yıl Sonu Tahmini:</b> %{res_total:.2f}</p><p><b>1.000 TL Reel Değer:</b> {live_entry['Reel_Kalan']:.2f} TL</p><hr><center><i>Veri Google Sheets'e Mermi Gibi İşlendi.</i></center></div>""", unsafe_allow_html=True)
 
 # --- 🔐 ADMIN: HATASIZ CANLI PANEL ---
 with st.expander("🔐 Admin Control Center"):
@@ -152,8 +156,10 @@ with st.expander("🔐 Admin Control Center"):
                 st.rerun()
             except Exception as e: st.error(f"Hata: {e}")
 
-        if len(st.session_state['live_data']) > 0:
-            df_admin = pd.DataFrame(st.session_state['live_data'])
+        # --- 🛡️ LİSTE KONTROLÜ ---
+        live_list = st.session_state.get('live_data', [])
+        if isinstance(live_list, list) and len(live_list) > 0:
+            df_admin = pd.DataFrame(live_list)
             
             st.write("### 📈 Sokağın Röntgenti")
             s1, s2, s3 = st.columns(3)
