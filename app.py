@@ -48,7 +48,6 @@ st.markdown("""<style>
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; }
     .receipt-box { background-color: #fff; color: #333 !important; padding: 20px; border-radius: 5px; font-family: 'Courier New', monospace; border: 2px dashed #333; margin: 20px auto; max-width: 450px; line-height: 1.6; }
-    .receipt-box b, .receipt-box center, .receipt-box p { color: #333 !important; }
     </style>""", unsafe_allow_html=True)
 
 if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
@@ -60,7 +59,6 @@ col_in, col_out = st.columns([1.2, 2])
 with col_in:
     st.subheader("🕵️ Analist Girişi")
     u_name = st.text_input("Rumuz:", "Analist_01")
-    u_gender = st.selectbox("Cinsiyet:", ["Erkek", "Kadın", "Belirtmek İstemiyorum"])
     u_salary = st.number_input("Aylık Maaş (TL):", value=22102)
     u_prof = st.selectbox("Harcama Sepeti:", ["Öğrenci", "Mavi Yaka", "Beyaz Yaka", "Emekli", "Kamu Personeli"])
     u_city = st.selectbox("Şehir:", ["Kırklareli", "İstanbul", "Ankara", "İzmir", "Diğer"])
@@ -87,25 +85,20 @@ alim_kaybi = round((1 - (1 / (1 + res_total/100))) * 100, 2)
 
 with col_out:
     st.markdown(f"""<div class="ozet-panel"><h3>Yıl Sonu Beklenti Analizi</h3><div style="display:flex; justify-content: space-around; align-items:center;"><div><small>Q1 Gerçekleşen</small><br><b style="font-size:24px; color:#00d4ff;">%{tr_format(Q1_ENF)}</b></div><div style="font-size:30px; color:#555;">+</div><div><small>Tahminin</small><br><b style="font-size:24px; color:#ffbd45;">%{tr_format(s_enf)}</b></div><div style="font-size:30px; color:#555;">=</div><div><small><b>Yıl Sonu Toplamı</b></small><br><b style="font-size:36px; color:#ff4b4b;">%{tr_format(res_total)}</b></div></div><hr style="border:0.5px solid #333;"><p>Tahmini Kur: <b>{tr_format(tahmini_kur)} TL</b></p></div>""", unsafe_allow_html=True)
-    h1, h2, h3 = st.columns(3)
-    with h1: st.metric("🎮 PS5 (2026)", f"{tr_format(P_PS5*(1+res_total/85))} TL")
-    with h2: st.metric("📱 iPhone (2026)", f"{tr_format(P_IPHONE*(1+res_total/95))} TL")
-    with h3: st.metric("🚗 Clio (2026)", f"{tr_format(P_CLIO*(1+res_total/100))} TL")
     st.divider()
     st.plotly_chart(go.Figure(go.Indicator(mode="gauge+number", value=alim_kaybi, title={'text': "Alım Gücü Kaybı (%)"}, gauge={'bar': {'color': "#ff4b4b"}})).update_layout(height=280, paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
 
 # --- 💾 EXCEL'E KAYIT ---
-if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_width=True):
+if st.button("💾 ANALİZİ KAYDET VE ADİSYONU AL", use_container_width=True):
     def f_tr(val):
         s = f"{val:.2f}".replace(".", ",")
         if s.endswith(",00"): s = s[:-3]
         return f"'{s}"
     kayit_id = str(uuid.uuid4().hex[:8]).upper()
-    reel_kalan = round(1000/(1+res_total/100), 2)
-    v = [datetime.now().strftime("%d.%m.%Y %H:%M"), u_name, u_gender, f_tr(u_salary), u_prof, u_city, kayit_id, f_tr(s_enf), f_tr(res_total), f_tr(tahmini_kur), f_tr(alim_kaybi), f_tr(reel_kalan)]
+    v = [datetime.now().strftime("%d.%m.%Y %H:%M"), u_name, "", f_tr(u_salary), u_prof, u_city, kayit_id, f_tr(s_enf), f_tr(res_total), f_tr(tahmini_kur), f_tr(alim_kaybi), f_tr(1000/(1+res_total/100))]
     if save_to_sheets(v):
         st.balloons()
-        st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>ID:</b> {kayit_id}</p><p><b>Yıl Sonu Tahmini:</b> %{tr_format(res_total)}</p><p><b>Dolar Beklentisi:</b> {tr_format(tahmini_kur)} TL</p><hr><center><i>Veri Google Sheets'e Mermi Gibi İşlendi.</i></center></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>ID:</b> {kayit_id}</p><p><b>Enflasyon:</b> %{tr_format(res_total)}</p><p><b>Dolar:</b> {tr_format(tahmini_kur)} TL</p></div>""", unsafe_allow_html=True)
 
 # --- 🔐 ADMIN PANELİ ---
 if 'admin_data' not in st.session_state: st.session_state['admin_data'] = []
@@ -130,7 +123,7 @@ with st.expander("🔐 Admin Control Center"):
 
                     clean_data = []
                     for i, row in enumerate(records):
-                        # AKILLI SÜTUN BULUCU: İsme değil, içeriğe veya benzerliğe bakar
+                        # --- HATA ÖNLEYİCİ SÜTUN BULUCU ---
                         col_enf = next((k for k in row.keys() if any(x in k for x in ['Toplam', 'Enf', 'enf'])), 'Enflasyon')
                         col_dol = next((k for k in row.keys() if 'Dolar' in k), 'Dolar')
                         col_id = next((k for k in row.keys() if any(x in k for x in ['ID', 'IP'])), 'Kayit_ID')
@@ -142,11 +135,11 @@ with st.expander("🔐 Admin Control Center"):
                             "Maas": clean_num(row.get(col_maas, 0)),
                             "Kayit_ID": str(row.get(col_id, "")).strip(), 
                             "Enflasyon": clean_num(row.get(col_enf, 0)),
-                            "Dolar_Beklentisi": clean_num(row.get(col_dol, 0)),
+                            "Dolar": clean_num(row.get(col_dol, 0)),
                             "Excel_Row": i + 2
                         })
                     st.session_state['admin_data'] = clean_data
-                    st.success("Excel mermi gibi çekildi!")
+                    st.success("Veriler çekildi!")
                 else: st.info("Excel'de veri yok.")
             except Exception as e: st.error(f"Hata: {e}")
 
@@ -157,31 +150,18 @@ with st.expander("🔐 Admin Control Center"):
             s1.metric("Toplam Katılım", f"{len(df_admin)} Kişi")
             s2.metric("Ort. Maaş", f"{tr_format(df_admin['Maas'].mean())} TL")
             s3.metric("Ort. Enflasyon", f"%{tr_format(df_admin['Enflasyon'].mean())}")
-            s4.metric("Ort. Dolar Beklentisi", f"{tr_format(df_admin['Dolar_Beklentisi'].mean())} TL")
+            s4.metric("Ort. Dolar Beklentisi", f"{tr_format(df_admin['Dolar'].mean())} TL")
             
             st.divider()
             df_edit = df_admin.copy(); df_edit.insert(0, "Seç", False)
-            edited_df = st.data_editor(df_edit, column_config={
-                "Seç": st.column_config.CheckboxColumn("Sil?", default=False),
-                "Maas": st.column_config.NumberColumn("Maaş", format="%.0f"),
-                "Enflasyon": st.column_config.NumberColumn("Enflasyon", format="%.2f"),
-                "Dolar_Beklentisi": st.column_config.NumberColumn("Dolar", format="%.2f"),
-                "Excel_Row": None, "Kayit_ID": None # ID'yi gizleyelim ama silme için kullanacağız
-            }, use_container_width=True, hide_index=True)
+            edited_df = st.data_editor(df_edit, column_config={"Seç": st.column_config.CheckboxColumn("Sil?", default=False), "Excel_Row": None, "Kayit_ID": None}, use_container_width=True, hide_index=True)
             
-            if st.button("🗑️ SEÇİLENLERİ EXCEL'DEN KAZI"):
+            if st.button("🗑️ SEÇİLENLERİ EXCEL'DEN SİL"):
                 try:
-                    secilen_idler = edited_df[edited_df["Seç"] == True]["Kayit_ID"].tolist()
-                    if secilen_idler:
+                    sec_idler = edited_df[edited_df["Seç"] == True]["Kayit_ID"].tolist()
+                    if sec_idler:
                         client = get_gspread_client(); sheet = client.open("LiraPulse_Veri").sheet1; all_vals = sheet.get_all_values()
-                        rows_to_del = []
-                        # Excel'de ID'nin olduğu sütunu tara (genelde 7. sütun / index 6)
-                        for i, row_data in enumerate(all_vals):
-                            if i == 0: continue
-                            if any(str(cell).strip() in secilen_idler for cell in row_data):
-                                rows_to_del.append(i + 1)
-                        
-                        rows_to_del.sort(reverse=True)
-                        for r_num in rows_to_del: sheet.delete_rows(int(r_num))
+                        rows_to_del = [i+1 for i, r in enumerate(all_vals) if any(str(c).strip() in sec_idler for c in r)]
+                        for r_num in sorted(rows_to_del, reverse=True): sheet.delete_rows(r_num)
                         st.success(f"{len(rows_to_del)} veri silindi!"); st.session_state['admin_data'] = []; st.rerun()
                 except Exception as e: st.error(f"Hata: {e}")
