@@ -125,19 +125,27 @@ with st.expander("🔐 Admin Control Center"):
             df_cloud = pd.DataFrame(sheet.get_all_records())
             
             if not df_cloud.empty:
-                st.write("### 📈 Sokağın Röntgenti")
-                s1, s2, s3 = st.columns(3)
-                # Sayısal değerlere zorla (Hatalı ortalamayı düzeltmek için)
+                # 1. VERİ TEMİZLİĞİ (Sayısal ve String Normaleştirme)
                 df_cloud['Maas'] = pd.to_numeric(df_cloud['Maas'], errors='coerce')
                 df_cloud['Yil_Sonu_Toplam'] = pd.to_numeric(df_cloud['Yil_Sonu_Toplam'], errors='coerce')
+                # Cinsiyetleri temizle (Erkek, erkek, ERKEK -> Erkek)
+                df_cloud['Cinsiyet'] = df_cloud['Cinsiyet'].astype(str).str.strip().str.capitalize()
                 
+                st.write("### 📈 Sokağın Röntgenti")
+                s1, s2, s3 = st.columns(3)
                 s1.metric("Toplam Katılım", f"{len(df_cloud)} Kişi")
                 s2.metric("Ort. Maaş", f"{df_cloud['Maas'].mean():,.0f} TL")
+                # 2. ORTALAMA ENFLASYON HATASI ÇÖZÜLDÜ
                 s3.metric("Ort. Enflasyon", f"%{df_cloud['Yil_Sonu_Toplam'].mean():.1f}")
                 
+                # 3. PASTA GRAFİĞİ HATASI ÇÖZÜLDÜ (Daha temiz gruplama)
                 gr1, gr2 = st.columns(2)
-                with gr1: st.plotly_chart(px.pie(df_cloud, names='Cinsiyet', title="Cinsiyet Dağılımı", hole=0.4, color_discrete_sequence=px.colors.qualitative.Pastel), use_container_width=True)
-                with gr2: st.plotly_chart(px.pie(df_cloud, names='Profil', title="Sepet Dağılımı", hole=0.4, color_discrete_sequence=px.colors.qualitative.Set3), use_container_width=True)
+                with gr1:
+                    gen_data = df_cloud['Cinsiyet'].value_counts().reset_index()
+                    st.plotly_chart(px.pie(gen_data, names='Cinsiyet', values='count', title="Cinsiyet Dağılımı", hole=0.4, color_discrete_sequence=px.colors.qualitative.Pastel), use_container_width=True)
+                with gr2:
+                    prof_data = df_cloud['Profil'].value_counts().reset_index()
+                    st.plotly_chart(px.pie(prof_data, names='Profil', values='count', title="Sepet Dağılımı", hole=0.4, color_discrete_sequence=px.colors.qualitative.Set3), use_container_width=True)
                 
                 st.divider()
                 st.write("### 🧹 Veri Temizliği (Trollere Ölüm)")
@@ -149,7 +157,7 @@ with st.expander("🔐 Admin Control Center"):
                     rows_to_keep = edited_df[edited_df["Seç"] == False].drop(columns=["Seç"])
                     sheet.clear()
                     sheet.update([rows_to_keep.columns.values.tolist()] + rows_to_keep.values.tolist())
-                    st.success("Seçilen satırlar silindi!")
+                    st.success("Troller temizlendi!")
                     st.rerun()
             else: st.info("Henüz veri yok.")
         except Exception as e: st.error(f"Hata: {e}")
