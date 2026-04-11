@@ -26,7 +26,7 @@ def save_to_sheets(veri):
         st.error(f"Kayıt Hatası: {e}")
         return False
 
-# --- 📊 PİYASA VERİLERİ (11 Nisan 2026) ---
+# --- 📊 PİYASA VERİLERİ (GÜNCEL) ---
 GUNCEL_DOLAR, Q1_ENF, TCMB_FAIZ, TCMB_2026_HEDEF = 44.92, 14.40, 37.0, 21.0
 P_PS5, P_IPHONE, P_CLIO = 42999, 77999, 1795000
 
@@ -37,7 +37,6 @@ st.markdown("""<style>
     .main { background-color: #0d1117; }
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; }
-    .receipt-box { background-color: #fff; color: #333 !important; padding: 20px; border-radius: 5px; font-family: 'Courier New', monospace; border: 2px dashed #333; margin: 20px auto; max-width: 450px; }
     </style>""", unsafe_allow_html=True)
 
 if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
@@ -74,6 +73,7 @@ w = weights[u_prof]
 s_enf = (d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3])
 res_total = Q1_ENF + s_enf
 tahmini_kur = GUNCEL_DOLAR * (1 + d_a/100)
+alim_kaybi = (1 - (1 / (1 + res_total/100))) * 100
 
 with col_out:
     st.markdown(f"""<div class="ozet-panel"><h3 style="color:#888; margin-bottom:5px;">Yıl Sonu Beklenti Analizi</h3><div style="display:flex; justify-content: space-around; align-items:center;"><div><small>Q1 Gerçekleşen</small><br><b style="font-size:24px; color:#00d4ff;">%{Q1_ENF}</b></div><div style="font-size:30px; color:#555;">+</div><div><small>Senin Tahminin</small><br><b style="font-size:24px; color:#ffbd45;">%{s_enf:.1f}</b></div><div style="font-size:30px; color:#555;">=</div><div><small><b>Yıl Sonu Toplamı</b></small><br><b style="font-size:36px; color:#ff4b4b;">%{res_total:.1f}</b></div></div><hr style="border:0.5px solid #333;"><p style="margin:0; font-size:18px;">Tahmini Kur: <span style="color:#00d4ff; font-weight:bold;">{tahmini_kur:.2f} TL</span></p></div>""", unsafe_allow_html=True)
@@ -82,7 +82,6 @@ with col_out:
     with h2: st.metric("📱 iPhone (2026)", f"{P_IPHONE*(1+res_total/95):,.0f} TL")
     with h3: st.metric("🚗 Clio (2026)", f"{P_CLIO*(1+res_total/100):,.0f} TL")
     st.divider()
-    alim_kaybi = (1 - (1 / (1 + res_total/100))) * 100
     st.write("### 📉 1.000 TL Akıbeti")
     st.title(f"{1000/(1+res_total/100):.2f} TL")
 
@@ -90,7 +89,7 @@ if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_wi
     v = [datetime.now().strftime("%d.%m.%Y %H:%M"), u_name, u_gender, str(u_salary).replace(".",","), u_prof, u_city, "0.0.0.0", str(s_enf).replace(".",","), str(res_total).replace(".",","), str(tahmini_kur).replace(".",","), str(alim_kaybi).replace(".",","), str(1000/(1+res_total/100)).replace(".",",")]
     if save_to_sheets(v):
         st.balloons()
-        st.success("Veri Google Sheets'e mermi gibi kaydedildi!")
+        st.success("Veriler Google Sheets'e mermi gibi işlendi!")
 
 # --- 🔐 ADMIN ---
 with st.expander("🔐 Admin Control Center"):
@@ -101,21 +100,23 @@ with st.expander("🔐 Admin Control Center"):
             df_cloud = pd.DataFrame(sheet.get_all_records())
             
             if not df_cloud.empty:
-                # --- 📉 VERİ TEMİZLEME (VİRGÜLLERİ NOKTAYA ÇEVİRİR) ---
-                def clean_num(val):
+                # --- 📉 KRİTİK VERİ TEMİZLEME MOTORU ---
+                def parse_tr_float(val):
                     try: return float(str(val).replace(',', '.'))
                     except: return 0.0
 
-                df_cloud['Maas'] = df_cloud['Maas'].apply(clean_num)
-                # DİKKAT: Sütun adı Excel'deki gibi "Yil_Sonu_Toplam" olarak düzeltildi
-                df_cloud['Yil_Sonu_Toplam'] = df_cloud['Yil_Sonu_Toplam'].apply(clean_num)
-                df_cloud['Dolar_Beklentisi'] = df_cloud['Dolar_Beklentisi'].apply(clean_num)
+                df_cloud['Maas'] = df_cloud['Maas'].apply(parse_tr_float)
+                # Sütun adı düzeltildi
+                target_col = 'Yil_Sonu_Toplam' if 'Yil_Sonu_Toplam' in df_cloud.columns else 'Yil_Sonu_Toplar'
+                df_cloud['Clean_Enf'] = df_cloud[target_col].apply(parse_tr_float)
+                df_cloud['Dolar_Beklentisi'] = df_cloud['Dolar_Beklentisi'].apply(parse_tr_float)
 
                 st.write("### 📈 Sokağın Röntgenti")
                 s1, s2, s3 = st.columns(3)
                 s1.metric("Toplam Katılım", f"{len(df_cloud)} Kişi")
                 s2.metric("Ort. Maaş", f"{df_cloud['Maas'].mean():,.2f} TL")
-                s3.metric("Ort. Enflasyon", f"%{df_cloud['Yil_Sonu_Toplam'].mean():.2f}")
+                # Artık tertemiz bir ortalama çıkacak
+                s3.metric("Ort. Enflasyon", f"%{df_cloud['Clean_Enf'].mean():.2f}")
                 
                 # Pasta Grafikleri
                 gr1, gr2, gr3 = st.columns(3)
@@ -125,11 +126,10 @@ with st.expander("🔐 Admin Control Center"):
                 
                 st.divider()
                 st.write("### 🧹 Veri Temizliği (Gerçek IP'ler Gösteriliyor)")
-                st.data_editor(df_cloud, column_config={
+                st.data_editor(df_cloud.drop(columns=['Clean_Enf']), column_config={
                     "Maas": st.column_config.NumberColumn("Maaş", format="%.2f"),
-                    "Yil_Sonu_Toplam": st.column_config.NumberColumn("Enflasyon", format="%.2f"),
-                    "Dolar_Beklentisi": st.column_config.NumberColumn("Dolar Beklentisi", format="%.2f"),
-                    "IP": st.column_config.TextColumn("Kullanıcı IP") # IP GİZLEME KALDIRILDI
+                    target_col: st.column_config.NumberColumn("Enflasyon", format="%.2f"),
+                    "Dolar_Beklentisi": st.column_config.NumberColumn("Kur Tahmini", format="%.2f"),
+                    "IP": st.column_config.TextColumn("IP Adresi")
                 }, use_container_width=True, hide_index=True)
-        except Exception as e: 
-            st.error(f"Veri çekilemedi. Hata: {e}")
+        except Exception as e: st.error(f"Hata: {e}")
