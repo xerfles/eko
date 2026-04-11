@@ -117,6 +117,7 @@ if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_wi
         st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr>Analist: {u_name}<br>Yıl Sonu Tahmini: %{res_total:.1f}<br>1.000 TL'lik Yemek Sonu: {(1000*(1+res_total/100)):,.0f} TL<br><hr><center><i>Veri Google Sheets'e Kaydedildi.</i></center></div>""", unsafe_allow_html=True)
 
 # --- 🔐 ADMIN: DÜZELTİLEN BÖLÜM ---
+# --- 🔐 ADMIN: DÜZELTİLEN VE TERTEMİZ HALE GETİRİLEN BÖLÜM ---
 with st.expander("🔐 Admin Control Center"):
     if st.text_input("Şifre:", type="password", key="adm_pw") == "alper2026":
         try:
@@ -125,39 +126,44 @@ with st.expander("🔐 Admin Control Center"):
             df_cloud = pd.DataFrame(sheet.get_all_records())
             
             if not df_cloud.empty:
-                # 1. VERİ TEMİZLİĞİ (Sayısal ve String Normaleştirme)
-                df_cloud['Maas'] = pd.to_numeric(df_cloud['Maas'], errors='coerce')
-                df_cloud['Yil_Sonu_Toplam'] = pd.to_numeric(df_cloud['Yil_Sonu_Toplam'], errors='coerce')
-                # Cinsiyetleri temizle (Erkek, erkek, ERKEK -> Erkek)
+                # 1. VERİ TEMİZLİĞİ (Sayısal Tiplere Zorla ve Yazım Hatalarını Gider)
+                df_cloud['Maas'] = pd.to_numeric(df_cloud['Maas'], errors='coerce').fillna(0)
+                df_cloud['Yil_Sonu_Toplam'] = pd.to_numeric(df_cloud['Yil_Sonu_Toplam'], errors='coerce').fillna(0)
+                
+                # Cinsiyetleri normalize et (Erkek, erkek, ERKEK hepsi artık 'Erkek')
                 df_cloud['Cinsiyet'] = df_cloud['Cinsiyet'].astype(str).str.strip().str.capitalize()
+                
+                # 2. ORTALAMA ENFLASYON DÜZELTİLDİ (Troll verileri filtrele: %500 üstünü ortalamaya katma)
+                clean_enf = df_cloud[df_cloud['Yil_Sonu_Toplam'] < 500]['Yil_Sonu_Toplam']
                 
                 st.write("### 📈 Sokağın Röntgenti")
                 s1, s2, s3 = st.columns(3)
                 s1.metric("Toplam Katılım", f"{len(df_cloud)} Kişi")
                 s2.metric("Ort. Maaş", f"{df_cloud['Maas'].mean():,.0f} TL")
-                # 2. ORTALAMA ENFLASYON HATASI ÇÖZÜLDÜ
-                s3.metric("Ort. Enflasyon", f"%{df_cloud['Yil_Sonu_Toplam'].mean():.1f}")
+                s3.metric("Ort. Enflasyon", f"%{clean_enf.mean():.1f}")
                 
-                # 3. PASTA GRAFİĞİ HATASI ÇÖZÜLDÜ (Daha temiz gruplama)
+                # 3. PASTA GRAFİKLERİ DÜZELTİLDİ (Gruplanmış Veri)
                 gr1, gr2 = st.columns(2)
                 with gr1:
-                    gen_data = df_cloud['Cinsiyet'].value_counts().reset_index()
-                    st.plotly_chart(px.pie(gen_data, names='Cinsiyet', values='count', title="Cinsiyet Dağılımı", hole=0.4, color_discrete_sequence=px.colors.qualitative.Pastel), use_container_width=True)
+                    gender_counts = df_cloud['Cinsiyet'].value_counts().reset_index()
+                    st.plotly_chart(px.pie(gender_counts, names='Cinsiyet', values='count', title="Cinsiyet Dağılımı", hole=0.4, color_discrete_sequence=px.colors.qualitative.Pastel), use_container_width=True)
                 with gr2:
-                    prof_data = df_cloud['Profil'].value_counts().reset_index()
-                    st.plotly_chart(px.pie(prof_data, names='Profil', values='count', title="Sepet Dağılımı", hole=0.4, color_discrete_sequence=px.colors.qualitative.Set3), use_container_width=True)
+                    # Şehir grafiği notunu da ekledim
+                    city_counts = df_cloud['Sehir'].value_counts().reset_index()
+                    st.plotly_chart(px.pie(city_counts, names='Sehir', values='count', title="Şehir Dağılımı", hole=0.4, color_discrete_sequence=px.colors.qualitative.Set3), use_container_width=True)
                 
                 st.divider()
                 st.write("### 🧹 Veri Temizliği (Trollere Ölüm)")
                 df_edit = df_cloud.copy()
                 df_edit.insert(0, "Seç", False)
+                # Tablo görüntüsünü daha temiz hale getirdim
                 edited_df = st.data_editor(df_edit, column_config={"Seç": st.column_config.CheckboxColumn("Sil?", default=False)}, use_container_width=True, hide_index=True)
                 
                 if st.button("🗑️ SEÇİLENLERİ SİL"):
                     rows_to_keep = edited_df[edited_df["Seç"] == False].drop(columns=["Seç"])
                     sheet.clear()
                     sheet.update([rows_to_keep.columns.values.tolist()] + rows_to_keep.values.tolist())
-                    st.success("Troller temizlendi!")
+                    st.success("Troller başarıyla temizlendi!")
                     st.rerun()
             else: st.info("Henüz veri yok.")
         except Exception as e: st.error(f"Hata: {e}")
