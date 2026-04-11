@@ -26,13 +26,13 @@ def save_to_sheets(veri):
         st.error(f"Kayıt Hatası: {e}")
         return False
 
-# --- 📊 PİYASA VERİLERİ (6 Nisan 2026) ---
-GUNCEL_DOLAR, Q1_ENF, TCMB_FAIZ, TCMB_2026_HEDEF = 44.92, 14.40, 37.0, 22.0
+# --- 📊 PİYASA VERİLERİ (11 Nisan 2026 GÜNCEL) ---
+GUNCEL_DOLAR, Q1_ENF, TCMB_FAIZ, TCMB_2026_HEDEF = 44.92, 14.40, 37.0, 21.0
 P_PS5, P_IPHONE, P_CLIO = 42999, 77999, 1795000
 
 st.set_page_config(page_title="LiraPulse: Gelecek Beklentisi", layout="wide")
 
-# --- 🎨 CSS: TASARIM KORUMASI ---
+# --- 🎨 CSS ---
 st.markdown("""<style>
     .main { background-color: #0d1117; }
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
@@ -47,8 +47,8 @@ if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val
 
 st.title("🛰️ LiraPulse: Enflasyon ve Gelecek Beklentisi")
 
-# Dolar Geçişkenliği Bilgi Kutusu
-st.markdown("""<div class="info-box"><b>💡 Dolar Geçişkenliği Nedir?</b><br>Dolar %10 artınca her şey %10 artmaz. iPhone gibi ithal ürünler dolara %90 bağlıyken, yerli üretim gıdalarda bu etki %30 civarındadır. Bu yüzden farklı harcama kalemleri için farklı 'geçişkenlik çarpanları' kullanıyoruz.</div>""", unsafe_allow_html=True)
+# Dolar Geçişkenliği Kutusu
+st.markdown("""<div class="info-box"><b>💡 Dolar Geçişkenliği ve Mutfak</b><br>Dolar artışının ürünlere yansıması aynı değildir. iPhone %90 ithal olduğu için dolara doğrudan bağlıyken, gıda ve ulaşımda bu etki mazot ve gübre üzerinden dolaylı gelir. Biz burada her profil için bu geçişkenliği ayrı hesaplıyoruz.</div>""", unsafe_allow_html=True)
 
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("💵 Güncel Dolar", f"{GUNCEL_DOLAR} TL")
@@ -63,37 +63,34 @@ with col_in:
     st.subheader("🕵️ Analist Girişi")
     u_name = st.text_input("Rumuz:", "Analist_01")
     u_salary = st.number_input("Aylık Maaş (TL):", value=22102)
-    
-    # Yeni Harcama Sepeti Profilleri
     u_prof = st.selectbox("Harcama Sepeti (Profil):", ["Öğrenci", "Mavi Yaka", "Beyaz Yaka", "Emekli", "Kamu Personeli"])
     u_city = st.selectbox("Şehir:", ["Kırklareli", "İstanbul", "Ankara", "İzmir", "Diğer"])
     
-    # Yeni Senaryo Butonları
+    # --- 🔮 SENARYO BUTONLARI (MATEMATİKSEL DÜZELTME YAPILDI) ---
     st.write("🔮 **Gelecek Senaryosunu Seç**")
     s1, s2, s3 = st.columns(3)
-    if s1.button("🏦 TCMB"): st.session_state.update({'d_val': 12, 'g_val': 16, 'k_val': 15, 'u_val': 14}); st.rerun()
-    if s2.button("📉 TÜİK"): st.session_state.update({'d_val': 20, 'g_val': 28, 'k_val': 25, 'u_val': 22}); st.rerun()
-    if s3.button("🌸 İyimser"): st.session_state.update({'d_val': 25, 'g_val': 35, 'k_val': 30, 'u_val': 28}); st.rerun()
+    # Hedef %21 - Q1 %14.4 = %6.6
+    if s1.button("🏦 TCMB"): st.session_state.update({'d_val': 5, 'g_val': 8, 'k_val': 7, 'u_val': 6}); st.rerun()
+    # Hedef %32 - Q1 %14.4 = %17.6
+    if s2.button("📉 TÜİK"): st.session_state.update({'d_val': 12, 'g_val': 22, 'k_val': 20, 'u_val': 16}); st.rerun()
+    # Hedef %42 - Q1 %14.4 = %27.6
+    if s3.button("🌸 İyimser"): st.session_state.update({'d_val': 20, 'g_val': 32, 'k_val': 30, 'u_val': 28}); st.rerun()
     
     s4, s5, s6 = st.columns(3)
-    if s4.button("📊 Realist"): st.session_state.update({'d_val': 40, 'g_val': 55, 'k_val': 60, 'u_val': 45}); st.rerun()
-    if s5.button("🔥 ENAG"): st.session_state.update({'d_val': 65, 'g_val': 85, 'k_val': 90, 'u_val': 75}); st.rerun()
-    if s6.button("🌋 Kriz"): st.session_state.update({'d_val': 100, 'g_val': 130, 'k_val': 150, 'u_val': 120}); st.rerun()
+    # Hedef %58 - Q1 %14.4 = %43.6
+    if s4.button("📊 Realist"): st.session_state.update({'d_val': 35, 'g_val': 48, 'k_val': 50, 'u_val': 42}); st.rerun()
+    # Hedef %78 - Q1 %14.4 = %63.6
+    if s5.button("🔥 ENAG"): st.session_state.update({'d_val': 55, 'g_val': 70, 'k_val': 75, 'u_val': 60}); st.rerun()
+    # Hedef %125 - Q1 %14.4 = %110.6
+    if s6.button("🌋 Kriz"): st.session_state.update({'d_val': 100, 'g_val': 120, 'k_val': 130, 'u_val': 110}); st.rerun()
     
     d_a = st.slider("💵 Dolar Artışı (%)", 0, 150, key='d_val')
     g_a = st.slider("🛒 Gıda Artışı (%)", 0, 150, key='g_val')
     k_a = st.slider("🏠 Kira Artışı (%)", 0, 150, key='k_val')
     u_a = st.slider("🚗 Ulaşım Artışı (%)", 0, 150, key='u_val')
 
-# --- 🧮 HESAPLAMA (PROFİL KATSAYILARI) ---
-# Ağırlıklar: [Dolar, Gıda, Kira, Ulaşım]
-weights = {
-    "Öğrenci": [0.25, 0.20, 0.40, 0.15],
-    "Mavi Yaka": [0.10, 0.45, 0.30, 0.15],
-    "Beyaz Yaka": [0.20, 0.25, 0.35, 0.20],
-    "Emekli": [0.05, 0.55, 0.30, 0.10],
-    "Kamu Personeli": [0.15, 0.30, 0.35, 0.20]
-}
+# --- 🧮 HESAPLAMA ---
+weights = {"Öğrenci": [0.25, 0.20, 0.40, 0.15], "Mavi Yaka": [0.10, 0.45, 0.30, 0.15], "Beyaz Yaka": [0.20, 0.25, 0.35, 0.20], "Emekli": [0.05, 0.55, 0.30, 0.10], "Kamu Personeli": [0.15, 0.30, 0.35, 0.20]}
 w = weights[u_prof]
 s_enf = (d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3])
 res_total = Q1_ENF + s_enf
@@ -134,7 +131,7 @@ if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_wi
     v = [datetime.now().strftime("%d.%m.%Y %H:%M"), u_name, "", u_salary, u_prof, u_city, "0.0.0.0", s_enf, res_total, tahmini_kur, alim_kaybi, 1000/(1+res_total/100)]
     if save_to_sheets(v):
         st.balloons()
-        st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr>Analist: {u_name}<br>Profil: {u_prof}<br>Yıl Sonu Tahmini: %{res_total:.1f}<br>1.000 TL'lik Yemek Sonu: {(1000*(1+res_total/100)):,.0f} TL<br><hr><center><i>Veri Google Sheets'e Kaydedildi.</i></center></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr>Analist: {u_name}<br>Yıl Sonu Tahmini: %{res_total:.1f}<br>1.000 TL'lik Yemek Sonu: {(1000*(1+res_total/100)):,.0f} TL<br><hr><center><i>Veri Google Sheets'e Kaydedildi.</i></center></div>""", unsafe_allow_html=True)
 
 # --- 🔐 ADMIN ---
 with st.expander("🔐 Admin Control Center"):
@@ -147,7 +144,6 @@ with st.expander("🔐 Admin Control Center"):
             if not df_cloud.empty:
                 df_cloud['Maas'] = pd.to_numeric(df_cloud['Maas'], errors='coerce').fillna(0)
                 df_cloud['Yil_Sonu_Toplam'] = pd.to_numeric(df_cloud['Yil_Sonu_Toplam'], errors='coerce').fillna(0)
-                df_cloud['Cinsiyet'] = df_cloud['Cinsiyet'].astype(str).str.strip().str.capitalize()
                 
                 st.write("### 📈 Sokağın Röntgenti")
                 s1, s2, s3 = st.columns(3)
@@ -169,6 +165,6 @@ with st.expander("🔐 Admin Control Center"):
                     rows_to_keep = edited_df[edited_df["Seç"] == False].drop(columns=["Seç"])
                     sheet.clear()
                     sheet.update([rows_to_keep.columns.values.tolist()] + rows_to_keep.values.tolist())
-                    st.success("Temizlendi!")
+                    st.success("Troller temizlendi!")
                     st.rerun()
         except: st.warning("Veri bekleniyor...")
