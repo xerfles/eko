@@ -136,12 +136,12 @@ with st.expander("🔐 Admin Control Center"):
             df_cloud = pd.DataFrame(data)
             
             if not df_cloud.empty:
-                # --- 📊 VERİ TEMİZLEME VE SAYISAL DÖNÜŞÜM (Hataları çözen kısım) ---
+                # --- 📉 1. ENFLASYON ORTALAMASI VE SAYISAL DÜZELTME ---
                 df_cloud['Maas'] = pd.to_numeric(df_cloud['Maas'], errors='coerce').fillna(0)
-                # Enflasyon verilerini sayıya çeviriyoruz (Troll verileri NaN yapar)
+                # Virgül/Nokta hatalarını gidermek için Yil_Sonu_Toplam verisini sayıya çevir
                 df_cloud['Yil_Sonu_Toplam'] = pd.to_numeric(df_cloud['Yil_Sonu_Toplam'], errors='coerce')
                 
-                # Cinsiyetleri temizle
+                # Cinsiyet normalleştirme
                 df_cloud['Cinsiyet'] = df_cloud['Cinsiyet'].astype(str).str.strip().str.capitalize()
 
                 st.write("### 📈 Sokağın Röntgenti")
@@ -149,12 +149,12 @@ with st.expander("🔐 Admin Control Center"):
                 s1.metric("Toplam Katılım", f"{len(df_cloud)} Kişi")
                 s2.metric("Ort. Maaş", f"{df_cloud['Maas'].mean():,.0f} TL")
                 
-                # Absürt ortalamayı düzeltmek için sadece makul değerlerin (örn %0-1000 arası) ortalamasını al
-                clean_enf = df_cloud[df_cloud['Yil_Sonu_Toplam'].between(0, 1000)]['Yil_Sonu_Toplam']
+                # Sadece makul değerlerin ortalamasını al (Trollere karşı koruma)
+                clean_enf = df_cloud[df_cloud['Yil_Sonu_Toplam'].between(0, 500)]['Yil_Sonu_Toplam']
                 avg_enf = clean_enf.mean() if not clean_enf.empty else 0.0
                 s3.metric("Ort. Enflasyon", f"%{avg_enf:.1f}")
                 
-                # --- 🥧 PASTA GRAFİKLERİ (Hata düzeltildi) ---
+                # --- 🥧 PASTA GRAFİKLERİ ---
                 gr1, gr2, gr3 = st.columns(3)
                 with gr1:
                     g_data = df_cloud['Cinsiyet'].value_counts().reset_index()
@@ -172,7 +172,7 @@ with st.expander("🔐 Admin Control Center"):
                 st.divider()
                 st.write("### 🧹 Veri Temizliği (Gerçek IP'ler Gösteriliyor)")
                 
-                # --- 📋 TABLO GÖRÜNÜMÜ (Formatlama ve IP gösterimi) ---
+                # --- 📋 2. VERİ TABLOSU (FORMATLAMA VE GERÇEK IP) ---
                 df_edit = df_cloud.copy()
                 df_edit.insert(0, "Seç", False)
                 
@@ -183,14 +183,14 @@ with st.expander("🔐 Admin Control Center"):
                     "Dolar_Beklentisi": st.column_config.NumberColumn("Kur Tahmini", format="%.2f"),
                     "Alim_Gucu_Kaybi": st.column_config.NumberColumn("Kayıp %", format="%.2f"),
                     "Reel_Kalan_TL": st.column_config.NumberColumn("Reel Kalan", format="%.2f"),
-                    "IP": st.column_config.TextColumn("IP Adresi") # IP GİZLEME KALDIRILDI
+                    "IP": st.column_config.TextColumn("Gerçek IP Adresi") # IP GÖSTERİLİYOR
                 }, use_container_width=True, hide_index=True)
                 
                 if st.button("🗑️ SEÇİLENLERİ SİL"):
                     rows_to_keep = edited_df[edited_df["Seç"] == False].drop(columns=["Seç"])
                     sheet.clear()
                     sheet.update([rows_to_keep.columns.values.tolist()] + rows_to_keep.values.tolist())
-                    st.success("Veriler güncellendi!")
+                    st.success("Troller temizlendi!")
                     st.rerun()
         except Exception as e: 
             st.error(f"Veri yükleme hatası: {e}")
