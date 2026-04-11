@@ -47,8 +47,7 @@ if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val
 
 st.title("🛰️ LiraPulse: Enflasyon ve Gelecek Beklentisi")
 
-# Dolar Geçişkenliği Kutusu
-st.markdown("""<div class="info-box"><b>💡 Dolar Geçişkenliği ve Mutfak</b><br>Dolar artışının ürünlere yansıması aynı değildir. iPhone %90 ithal olduğu için dolara doğrudan bağlıyken, gıda ve ulaşımda bu etki mazot ve gübre üzerinden dolaylı gelir. Biz burada her profil için bu geçişkenliği ayrı hesaplıyoruz.</div>""", unsafe_allow_html=True)
+st.markdown("""<div class="info-box"><b>💡 Dolar Geçişkenliği ve Mutfak</b><br>Dolar artışının ürünlere yansıması aynı değildir. Her profil için bu geçişkenliği ayrı hesaplıyoruz.</div>""", unsafe_allow_html=True)
 
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("💵 Güncel Dolar", f"{GUNCEL_DOLAR} TL")
@@ -66,22 +65,15 @@ with col_in:
     u_prof = st.selectbox("Harcama Sepeti (Profil):", ["Öğrenci", "Mavi Yaka", "Beyaz Yaka", "Emekli", "Kamu Personeli"])
     u_city = st.selectbox("Şehir:", ["Kırklareli", "İstanbul", "Ankara", "İzmir", "Diğer"])
     
-    # --- 🔮 SENARYO BUTONLARI (MATEMATİKSEL DÜZELTME YAPILDI) ---
     st.write("🔮 **Gelecek Senaryosunu Seç**")
     s1, s2, s3 = st.columns(3)
-    # Hedef %21 - Q1 %14.4 = %6.6
     if s1.button("🏦 TCMB"): st.session_state.update({'d_val': 5, 'g_val': 8, 'k_val': 7, 'u_val': 6}); st.rerun()
-    # Hedef %32 - Q1 %14.4 = %17.6
     if s2.button("📉 TÜİK"): st.session_state.update({'d_val': 12, 'g_val': 22, 'k_val': 20, 'u_val': 16}); st.rerun()
-    # Hedef %42 - Q1 %14.4 = %27.6
     if s3.button("🌸 İyimser"): st.session_state.update({'d_val': 20, 'g_val': 32, 'k_val': 30, 'u_val': 28}); st.rerun()
     
     s4, s5, s6 = st.columns(3)
-    # Hedef %58 - Q1 %14.4 = %43.6
     if s4.button("📊 Realist"): st.session_state.update({'d_val': 35, 'g_val': 48, 'k_val': 50, 'u_val': 42}); st.rerun()
-    # Hedef %78 - Q1 %14.4 = %63.6
     if s5.button("🔥 ENAG"): st.session_state.update({'d_val': 55, 'g_val': 70, 'k_val': 75, 'u_val': 60}); st.rerun()
-    # Hedef %125 - Q1 %14.4 = %110.6
     if s6.button("🌋 Kriz"): st.session_state.update({'d_val': 100, 'g_val': 120, 'k_val': 130, 'u_val': 110}); st.rerun()
     
     d_a = st.slider("💵 Dolar Artışı (%)", 0, 150, key='d_val')
@@ -133,7 +125,7 @@ if st.button("💾 ANALİZİ KAYDET VE GELECEK ADİSYONUNU AL", use_container_wi
         st.balloons()
         st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr>Analist: {u_name}<br>Yıl Sonu Tahmini: %{res_total:.1f}<br>1.000 TL'lik Yemek Sonu: {(1000*(1+res_total/100)):,.0f} TL<br><hr><center><i>Veri Google Sheets'e Kaydedildi.</i></center></div>""", unsafe_allow_html=True)
 
-# --- 🔐 ADMIN ---
+# --- 🔐 ADMIN: ÜÇLÜ GRAFİK DÜZENLEMESİ ---
 with st.expander("🔐 Admin Control Center"):
     if st.text_input("Şifre:", type="password", key="adm_pw") == "alper2026":
         try:
@@ -142,8 +134,10 @@ with st.expander("🔐 Admin Control Center"):
             df_cloud = pd.DataFrame(sheet.get_all_records())
             
             if not df_cloud.empty:
+                # Veri Temizliği
                 df_cloud['Maas'] = pd.to_numeric(df_cloud['Maas'], errors='coerce').fillna(0)
                 df_cloud['Yil_Sonu_Toplam'] = pd.to_numeric(df_cloud['Yil_Sonu_Toplam'], errors='coerce').fillna(0)
+                df_cloud['Cinsiyet'] = df_cloud['Cinsiyet'].astype(str).str.strip().str.capitalize()
                 
                 st.write("### 📈 Sokağın Röntgenti")
                 s1, s2, s3 = st.columns(3)
@@ -151,9 +145,20 @@ with st.expander("🔐 Admin Control Center"):
                 s2.metric("Ort. Maaş", f"{df_cloud['Maas'].mean():,.0f} TL")
                 s3.metric("Ort. Enflasyon", f"%{df_cloud[df_cloud['Yil_Sonu_Toplam'] < 500]['Yil_Sonu_Toplam'].mean():.1f}")
                 
-                gr1, gr2 = st.columns(2)
-                with gr1: st.plotly_chart(px.pie(df_cloud, names='Profil', title="Profil Dağılımı", hole=0.4), use_container_width=True)
-                with gr2: st.plotly_chart(px.pie(df_cloud, names='Sehir', title="Şehir Dağılımı", hole=0.4), use_container_width=True)
+                # --- 📊 ÜÇ AYRI PASTA GRAFİĞİ (İstediğin Yer) ---
+                gr1, gr2, gr3 = st.columns(3)
+                
+                with gr1:
+                    gender_data = df_cloud['Cinsiyet'].value_counts().reset_index()
+                    st.plotly_chart(px.pie(gender_data, names='Cinsiyet', values='count', title="Cinsiyet Dağılımı", hole=0.4, color_discrete_sequence=px.colors.qualitative.Pastel), use_container_width=True)
+                
+                with gr2:
+                    city_data = df_cloud['Sehir'].value_counts().reset_index()
+                    st.plotly_chart(px.pie(city_data, names='Sehir', values='count', title="Şehir Dağılımı", hole=0.4, color_discrete_sequence=px.colors.qualitative.Set3), use_container_width=True)
+                
+                with gr3:
+                    prof_data = df_cloud['Profil'].value_counts().reset_index()
+                    st.plotly_chart(px.pie(prof_data, names='Profil', values='count', title="Sepet Dağılımı", hole=0.4, color_discrete_sequence=px.colors.qualitative.Safe), use_container_width=True)
                 
                 st.divider()
                 st.write("### 🧹 Veri Temizliği")
