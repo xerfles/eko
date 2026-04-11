@@ -38,7 +38,7 @@ def tr_format(number, decimals=2):
     except: return "0"
 
 # --- 📊 PİYASA VERİLERİ ---
-GUNCEL_DOLAR, Q1_ENF = 44.92, 14.40
+GUNCEL_DOLAR, Q1_ENF, TCMB_FAIZ, TCMB_2026_HEDEF = 44.92, 14.40, 37.0, 22.0
 P_PS5, P_IPHONE, P_CLIO = 42999, 77999, 1795000
 
 st.set_page_config(page_title="LiraPulse: Gelecek Analizi", layout="wide")
@@ -51,33 +51,46 @@ st.markdown("""<style>
     .bugun-etiket { color: #ffbd45; font-size: 13px; text-align: center; margin-top: -10px; font-weight: bold; }
     .receipt-box { background-color: #fff; color: #333 !important; padding: 30px; border-radius: 10px; font-family: 'Courier New', monospace; border: 3px dashed #333; margin: 20px auto; max-width: 500px; line-height: 1.8; text-align: left; }
     .receipt-box b, .receipt-box center, .receipt-box p, .receipt-box hr { color: #333 !important; border-color: #333 !important; }
+    .ekmek-text { color: #ffbd45; font-size: 14px; font-weight: bold; margin-bottom: 20px; }
     </style>""", unsafe_allow_html=True)
 
 if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
 
-# --- 🛰️ ÜST BAŞLIK VE EKMEK ÖRNEĞİ ---
-st.title("🛰️ LiraPulse: Enflasyon ve Gelecek Beklentisi")
-st.markdown("Yani basitçe anlatmak gerekirse; yıl başında **100 TL**'ye aldığın bir ekmek sepetinin, senin tahminlerine göre yıl sonunda **kaç TL** olacağıdır. Kendi enflasyon senaryonu oluştur ve gerçeği gör.")
+# --- 🍞 ÜST BAŞLIK VE EKMEK ÖRNEĞİ (EN TEPE) ---
+st.markdown('<p class="ekmek-text">💡 Enflasyon Nedir?<br>Bugün 100 liraya aldığın 10 ekmeğin, seneye aynı parayla sadece 6 tanesini alabilmendir.</p>', unsafe_allow_html=True)
+
+# --- 📈 4'LÜ TEPE METRİKLERİ ---
+tm1, tm2, tm3, tm4 = st.columns(4)
+tm1.metric("💵 Güncel Dolar", f"{GUNCEL_DOLAR} TL")
+tm2.metric("📉 Q1 Enflasyon", f"%{Q1_ENF}")
+tm3.metric("🏦 TCMB Faiz", f"%{TCMB_FAIZ}")
+tm4.metric("🎯 TCMB Hedef", f"%{TCMB_2026_HEDEF}")
+st.divider()
 
 col_in, col_out = st.columns([1.2, 2])
 
 with col_in:
     st.subheader("🕵️ Analist Girişi")
     u_name = st.text_input("Rumuz:", "Analist_01")
-    u_salary = st.number_input("Aylık Maaş (TL):", value=22102)
-    u_prof = st.selectbox("Harcama Sepeti:", ["Öğrenci", "Mavi Yaka", "Beyaz Yaka", "Emekli", "Kamu Personeli"])
-    u_city = st.selectbox("Şehir:", ["Kırklareli", "İstanbul", "Ankara", "İzmir", "Diğer"])
-    u_gender = st.selectbox("Cinsiyet:", ["Erkek", "Kadın", "Belirtmek İstemiyorum"])
     
-    st.write("🔮 **Senaryo Seç**")
+    # Cinsiyet ve Maaş yan yana
+    c_col1, c_col2 = st.columns(2)
+    with c_col1: u_gender = st.selectbox("Cinsiyet:", ["Erkek", "Kadın", "Belirtmek İstemiyorum"])
+    with c_col2: u_salary = st.number_input("Aylık Maaş (TL):", value=22102)
+    
+    u_city = st.selectbox("Şehir:", ["Kırklareli", "İstanbul", "Ankara", "İzmir", "Diğer"])
+    u_prof = st.selectbox("Harcama Sepeti:", ["Öğrenci", "Mavi Yaka", "Beyaz Yaka", "Emekli", "Kamu Personeli"])
+    
+    st.write("🔮 **Hızlı Senaryo Seçimi**")
     s1, s2, s3, s4, s5, s6 = st.columns(6)
     if s1.button("🏦 TCMB"): st.session_state.update({'d_val': 5, 'g_val': 8, 'k_val': 7, 'u_val': 6}); st.rerun()
-    if s2.button("📉 TÜİK"): st.session_state.update({'d_val': 12, 'g_val': 22, 'k_val': 20, 'u_val': 16}); st.rerun()
-    if s3.button("🌸 İyimser"): st.session_state.update({'d_val': 20, 'g_val': 32, 'k_val': 30, 'u_val': 28}); st.rerun()
+    if s2.button("🌸 İyimser"): st.session_state.update({'d_val': 20, 'g_val': 32, 'k_val': 30, 'u_val': 28}); st.rerun()
+    if s3.button("📉 TÜİK"): st.session_state.update({'d_val': 12, 'g_val': 22, 'k_val': 20, 'u_val': 16}); st.rerun()
     if s4.button("📊 Realist"): st.session_state.update({'d_val': 35, 'g_val': 48, 'k_val': 50, 'u_val': 42}); st.rerun()
     if s5.button("🔥 ENAG"): st.session_state.update({'d_val': 55, 'g_val': 70, 'k_val': 75, 'u_val': 60}); st.rerun()
     if s6.button("🌋 Kriz"): st.session_state.update({'d_val': 100, 'g_val': 120, 'k_val': 130, 'u_val': 110}); st.rerun()
     
+    st.divider()
     d_a = st.slider("💵 Dolar Artışı (%)", 0, 150, key='d_val')
     g_a = st.slider("🛒 Gıda Artışı (%)", 0, 150, key='g_val')
     k_a = st.slider("🏠 Kira Artışı (%)", 0, 150, key='k_val')
@@ -93,10 +106,12 @@ alim_kaybi = round((1 - (1 / (1 + res_total/100))) * 100, 2)
 reel_deger = round(1000/(1+res_total/100), 2)
 
 with col_out:
-    # --- YIL SONU ANALİZİ (Yazısız, Temiz Hali) ---
-    st.markdown(f"""<div class="ozet-panel"><h3>Yıl Sonu Beklenti Analizi</h3><div style="display:flex; justify-content: space-around; align-items:center;"><div><small>Q1 Gerçekleşen</small><br><b style="font-size:24px; color:#00d4ff;">%{tr_format(Q1_ENF)}</b></div><div style="font-size:30px; color:#555;">+</div><div><small>Senin Tahminin</small><br><b style="font-size:24px; color:#ffbd45;">%{tr_format(s_enf)}</b></div><div style="font-size:30px; color:#555;">=</div><div><small><b>Yıl Sonu Toplamı</b></small><br><b style="font-size:36px; color:#ff4b4b;">%{tr_format(res_total)}</b></div></div><hr style="border:0.5px solid #333;"><p>Tahmini Kur: <b>{tr_format(tahmini_kur)} TL</b></p></div>""", unsafe_allow_html=True)
+    # --- YIL SONU ANALİZİ (Tertemiz, Karmaşasız) ---
+    st.markdown(f"""<div class="ozet-panel"><h3 style="color:#aaa;">Yıl Sonu Beklenti Analizi</h3><b style="font-size:42px; color:#ff4b4b;">%{tr_format(res_total)}</b><br><p style="font-size:14px; color:#ccc; margin-top:10px;">Tahmini Kur: <b>{tr_format(tahmini_kur)} TL</b></p></div>""", unsafe_allow_html=True)
     
-    # --- CLIO GERİ GELDİ ---
+    st.write("") # Boşluk
+    
+    # --- PS5, IPHONE, CLIO (Güncel Fiyat Etiketleriyle) ---
     h1, h2, h3 = st.columns(3)
     with h1: st.metric("🎮 PS5 (2026)", f"{tr_format(P_PS5*(1+res_total/85), 0)} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {tr_format(P_PS5, 0)} TL</p>', unsafe_allow_html=True)
     with h2: st.metric("📱 iPhone (2026)", f"{tr_format(P_IPHONE*(1+res_total/95), 0)} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {tr_format(P_IPHONE, 0)} TL</p>', unsafe_allow_html=True)
@@ -104,24 +119,26 @@ with col_out:
     
     st.divider()
     
-    # --- 1000 TL AKIBETİ VE KADRAN YAN YANA (ESKİSİ GİBİ) ---
+    # --- KADRAN VE 1000 TL AKIBETİ (Yan Yana) ---
     c_g, c_e = st.columns(2)
     with c_g: 
-        st.plotly_chart(go.Figure(go.Indicator(mode="gauge+number", value=alim_kaybi, title={'text': "Alım Gücü Kaybı (%)"}, gauge={'bar': {'color': "#ff4b4b"}})).update_layout(height=280, paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
+        st.plotly_chart(go.Figure(go.Indicator(mode="gauge+number", value=alim_kaybi, title={'text': "Alım Gücü Kaybı (%)"}, gauge={'bar': {'color': "#ff4b4b"}})).update_layout(height=220, margin=dict(l=20, r=20, t=30, b=10), paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
     with c_e: 
-        st.write("### 📉 1.000 TL Akıbeti")
-        st.title(f"{tr_format(reel_deger)} TL")
+        st.markdown(f"""<div style="background-color: #161b22; padding: 25px; border-radius: 15px; border-left: 5px solid #ff4b4b; margin-top:20px;">
+            <p style="margin:0; color:#aaa; font-size:16px; font-weight:bold;">📉 1.000 TL Akıbeti</p>
+            <h2 style="margin:0; color:#fff; font-size:36px;">{tr_format(reel_deger)} TL</h2>
+        </div>""", unsafe_allow_html=True)
 
 st.divider()
 
 # --- 🕰️ ZAMAN MAKİNESİ (ALTIN VE DOLAR GRAFİKLERİ) ---
-st.subheader("🕰️ Zaman Makinesi: Asgari Ücretin Erimesi")
+st.subheader("🕰️ Zaman Makinesi: Asgari Ücretin Erimesi (2000-2025)")
 yillar = [str(y) for y in range(2000, 2026)]; altin = [24.5, 11.2, 12.5, 13.1, 17.8, 18.2, 15.1, 14.8, 14.1, 11.8, 10.5, 8.5, 8.0, 9.5, 10.5, 10.1, 10.4, 9.6, 7.5, 7.8, 5.1, 5.6, 5.3, 6.5, 6.8, 4.5]
 dolar = [126, 92, 115, 150, 222, 261, 265, 315, 385, 352, 395, 393, 410, 420, 406, 365, 430, 385, 330, 355, 330, 315, 330, 430, 520, 485]
 df_nost = pd.DataFrame({"Yıl": yillar, "Gram Altın": altin, "Dolar ($)": dolar})
 g1, g2 = st.columns(2)
-with g1: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Gram Altın", title="Maaş Kaç Gram Altın Alıyordu?", color="Gram Altın", color_continuous_scale="YlOrBr"), use_container_width=True)
-with g2: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Dolar ($)", title="Maaş Kaç Dolar Alıyordu?", color="Dolar ($)", color_continuous_scale="Greens"), use_container_width=True)
+with g1: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Gram Altın", title="Maaş Kaç Gram Altın?", color="Gram Altın", color_continuous_scale="Blues"), use_container_width=True) # Renkleri resme göre mavi-yeşil tonlarına çektik
+with g2: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Dolar ($)", title="Maaş Kaç Dolar?", color="Dolar ($)", color_continuous_scale="Greens"), use_container_width=True)
 
 if st.button("💾 ANALİZİ KAYDET VE ADİSYONU AL", use_container_width=True):
     def f_tr(val):
@@ -131,9 +148,10 @@ if st.button("💾 ANALİZİ KAYDET VE ADİSYONU AL", use_container_width=True):
     v = [datetime.now().strftime("%d.%m.%Y %H:%M"), u_name, u_gender, f_tr(u_salary), u_prof, u_city, kayit_id, f_tr(s_enf), f_tr(res_total), f_tr(tahmini_kur), f_tr(alim_kaybi), f_tr(reel_deger)]
     if save_to_sheets(v):
         st.balloons()
+        # --- ADİSYON ---
         st.markdown(f"""<div class="receipt-box"><center>🧾 <b>LiraPulse ADİSYON</b></center><hr><p><b>Analist:</b> {u_name}</p><p><b>ID:</b> {kayit_id}</p><p><b>Tahmini Enflasyon:</b> %{tr_format(res_total)}</p><p><b>Dolar Beklentisi:</b> {tr_format(tahmini_kur)} TL</p><p><b>1.000 TL Reel Değer:</b> {tr_format(reel_deger)} TL</p><hr><center><i>Veri Google Sheets'e Mermi Gibi İşlendi.</i></center></div>""", unsafe_allow_html=True)
 
-# --- 🔐 ADMIN PANELİ ---
+# --- 🔐 ADMIN PANELİ (ZIRHLI MİMARİ KORUNDU) ---
 if 'admin_data' not in st.session_state: st.session_state['admin_data'] = []
 
 with st.expander("🔐 Admin Control Center"):
@@ -152,7 +170,9 @@ with st.expander("🔐 Admin Control Center"):
                             elif ',' in s: s = s.replace(',', '.')
                             return float(s)
                         except: return 0.0
+                    
                     new_data = []
+                    # Sütun isimlerine değil sıralamasına (index) bakıyoruz. Hata imkansız.
                     for i in range(1, len(vals)):
                         row = vals[i]
                         new_data.append({
@@ -176,10 +196,11 @@ with st.expander("🔐 Admin Control Center"):
             s4.metric("Ort. Dolar", f"{tr_format(df['Dolar'].mean())} TL")
             
             # --- PASTA GRAFİKLERİ ---
-            g1, g2, g3 = st.columns(3)
-            with g1: st.plotly_chart(px.pie(df, names='Cinsiyet', title="Cinsiyet Dağılımı", hole=0.4), use_container_width=True)
-            with g2: st.plotly_chart(px.pie(df, names='Sehir', title="Şehir Dağılımı", hole=0.4), use_container_width=True)
-            with g3: st.plotly_chart(px.pie(df, names='Profil', title="Harcama Sepeti", hole=0.4), use_container_width=True)
+            if not df.empty and len(df) > 0:
+                g1, g2, g3 = st.columns(3)
+                with g1: st.plotly_chart(px.pie(df, names='Cinsiyet', title="Cinsiyet Dağılımı", hole=0.4), use_container_width=True)
+                with g2: st.plotly_chart(px.pie(df, names='Sehir', title="Şehir Dağılımı", hole=0.4), use_container_width=True)
+                with g3: st.plotly_chart(px.pie(df, names='Profil', title="Harcama Sepeti", hole=0.4), use_container_width=True)
             
             st.divider()
             df_edit = df.copy(); df_edit.insert(0, "Seç", False)
