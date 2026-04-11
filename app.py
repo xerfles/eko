@@ -44,7 +44,7 @@ def tr_format(number, decimals=2):
 GUNCEL_DOLAR, Q1_ENF, TCMB_FAIZ, TCMB_2026_HEDEF = 44.92, 14.40, 37.0, 22.0
 P_PS5, P_IPHONE, P_CLIO = 42999, 77999, 1795000
 
-st.set_page_config(page_title="LiraPulse: Gelecek Analizi", layout="wide")
+st.set_page_config(page_title="LiraPulse: Geleceğin Faturası", layout="wide")
 
 # --- 🎨 CSS: TASARIM KORUMASI ---
 st.markdown("""<style>
@@ -52,7 +52,7 @@ st.markdown("""<style>
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; }
     .bugun-etiket { color: #ffbd45; font-size: 13px; text-align: center; margin-top: -10px; font-weight: bold; }
-    .ekmek-text { color: #ffbd45; font-size: 14px; font-weight: bold; margin-bottom: 20px; }
+    .ekmek-text { color: #ffbd45; font-size: 16px; margin-bottom: 25px; line-height: 1.5; }
     .receipt-box { background-color: #fff; color: #333 !important; padding: 30px; border-radius: 10px; font-family: 'Courier New', monospace; border: 3px dashed #333; margin: 20px auto; max-width: 500px; line-height: 1.8; text-align: left; }
     .receipt-box b, .receipt-box center, .receipt-box p, .receipt-box hr { color: #333 !important; border-color: #333 !important; }
     </style>""", unsafe_allow_html=True)
@@ -104,7 +104,8 @@ with st.sidebar.expander("🔐 Admin Control Center"):
                     st.success("Silindi!"); st.session_state['admin_data'] = []; st.rerun()
 
 # --- 🍞 ÜST BAŞLIK VE EKMEK ÖRNEĞİ ---
-st.markdown('<p class="ekmek-text">💡 Enflasyon Nedir?<br>Bugün 100 liraya aldığın 10 ekmeğin, seneye aynı parayla sadece 6 tanesini alabilmendir.</p>', unsafe_allow_html=True)
+st.title("🛰️ LiraPulse: Geleceğin Faturası")
+st.markdown('<p class="ekmek-text">💡 <b>Enflasyon Nedir?</b><br>Bugün 100 liraya aldığın 10 ekmeğin, seneye aynı parayla sadece 6 tanesini alabilmendir.</p>', unsafe_allow_html=True)
 
 # --- 📈 4'LÜ TEPE METRİKLERİ ---
 tm1, tm2, tm3, tm4 = st.columns(4)
