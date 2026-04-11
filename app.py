@@ -106,7 +106,7 @@ alim_kaybi = round((1 - (1 / (1 + res_total/100))) * 100, 2)
 reel_deger = round(1000/(1+res_total/100), 2)
 
 with col_out:
-    # --- YIL SONU ANALİZİ (MATEMATİKLİ YAPI) ---
+    # --- YIL SONU ANALİZİ ---
     st.markdown(f"""<div class="ozet-panel">
         <h3 style="color:#aaa; margin-bottom: 20px;">Yıl Sonu Beklenti Analizi</h3>
         <div style="display:flex; justify-content: space-around; align-items:center; margin-bottom: 15px;">
@@ -132,10 +132,7 @@ with col_out:
     c_g, c_e = st.columns(2)
     with c_g: 
         st.plotly_chart(go.Figure(go.Indicator(
-            mode="gauge+number", 
-            value=alim_kaybi, 
-            title={'text': "Alım Gücü Kaybı (%)", 'font': {'size': 16}}, 
-            gauge={'bar': {'color': "#ff4b4b"}}
+            mode="gauge+number", value=alim_kaybi, title={'text': "Alım Gücü Kaybı (%)", 'font': {'size': 16}}, gauge={'bar': {'color': "#ff4b4b"}}
         )).update_layout(height=250, margin=dict(l=30, r=30, t=50, b=20), paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
     
     with c_e: 
@@ -152,7 +149,7 @@ with col_out:
 
 st.divider()
 
-# --- ⚔️ YENİ BÖLÜM: YIL YIL ENFLASYON VS YATIRIM TABLOSU (TAHVİL VE EMLAK EKLENDİ) ---
+# --- ⚔️ YATIRIM TABLOSU ---
 st.subheader("⚔️ 2020-2025: Enflasyonu Yenenler ve Yenilenler")
 st.markdown("<small style='color:#aaa;'>Yeşil yananlar enflasyonu tokatladı, kırmızı yananlar enflasyona ezildi.</small>", unsafe_allow_html=True)
 
@@ -163,8 +160,8 @@ df_yatirim = pd.DataFrame({
     "Dolar (%)": [24.8, 78.5, 40.2, 57.3, 25.1, 18.0],
     "Gram Altın (%)": [55.9, 71.2, 42.8, 78.4, 40.5, 22.0],
     "BIST 100 (%)": [29.1, 25.8, 196.6, 35.1, 46.2, 32.0],
-    "Devlet Tahvili (%)": [11.2, 16.8, 14.5, 28.2, 43.5, 36.0], # YENİ
-    "Emlak/Konut (%)": [30.4, 59.6, 168.0, 84.1, 38.2, 28.0]   # YENİ
+    "Devlet Tahvili (%)": [11.2, 16.8, 14.5, 28.2, 43.5, 36.0], 
+    "Emlak/Konut (%)": [30.4, 59.6, 168.0, 84.1, 38.2, 28.0]   
 })
 
 def color_cells(row):
@@ -172,24 +169,48 @@ def color_cells(row):
     colors = [''] * len(row)
     for i, col in enumerate(row.index):
         if col not in ["Yıl", "Enflasyon (%)"]:
-            if row[col] > enf:
-                colors[i] = 'color: #28a745; font-weight: bold;'
-            elif row[col] < enf:
-                colors[i] = 'color: #ff4b4b; font-weight: bold;'
-            else:
-                colors[i] = 'color: white;'
-        elif col == "Enflasyon (%)":
-            colors[i] = 'color: white; font-weight: bold; background-color: rgba(255,255,255,0.05);'
-        else:
-            colors[i] = 'font-weight: bold;'
+            if row[col] > enf: colors[i] = 'color: #28a745; font-weight: bold;'
+            elif row[col] < enf: colors[i] = 'color: #ff4b4b; font-weight: bold;'
+            else: colors[i] = 'color: white;'
+        elif col == "Enflasyon (%)": colors[i] = 'color: white; font-weight: bold; background-color: rgba(255,255,255,0.05);'
+        else: colors[i] = 'font-weight: bold;'
     return colors
 
 styled_df = df_yatirim.style.apply(color_cells, axis=1).format({
     "Enflasyon (%)": "{:.1f}%", "TL Mevduat (%)": "{:.1f}%", "Dolar (%)": "{:.1f}%",
     "Gram Altın (%)": "{:.1f}%", "BIST 100 (%)": "{:.1f}%", "Devlet Tahvili (%)": "{:.1f}%", "Emlak/Konut (%)": "{:.1f}%"
 })
-
 st.dataframe(styled_df, use_container_width=True, hide_index=True)
+
+# --- 🛒 YENİ BÖLÜM: SOKAĞIN ENFLASYONU (TEK ÖRNEKLİ TABLO) ---
+st.write("")
+st.subheader("🛒 Sokağın Enflasyonu: Pazarın Şampiyonları ve Kaybedenleri")
+st.markdown("<small style='color:#aaa;'>Halkın cebini en çok yakanlar ve fiyatı en az artanlar (Tekil Ürün Bazında)</small>", unsafe_allow_html=True)
+
+df_sokak = pd.DataFrame({
+    "Yıl": ["2020", "2021", "2022", "2023", "2024", "2025"],
+    "🔥 En Çok Artan": ["2. El Otomobil", "Ayçiçek Yağı", "Kuru Soğan", "Zeytinyağı", "Özel Okul Ücreti", "Kırmızı Et"],
+    "Artış (%)": [85.0, 130.0, 315.0, 180.0, 120.0, 95.0],
+    "❄️ En Az Artan / Düşen": ["Uçak Bileti", "Elektrik Faturası", "Sabit İnternet", "Doğalgaz", "2. El Otomobil", "Kuru Soğan"],
+    "Değişim (%)": [-15.0, 15.0, 25.0, 0.0, 10.0, 15.0]
+})
+
+def color_sokak(row):
+    colors = [''] * len(row)
+    for i, col in enumerate(row.index):
+        if col == "🔥 En Çok Artan" or col == "Artış (%)":
+            colors[i] = 'color: #ff4b4b; font-weight: bold;'
+        elif col == "❄️ En Az Artan / Düşen" or col == "Değişim (%)":
+            colors[i] = 'color: #00d4ff; font-weight: bold;'
+        else:
+            colors[i] = 'color: white; font-weight: bold;'
+    return colors
+
+styled_sokak = df_sokak.style.apply(color_sokak, axis=1).format({
+    "Artış (%)": "+{:.0f}%",
+    "Değişim (%)": "{:+.0f}%"
+})
+st.dataframe(styled_sokak, use_container_width=True, hide_index=True)
 
 st.divider()
 
