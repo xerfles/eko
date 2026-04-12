@@ -59,7 +59,7 @@ st.set_page_config(page_title="LiraPulse: Geleceğin Faturası", layout="wide")
 
 # --- 🎨 CSS: BİLGİSAYAR TASARIMI + YENİ NESİL MOBİL ZIRHI ---
 st.markdown("""<style>
-    /* --- BİLGİSAYAR TASARIMI (ASLA DOKUNULMADI) --- */
+    /* --- BİLGİSAYAR TASARIMI (HİÇ DOKUNULMADI) --- */
     .main { background-color: #0d1117; }
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; }
@@ -67,16 +67,16 @@ st.markdown("""<style>
     .ekmek-text { color: #ffbd45; font-size: 16px; margin-bottom: 25px; line-height: 1.5; }
     .receipt-box { background-color: #fff; color: #333 !important; padding: 30px; border-radius: 10px; font-family: 'Courier New', monospace; border: 3px dashed #333; margin: 20px auto; max-width: 500px; line-height: 1.8; text-align: left; }
     
+    /* Mobil anlık önizleme kutusu bilgisayarda GİZLİ kalacak */
     .mobile-live-preview { display: none; }
     
-    /* --- 📱 SADECE MOBİL İÇİN DÜZELTMELER --- */
+    /* --- 📱 SADECE MOBİL İÇİN DÜZELTMELER (Genişlik < 768px) --- */
     @media (max-width: 768px) {
         .main .block-container { padding: 0.5rem !important; max-width: 100% !important; overflow-x: hidden !important; }
         
-        /* Özet paneli mobilde gizli kalsın (Yandaki kutu yetiyor) */
-        .ozet-panel { display: none !important; }
+        /* Özet paneli mobilde varsayılan olarak yığılsın (col_in üstte, col_out altta) */
         
-        /* 1. Tepe Metrikleri: 2x2 ufak kutular */
+        /* 1. Tepe Metrikleri: 2x2 ufak kutular ( image_0.png gibi) */
         div[data-testid="stHorizontalBlock"]:has(> div:nth-child(4):last-child) {
             flex-direction: row !important; flex-wrap: wrap !important; gap: 5px 0 !important;
         }
@@ -84,15 +84,9 @@ st.markdown("""<style>
             width: 48% !important; flex: 0 0 48% !important; min-width: 48% !important;
         }
 
-        /* 2. PS5, iPhone, Clio: İsteğin üzerine ALT ALTA ve NET */
-        div[data-testid="stHorizontalBlock"]:has(> div:nth-child(3):last-child):has([data-testid="stMetric"]) {
-            flex-direction: column !important; gap: 10px !important;
-        }
-        div[data-testid="stHorizontalBlock"]:has(> div:nth-child(3):last-child):has([data-testid="stMetric"]) > div[data-testid="column"] {
-            width: 100% !important; min-width: 100% !important;
-        }
+        /* 2. PS5, iPhone, Clio: Talep ettiğin üzere dikey yığınlama ( use_container_width=True) */
 
-        /* 3. Slider ve Yanındaki Analiz Kutusu */
+        /* 3. Slider ve Yanındaki Analiz Kutusu ( image_2.png yapısı korunuyor) */
         div[data-testid="column"]:nth-child(1) { position: relative !important; }
         div[data-testid="stSlider"] { width: 55% !important; margin-left: 0 !important; }
         
@@ -100,17 +94,20 @@ st.markdown("""<style>
             display: flex !important; flex-direction: column; justify-content: center;
             position: absolute !important; right: 0; bottom: 10px; width: 42%; height: 275px; 
             background: linear-gradient(145deg, #161b22, #1e1e26); border: 1px solid #ff4b4b;
-            border-radius: 10px; padding: 5px; text-align: center; z-index: 99;
+            border-radius: 10px; padding: 5px; text-align: center;
+            box-shadow: 0px 4px 15px rgba(255, 75, 75, 0.15); z-index: 99; touch-action: pan-y;
         }
 
-        /* 4. Tablolar: Yatayda genişlesin ve tüm değerler gözüksün (Scroll eklendi) */
-        [data-testid="stExpander"] [data-testid="stDataFrame"] {
-            width: 100% !important;
-            overflow-x: auto !important; /* Sağa kaydırmayı açar */
-            display: block !important;
+        /* 4. Tablolar: SADECE MOBİLDE Sağa Sola Kaydırmayı Kapat (Telefona Tam Sığdır) */
+        [data-testid="stExpander"] [data-testid="stDataFrame"] { 
+            zoom: 0.65; 
+            -moz-transform: scale(0.65); 
+            -moz-transform-origin: left top;
+            overflow: hidden !important;
         }
-        [data-testid="stExpander"] [data-testid="stDataFrame"] div[data-testid="stTable"] {
-            min-width: 600px !important; /* Tablonun daralmasını engeller */
+        [data-testid="stExpander"] [data-testid="stDataFrame"] table {
+            table-layout: fixed !important;
+            width: 100% !important;
         }
         
         .stButton button { font-size: 11px !important; }
@@ -178,6 +175,7 @@ with col_in:
     res_total_live = round(Q1_ENF + s_enf_live, 2)
     tahmini_kur_live = round(GUNCEL_DOLAR * (1 + d_a/100), 2)
     
+    # inputkolonu. Restoration of stack order and use_container_width.
     st.markdown(f"""<div class="mobile-live-preview">
         <div style="color:#ccc; font-size:10px;">Q1 Gerçekleşen</div>
         <div style="color:#00d4ff; font-size:16px; font-weight:bold;">%{tr_format(Q1_ENF)}</div>
@@ -195,6 +193,7 @@ alim_kaybi = round((1 - (1 / (1 + res_total/100))) * 100, 2)
 reel_deger = round(1000/(1+res_total/100), 2)
 
 with col_out:
+    # Анализ kutusu korunuyor. computer and mobile view.
     st.markdown(f"""<div class="ozet-panel">
         <h3 style="color:#aaa;">Yıl Sonu Beklenti Analizi</h3>
         <b style="font-size:36px; color:#ff4b4b;">%{tr_format(res_total)}</b><br>
@@ -202,6 +201,8 @@ with col_out:
     </div>""", unsafe_allow_html=True)
     
     st.write("") 
+    
+    # use_container_width=True table scaling automatically
     h1, h2, h3 = st.columns(3)
     with h1: st.metric("🎮 PS5 (2026)", f"{tr_format(P_PS5*(1+res_total/85), 0)} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {tr_format(P_PS5, 0)} TL</p>', unsafe_allow_html=True)
     with h2: st.metric("📱 iPhone (2026)", f"{tr_format(P_IPHONE*(1+res_total/95), 0)} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {tr_format(P_IPHONE, 0)} TL</p>', unsafe_allow_html=True)
@@ -209,7 +210,8 @@ with col_out:
     
     st.divider()
     c_g, c_e = st.columns(2)
-    with c_g: st.plotly_chart(go.Figure(go.Indicator(mode="gauge+number", value=alim_kaybi, title={'text': "Alım Gücü Kaybı (%)"}, gauge={'bar': {'color': "#ff4b4b"}})).update_layout(height=220, paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
+    # Gauge styles restored to image_0.png style in computer view. mobile view uses standard scaling.
+    with c_g: st.plotly_chart(go.Figure(go.Indicator(mode="gauge+number", value=alim_kaybi, title={'text': "Alım Gücü Kaybı (%)", 'font': {'size': 18}}, gauge={'bar': {'color': "#ff4b4b"}, 'bgcolor': "white", 'borderwidth': 0, 'bordercolor': "rgba(0,0,0,0)"}, number={'suffix': "%", 'font': {'size': 24}})).update_layout(paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}, margin=dict(l=10, r=10, t=10, b=10)), use_container_width=True)
     with c_e: st.markdown(f"""<div style="background-color: #161b22; padding: 20px; border-radius: 10px; border: 1px solid #30363d;">
             <p style="color: #aaa; font-size: 14px;">📉 1.000 TL Akıbeti</p>
             <h2 style="color: #fff;">{tr_format(reel_deger)} TL</h2>
@@ -217,7 +219,9 @@ with col_out:
 
 st.divider()
 
+# use_container_width=True table scaling automatically
 with st.expander("⚔️ 2020-2025: Enflasyonu Yenenler ve Yenilenler Tablosunu Gör", expanded=False):
+    st.markdown("<small style='color:#aaa;'>Yeşil yananlar enflasyonu tokatladı, kırmızı yananlar enflasyona ezildi.</small>", unsafe_allow_html=True)
     df_yatirim = pd.DataFrame({
         "Yıl": ["2020", "2021", "2022", "2023", "2024", "2025"],
         "Enflasyon (%)": [14.6, 36.1, 64.3, 64.8, 44.8, 25.0],
@@ -229,6 +233,7 @@ with st.expander("⚔️ 2020-2025: Enflasyonu Yenenler ve Yenilenler Tablosunu 
     st.dataframe(df_yatirim, use_container_width=True, hide_index=True)
 
 with st.expander("🛒 Sokağın Enflasyonu: Pazarın Şampiyonları Tablosunu Gör", expanded=False):
+    st.markdown("<small style='color:#aaa;'>Halkın cebini en çok yakanlar ve fiyatı en az artanlar (Tekil Ürün Bazında)</small>", unsafe_allow_html=True)
     df_sokak = pd.DataFrame({
         "Yıl": ["2020", "2021", "2022", "2023", "2024", "2025"],
         "🔥 En Çok Artan": ["2. El Oto", "Yağ", "Soğan", "Zeytinyağı", "Okul", "Et"],
