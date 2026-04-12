@@ -59,7 +59,7 @@ st.set_page_config(page_title="LiraPulse: Geleceğin Faturası", layout="wide")
 
 # --- 🎨 CSS: BİLGİSAYAR TASARIMI + YENİ NESİL MOBİL ZIRHI ---
 st.markdown("""<style>
-    /* --- BİLGİSAYAR TASARIMI (ASLA DOKUNULMADI) --- */
+    /* --- BİLGİSAYAR TASARIMI (HİÇ DOKUNULMADI) --- */
     .main { background-color: #0d1117; }
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; }
@@ -67,13 +67,14 @@ st.markdown("""<style>
     .ekmek-text { color: #ffbd45; font-size: 16px; margin-bottom: 25px; line-height: 1.5; }
     .receipt-box { background-color: #fff; color: #333 !important; padding: 30px; border-radius: 10px; font-family: 'Courier New', monospace; border: 3px dashed #333; margin: 20px auto; max-width: 500px; line-height: 1.8; text-align: left; }
     
+    /* Mobil anlık önizleme kutusu bilgisayarda GİZLİ kalacak */
     .mobile-live-preview { display: none; }
     
-    /* --- 📱 SADECE MOBİL İÇİN DÜZELTMELER --- */
+    /* --- 📱 SADECE MOBİL İÇİN DÜZELTMELER (Genişlik < 768px) --- */
     @media (max-width: 768px) {
         .main .block-container { padding: 0.5rem !important; max-width: 100% !important; overflow-x: hidden !important; }
         
-        /* Özet paneli mobilde gizli kalsın (Yandaki kutu yetiyor) */
+        /* Özet paneli mobilde varsayılan olarak gizli (Yandaki kutu yetiyor) */
         .ozet-panel { display: none !important; }
         
         /* 1. Tepe Metrikleri: 2x2 ufak kutular */
@@ -84,7 +85,7 @@ st.markdown("""<style>
             width: 48% !important; flex: 0 0 48% !important; min-width: 48% !important;
         }
 
-        /* 2. PS5, iPhone, Clio: İsteğin üzerine ALT ALTA ve NET */
+        /* 2. PS5, iPhone, Clio: Dikey yığınlama */
         div[data-testid="stHorizontalBlock"]:has(> div:nth-child(3):last-child):has([data-testid="stMetric"]) {
             flex-direction: column !important; gap: 10px !important;
         }
@@ -100,17 +101,20 @@ st.markdown("""<style>
             display: flex !important; flex-direction: column; justify-content: center;
             position: absolute !important; right: 0; bottom: 10px; width: 42%; height: 275px; 
             background: linear-gradient(145deg, #161b22, #1e1e26); border: 1px solid #ff4b4b;
-            border-radius: 10px; padding: 5px; text-align: center; z-index: 99;
+            border-radius: 10px; padding: 5px; text-align: center;
+            box-shadow: 0px 4px 15px rgba(255, 75, 75, 0.15); z-index: 99; touch-action: pan-y;
         }
 
-        /* 4. Tablolar: Yatayda genişlesin ve tüm değerler gözüksün (Scroll eklendi) */
-        [data-testid="stExpander"] [data-testid="stDataFrame"] {
-            width: 100% !important;
-            overflow-x: auto !important; /* Sağa kaydırmayı açar */
-            display: block !important;
+        /* 4. Tablolar: SADECE MOBİLDE Sağa Sola Kaydırmayı Kapat (Telefona Tam Sığdır) */
+        [data-testid="stExpander"] [data-testid="stDataFrame"] { 
+            zoom: 0.65; 
+            -moz-transform: scale(0.65); 
+            -moz-transform-origin: left top;
+            overflow: hidden !important;
         }
-        [data-testid="stExpander"] [data-testid="stDataFrame"] div[data-testid="stTable"] {
-            min-width: 600px !important; /* Tablonun daralmasını engeller */
+        [data-testid="stExpander"] [data-testid="stDataFrame"] table {
+            table-layout: fixed !important;
+            width: 100% !important;
         }
         
         .stButton button { font-size: 11px !important; }
@@ -195,29 +199,54 @@ alim_kaybi = round((1 - (1 / (1 + res_total/100))) * 100, 2)
 reel_deger = round(1000/(1+res_total/100), 2)
 
 with col_out:
+    # Masaüstünde Görünen Orijinal Ozet Paneli
     st.markdown(f"""<div class="ozet-panel">
-        <h3 style="color:#aaa;">Yıl Sonu Beklenti Analizi</h3>
-        <b style="font-size:36px; color:#ff4b4b;">%{tr_format(res_total)}</b><br>
-        <p style="color:#ccc;">Tahmini Kur: {tr_format(tahmini_kur)} TL</p>
+        <h3 style="color:#aaa; margin-bottom: 20px;">Yıl Sonu Beklenti Analizi</h3>
+        <div style="display:flex; justify-content: space-around; align-items:center; margin-bottom: 15px;">
+            <div><small style="color:#ccc;">Q1 Gerçekleşen</small><br><b style="font-size:24px; color:#00d4ff;">%{tr_format(Q1_ENF)}</b></div>
+            <div style="font-size:30px; color:#555;">+</div>
+            <div><small style="color:#ccc;">Senin Tahminin</small><br><b style="font-size:24px; color:#ffbd45;">%{tr_format(s_enf)}</b></div>
+            <div style="font-size:30px; color:#555;">=</div>
+            <div><small style="color:#ccc;"><b>Yıl Sonu Toplamı</b></small><br><b style="font-size:36px; color:#ff4b4b;">%{tr_format(res_total)}</b></div>
+        </div>
+        <hr style="border:0.5px solid #333;">
+        <p style="font-size:16px; color:#ccc; margin-top:10px;">Tahmini Kur: <b>{tr_format(tahmini_kur)} TL</b></p>
     </div>""", unsafe_allow_html=True)
     
     st.write("") 
+    
     h1, h2, h3 = st.columns(3)
     with h1: st.metric("🎮 PS5 (2026)", f"{tr_format(P_PS5*(1+res_total/85), 0)} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {tr_format(P_PS5, 0)} TL</p>', unsafe_allow_html=True)
     with h2: st.metric("📱 iPhone (2026)", f"{tr_format(P_IPHONE*(1+res_total/95), 0)} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {tr_format(P_IPHONE, 0)} TL</p>', unsafe_allow_html=True)
-    with h3: st.metric("🚗 Clio (2026)", f"{tr_format(P_CLIO*(1+res_total/100), 0)} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: 1,79M TL</p>', unsafe_allow_html=True)
+    with h3: st.metric("🚗 Clio (2026)", f"{tr_format(P_CLIO*(1+res_total/100), 0)} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: 1.795.000 TL</p>', unsafe_allow_html=True)
     
     st.divider()
+    
     c_g, c_e = st.columns(2)
-    with c_g: st.plotly_chart(go.Figure(go.Indicator(mode="gauge+number", value=alim_kaybi, title={'text': "Alım Gücü Kaybı (%)"}, gauge={'bar': {'color': "#ff4b4b"}})).update_layout(height=220, paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
-    with c_e: st.markdown(f"""<div style="background-color: #161b22; padding: 20px; border-radius: 10px; border: 1px solid #30363d;">
-            <p style="color: #aaa; font-size: 14px;">📉 1.000 TL Akıbeti</p>
-            <h2 style="color: #fff;">{tr_format(reel_deger)} TL</h2>
-        </div>""", unsafe_allow_html=True)
+    with c_g: 
+        st.plotly_chart(go.Figure(go.Indicator(
+            mode="gauge+number", 
+            value=alim_kaybi, 
+            title={'text': "Alım Gücü Kaybı (%)", 'font': {'size': 16}}, 
+            gauge={'bar': {'color': "#ff4b4b"}}
+        )).update_layout(height=250, margin=dict(l=30, r=30, t=50, b=20), paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
+    
+    with c_e: 
+        yuzde_kalan = max(0, min(100, (reel_deger / 1000) * 100))
+        st.markdown(f"""
+        <div style="background-color: #161b22; padding: 30px 25px; border-radius: 10px; border: 1px solid #30363d; margin-top: 10px;">
+            <p style="color: #aaa; font-size: 14px; margin-bottom: 5px; font-weight: bold;">📉 1.000 TL Akıbeti</p>
+            <h2 style="color: #fff; margin-top: 0; margin-bottom: 20px; font-size: 36px;">{tr_format(reel_deger)} TL</h2>
+            <div style="height: 10px; background-color: #252532; border-radius: 5px; width: 100%;">
+                <div style="height: 100%; background-color: #ff4b4b; border-radius: 5px; width: {yuzde_kalan}%;"></div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
 st.divider()
 
 with st.expander("⚔️ 2020-2025: Enflasyonu Yenenler ve Yenilenler Tablosunu Gör", expanded=False):
+    st.markdown("<small style='color:#aaa;'>Yeşil yananlar enflasyonu tokatladı, kırmızı yananlar enflasyona ezildi.</small>", unsafe_allow_html=True)
     df_yatirim = pd.DataFrame({
         "Yıl": ["2020", "2021", "2022", "2023", "2024", "2025"],
         "Enflasyon (%)": [14.6, 36.1, 64.3, 64.8, 44.8, 25.0],
@@ -229,6 +258,7 @@ with st.expander("⚔️ 2020-2025: Enflasyonu Yenenler ve Yenilenler Tablosunu 
     st.dataframe(df_yatirim, use_container_width=True, hide_index=True)
 
 with st.expander("🛒 Sokağın Enflasyonu: Pazarın Şampiyonları Tablosunu Gör", expanded=False):
+    st.markdown("<small style='color:#aaa;'>Halkın cebini en çok yakanlar ve fiyatı en az artanlar (Tekil Ürün Bazında)</small>", unsafe_allow_html=True)
     df_sokak = pd.DataFrame({
         "Yıl": ["2020", "2021", "2022", "2023", "2024", "2025"],
         "🔥 En Çok Artan": ["2. El Oto", "Yağ", "Soğan", "Zeytinyağı", "Okul", "Et"],
@@ -236,6 +266,14 @@ with st.expander("🛒 Sokağın Enflasyonu: Pazarın Şampiyonları Tablosunu G
         "❄️ En Az Artan": ["Uçak", "Elektirik", "İnternet", "Doğalgaz", "Oto", "Soğan"]
     })
     st.dataframe(df_sokak, use_container_width=True, hide_index=True)
+
+with st.expander("🕰️ Zaman Makinesi: Asgari Ücretin Erimesi Grafiklerini Gör", expanded=False):
+    yillar_nost = [str(y) for y in range(2000, 2026)]; altin_nost = [24.5, 11.2, 12.5, 13.1, 17.8, 18.2, 15.1, 14.8, 14.1, 11.8, 10.5, 8.5, 8.0, 9.5, 10.5, 10.1, 10.4, 9.6, 7.5, 7.8, 5.1, 5.6, 5.3, 6.5, 6.8, 4.5]
+    dolar_nost = [126, 92, 115, 150, 222, 261, 265, 315, 385, 352, 395, 393, 410, 420, 406, 365, 430, 385, 330, 355, 330, 315, 330, 430, 520, 485]
+    df_nost = pd.DataFrame({"Yıl": yillar_nost, "Gram Altın": altin_nost, "Dolar ($)": dolar_nost})
+    g1, g2 = st.columns(2)
+    with g1: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Gram Altın", title="Maaş Kaç Gram Altın?", color="Gram Altın", color_continuous_scale="Blues"), use_container_width=True)
+    with g2: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Dolar ($)", title="Maaş Kaç Dolar?", color="Dolar ($)", color_continuous_scale="Greens"), use_container_width=True)
 
 if st.button("💾 ANALİZİ KAYDET VE ADİSYONU AL", use_container_width=True):
     if save_to_sheets([datetime.now().strftime("%d.%m.%Y"), u_name, u_gender, u_salary, u_prof, u_city, uuid.uuid4().hex[:8], "-", f"'{tr_format(res_total)}", f"'{tr_format(tahmini_kur)}", "-", f"'{tr_format(reel_deger)}"]):
