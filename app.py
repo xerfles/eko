@@ -73,18 +73,23 @@ st.markdown("""<style>
     
     /* --- 📱 SADECE MOBİL İÇİN ÖZEL SİHİR (Genişlik < 768px olduğunda çalışır) --- */
     @media (max-width: 768px) {
-        .main .block-container { padding: 0.8rem !important; max-width: 100% !important; overflow-x: hidden !important; }
+        .main .block-container { padding: 0.5rem !important; max-width: 100% !important; overflow-x: hidden !important; }
         
         /* 1. TEPE METRİKLERİ (Yan yana 2x2 ufak grid) */
         div[data-testid="stHorizontalBlock"]:has(> div:nth-child(4):last-child) {
-            flex-direction: row !important; flex-wrap: wrap !important;
+            flex-direction: row !important; flex-wrap: wrap !important; gap: 5px 0 !important;
         }
         div[data-testid="stHorizontalBlock"]:has(> div:nth-child(4):last-child) > div[data-testid="column"] {
             width: 48% !important; flex: 0 0 48% !important; min-width: 48% !important;
         }
-        [data-testid="stMetric"] { padding: 5px 10px !important; margin-bottom: 5px !important; }
-        [data-testid="stMetricValue"] { font-size: 16px !important; }
-        [data-testid="stMetricLabel"] { font-size: 11px !important; }
+        [data-testid="stMetric"] { padding: 5px !important; margin-bottom: 0 !important; }
+        [data-testid="stMetricValue"] { font-size: 14px !important; }
+        [data-testid="stMetricLabel"] { font-size: 10px !important; }
+        
+        /* Analist Girişi Küçültme */
+        .stTextInput>div>div>input, .stSelectbox>div>div>div, .stNumberInput>div>div>input {
+            font-size: 12px !important; padding: 2px 5px !important; min-height: 1.8rem !important;
+        }
         
         /* 2. HIZLI SENARYO BUTONLARI (Yan yana 3x2 ufak grid) */
         div[data-testid="stHorizontalBlock"]:has(> div:nth-child(6):last-child) {
@@ -94,29 +99,58 @@ st.markdown("""<style>
             width: 32% !important; flex: 0 0 32% !important; min-width: 32% !important;
         }
         div[data-testid="stHorizontalBlock"]:has(> div:nth-child(6):last-child) .stButton button {
-            font-size: 11px !important; padding: 2px 0 !important; min-height: 2.2rem !important; width: 100% !important;
+            font-size: 10px !important; padding: 0 !important; min-height: 2rem !important; width: 100% !important;
         }
 
-        /* 3. MOBİLDE SONUCU ANINDA GÖSTEREN KUTU (Aktif Et) */
-        .mobile-live-preview {
-            display: block !important;
-            background: linear-gradient(145deg, #251212, #1e1e26);
-            border: 1px solid #ff4b4b; padding: 10px; border-radius: 10px;
-            text-align: center; margin: 15px 0px 15px 0px;
-            box-shadow: 0px 4px 15px rgba(255, 75, 75, 0.15);
+        /* 3. SİHİRLİ BÖLÜM: SLIDER VE ANALİZ YAN YANA */
+        /* Ana kolonu relative yapıyoruz ki içindeki kutuyu sağ alta sabitleyebilelim */
+        div[data-testid="column"]:nth-child(1) {
+            position: relative !important;
         }
         
-        /* 4. TABLOLARI UUFALT VE EKRANA TAM SIĞDIR (Sağa sola kaydırmayı bitirir) */
-        [data-testid="stDataFrame"] { width: 100% !important; overflow: hidden !important; }
-        [data-testid="stDataFrame"] table { width: 100% !important; table-layout: fixed !important; font-size: 7.5px !important; }
-        [data-testid="stDataFrame"] th, [data-testid="stDataFrame"] td { padding: 2px !important; white-space: normal !important; word-wrap: break-word !important; }
+        /* Sliderları sola sıkıştır %55, sağda %45 boşluk bırak */
+        div[data-testid="stSlider"] {
+            width: 55% !important;
+            margin-left: 0 !important;
+        }
+        div[data-testid="stSlider"] p { font-size: 12px !important; margin-bottom: -5px !important; }
         
-        /* Diğer mobil zarifleştirmeler */
-        .stTextInput>div>div>input, .stSelectbox>div>div>div, .stNumberInput>div>div>input { font-size: 13px !important; padding: 4px !important; min-height: 2rem !important; }
-        [data-testid="stSlider"] { margin-left: 20px !important; margin-right: 20px !important; }
+        /* Q1+Tahmin=YılSonu Kutusu Sağdaki Boşluğa Oturtuluyor */
+        .mobile-live-preview {
+            display: flex !important;
+            flex-direction: column;
+            justify-content: center;
+            position: absolute !important;
+            right: 0;
+            bottom: 25px; /* Sliderların tabanıyla hizalı */
+            width: 40%;
+            height: 260px; /* Slider yüksekliğine eşit */
+            background: linear-gradient(145deg, #161b22, #1e1e26);
+            border: 1px solid #ff4b4b;
+            border-radius: 10px;
+            padding: 5px;
+            text-align: center;
+            box-shadow: 0px 4px 15px rgba(255, 75, 75, 0.15);
+            z-index: 99;
+            /* Güvenli kaydırma alanı (Thumb Safe Scroll) */
+            touch-action: pan-y;
+        }
+        
+        /* 4. TABLOLARI TAMAMEN KÜÇÜLT VE SIĞDIR */
+        [data-testid="stExpander"] [data-testid="stDataFrame"] {
+            zoom: 0.60; 
+            -moz-transform: scale(0.60); 
+            -moz-transform-origin: left top;
+            overflow: hidden !important;
+        }
+        [data-testid="stExpander"] [data-testid="stDataFrame"] table {
+            table-layout: fixed !important;
+            width: 100% !important;
+        }
+        
         .ozet-panel { padding: 15px !important; margin-bottom: 15px !important; }
         .ozet-panel b { font-size: 18px !important; }
-        .receipt-box { padding: 15px !important; margin: 10px 0 !important; width: 100% !important; max-width: 100% !important; font-size: 13px !important; box-sizing: border-box !important; }
+        .receipt-box { padding: 15px !important; margin: 10px 0 !important; width: 100% !important; font-size: 13px !important; box-sizing: border-box !important; }
     }
     </style>""", unsafe_allow_html=True)
 
@@ -175,20 +209,6 @@ with col_in:
     
     st.write("🔮 **Hızlı Senaryo Seçimi**")
     
-    # --- 📱 MOBİL İÇİN ANLIK GÖSTERGE (Senaryo butonlarının HEMEN ÜSTÜNDE) ---
-    weights = {"Öğrenci": [0.25, 0.20, 0.40, 0.15], "Mavi Yaka": [0.10, 0.45, 0.30, 0.15], "Beyaz Yaka": [0.20, 0.25, 0.35, 0.20], "Emekli": [0.05, 0.55, 0.30, 0.10], "Kamu Personeli": [0.15, 0.30, 0.35, 0.20]}
-    w = weights[u_prof]
-    s_enf_live = round((st.session_state.d_val*w[0] + st.session_state.g_val*w[1] + st.session_state.k_val*w[2] + st.session_state.u_val*w[3]), 2)
-    res_total_live = round(Q1_ENF + s_enf_live, 2)
-    
-    st.markdown(f"""
-    <div class="mobile-live-preview">
-        <span style="color: #ccc; font-size: 13px;">🔥 Anlık Yıl Sonu Tahmini (Senaryo Sonucu)</span><br>
-        <b style="color: #ff4b4b; font-size: 26px;">%{tr_format(res_total_live)}</b>
-    </div>
-    """, unsafe_allow_html=True)
-    # -------------------------------------------------------------
-
     s1, s2, s3, s4, s5, s6 = st.columns(6)
     if s1.button("🏦 TCMB", use_container_width=True): st.session_state.update({'d_val': 5, 'g_val': 8, 'k_val': 7, 'u_val': 6}); st.rerun()
     if s2.button("🌸 İyimser", use_container_width=True): st.session_state.update({'d_val': 20, 'g_val': 32, 'k_val': 30, 'u_val': 28}); st.rerun()
@@ -197,6 +217,26 @@ with col_in:
     if s5.button("🔥 ENAG", use_container_width=True): st.session_state.update({'d_val': 55, 'g_val': 70, 'k_val': 75, 'u_val': 60}); st.rerun()
     if s6.button("🌋 Kriz", use_container_width=True): st.session_state.update({'d_val': 100, 'g_val': 120, 'k_val': 130, 'u_val': 110}); st.rerun()
     
+    # --- 📱 MOBİL İÇİN ANLIK GÖSTERGE (Sliderların SAĞINA sabitlenir) ---
+    weights = {"Öğrenci": [0.25, 0.20, 0.40, 0.15], "Mavi Yaka": [0.10, 0.45, 0.30, 0.15], "Beyaz Yaka": [0.20, 0.25, 0.35, 0.20], "Emekli": [0.05, 0.55, 0.30, 0.10], "Kamu Personeli": [0.15, 0.30, 0.35, 0.20]}
+    w = weights[u_prof]
+    s_enf_live = round((st.session_state.d_val*w[0] + st.session_state.g_val*w[1] + st.session_state.k_val*w[2] + st.session_state.u_val*w[3]), 2)
+    res_total_live = round(Q1_ENF + s_enf_live, 2)
+    
+    st.markdown(f"""
+    <div class="mobile-live-preview">
+        <div style="color:#ccc; font-size:10px;">Q1 Gerçekleşen</div>
+        <div style="color:#00d4ff; font-size:16px; font-weight:bold;">%{tr_format(Q1_ENF)}</div>
+        <div style="color:#555; font-size:18px; margin: 2px 0;">+</div>
+        <div style="color:#ccc; font-size:10px;">Senin Tahminin</div>
+        <div style="color:#ffbd45; font-size:16px; font-weight:bold;">%{tr_format(s_enf_live)}</div>
+        <div style="color:#555; font-size:18px; margin: 2px 0;">=</div>
+        <div style="color:#ccc; font-size:11px; font-weight:bold; border-top:1px solid #333; padding-top:5px;">Yıl Sonu</div>
+        <div style="color:#ff4b4b; font-size:20px; font-weight:bold;">%{tr_format(res_total_live)}</div>
+    </div>
+    """, unsafe_allow_html=True)
+    # -------------------------------------------------------------
+
     st.divider()
     d_a = st.slider("💵 Dolar Artışı (%)", 0, 150, key='d_val')
     g_a = st.slider("🛒 Gıda Artışı (%)", 0, 150, key='g_val')
