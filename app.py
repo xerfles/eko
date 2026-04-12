@@ -59,6 +59,7 @@ st.set_page_config(page_title="LiraPulse: Geleceğin Faturası", layout="wide")
 
 # --- 🎨 CSS: TASARIM VE MOBİL UYUM KORUMASI ---
 st.markdown("""<style>
+    /* BİLGİSAYAR TASARIMI (ESKİ HALİYLE %100 AYNI KORUNDU) */
     .main { background-color: #0d1117; }
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; }
@@ -67,12 +68,33 @@ st.markdown("""<style>
     .receipt-box { background-color: #fff; color: #333 !important; padding: 30px; border-radius: 10px; font-family: 'Courier New', monospace; border: 3px dashed #333; margin: 20px auto; max-width: 500px; line-height: 1.8; text-align: left; }
     .receipt-box b, .receipt-box center, .receipt-box p, .receipt-box hr { color: #333 !important; border-color: #333 !important; }
     
-    /* 📱 MOBİL EKRANLAR İÇİN ÖZEL DOKUNUŞLAR (Desktop'u etkilemez) */
+    /* 📱 EFSANE MOBİL UYUM ZIRHI (Sadece Ekran Küçüldüğünde Devreye Girer) */
     @media (max-width: 768px) {
-        .ozet-panel { padding: 15px; }
-        .receipt-box { padding: 20px; font-size: 14px; margin: 10px auto; }
-        .ekmek-text { font-size: 14px; }
-        [data-testid="stMetric"] { margin-bottom: 10px; }
+        /* Sitenin sağa sola kaymasını (taşmayı) engelle */
+        .main .block-container { padding: 1rem !important; max-width: 100% !important; overflow-x: hidden !important; }
+        
+        /* Senaryo Butonları ve Metrikleri daraltarak sıkışmayı önle */
+        .stButton button { padding: 0.2rem !important; font-size: 14px !important; min-height: 2.5rem !important; }
+        [data-testid="stMetric"] { padding: 10px !important; margin-bottom: 5px !important; }
+        [data-testid="stMetricValue"] { font-size: 22px !important; }
+        
+        /* Özet Panelindeki büyük yazıları telefona sığdır */
+        .ozet-panel { padding: 15px !important; margin-bottom: 15px !important; }
+        .ozet-panel div { font-size: 12px !important; flex-wrap: wrap; }
+        .ozet-panel b { font-size: 18px !important; }
+        
+        /* Adisyon Fişinin ekrandan taşmasını engelle, tam oturt */
+        .receipt-box { 
+            padding: 15px !important; 
+            margin: 10px 0 !important; 
+            width: 100% !important; 
+            max-width: 100% !important;
+            font-size: 13px !important; 
+            box-sizing: border-box !important;
+        }
+        
+        /* Grafikler ve Tabloların yarım çıkmasını engelle */
+        [data-testid="stDataFrame"] { width: 100% !important; overflow-x: auto !important; }
     }
     </style>""", unsafe_allow_html=True)
 
@@ -131,7 +153,6 @@ with col_in:
     
     st.write("🔮 **Hızlı Senaryo Seçimi**")
     s1, s2, s3, s4, s5, s6 = st.columns(6)
-    # Butonlara "use_container_width=True" eklendi. Bilgisayarda şık, mobilde parmak dostu olacak.
     if s1.button("🏦 TCMB", use_container_width=True): st.session_state.update({'d_val': 5, 'g_val': 8, 'k_val': 7, 'u_val': 6}); st.rerun()
     if s2.button("🌸 İyimser", use_container_width=True): st.session_state.update({'d_val': 20, 'g_val': 32, 'k_val': 30, 'u_val': 28}); st.rerun()
     if s3.button("📉 TÜİK", use_container_width=True): st.session_state.update({'d_val': 12, 'g_val': 22, 'k_val': 20, 'u_val': 16}); st.rerun()
