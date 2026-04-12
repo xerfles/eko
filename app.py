@@ -105,20 +105,23 @@ st.markdown("""<style>
             font-size: 10px !important; padding: 0 !important; min-height: 2rem !important; width: 100% !important;
         }
 
-        /* 3. PS5, IPHONE, CLIO YAN YANA (Sadece metrik içeren 3'lü kolonları hedefler) */
+        /* 3. PS5, IPHONE, CLIO YAN YANA (Kusursuz Mobil Sığdırma) */
         div[data-testid="stHorizontalBlock"]:has(> div:nth-child(3):last-child):has([data-testid="stMetric"]) {
-            flex-direction: row !important; flex-wrap: nowrap !important; justify-content: space-between !important; gap: 2px !important;
+            display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; justify-content: space-between !important; gap: 4px !important; width: 100% !important; margin-top: -10px !important;
         }
         div[data-testid="stHorizontalBlock"]:has(> div:nth-child(3):last-child):has([data-testid="stMetric"]) > div[data-testid="column"] {
-            width: 32% !important; flex: 0 0 32% !important; min-width: 32% !important;
+            width: 32% !important; flex: 1 1 0px !important; min-width: 0px !important; padding: 0 !important; /* min-width:0 taşmayı kökten çözer */
+        }
+        div[data-testid="stHorizontalBlock"]:has(> div:nth-child(3):last-child):has([data-testid="stMetric"]) [data-testid="stMetric"] {
+            padding: 5px !important; border-radius: 8px !important;
         }
         div[data-testid="stHorizontalBlock"]:has(> div:nth-child(3):last-child):has([data-testid="stMetric"]) [data-testid="stMetricValue"] {
-            font-size: 11px !important;
+            font-size: 12px !important;
         }
         div[data-testid="stHorizontalBlock"]:has(> div:nth-child(3):last-child):has([data-testid="stMetric"]) [data-testid="stMetricLabel"] {
             font-size: 9px !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
         }
-        .bugun-etiket { font-size: 8px !important; margin-top: -5px !important; }
+        .bugun-etiket { font-size: 8px !important; margin-top: -5px !important; white-space: nowrap; }
 
         /* 4. SİHİRLİ BÖLÜM: SLIDER VE ANALİZ YAN YANA */
         div[data-testid="column"]:nth-child(1) { position: relative !important; }
@@ -133,9 +136,13 @@ st.markdown("""<style>
             box-shadow: 0px 4px 15px rgba(255, 75, 75, 0.15); z-index: 99; touch-action: pan-y;
         }
         
-        /* 5. TABLOLARI TAMAMEN KÜÇÜLT VE SIĞDIR */
-        [data-testid="stExpander"] [data-testid="stDataFrame"] { zoom: 0.60; -moz-transform: scale(0.60); -moz-transform-origin: left top; overflow: hidden !important; }
-        [data-testid="stExpander"] [data-testid="stDataFrame"] table { table-layout: fixed !important; width: 100% !important; }
+        /* 5. TABLOLARI TAMAMEN KÜÇÜLT VE EKRANA OTURT (Sanal Genişlik Hacki) */
+        [data-testid="stExpander"] [data-testid="stDataFrame"] { 
+            width: 180% !important; /* Konteyneri sanal olarak genişletir */
+            transform: scale(0.55) !important; /* Sonra hepsini %55'e küçültür */
+            transform-origin: left top !important; 
+            margin-bottom: -40% !important; /* Küçülmeden kaynaklı alttaki boşluğu siler */
+        }
         
         .receipt-box { padding: 15px !important; margin: 10px 0 !important; width: 100% !important; font-size: 13px !important; box-sizing: border-box !important; }
     }
@@ -212,7 +219,7 @@ with col_in:
     k_a = st.slider("🏠 Kira Artışı (%)", 0, 150, key='k_val')
     u_a = st.slider("🚗 Ulaşım Artışı (%)", 0, 150, key='u_val')
 
-    # 2. MOBİL İÇİN ANLIK GÖSTERGE (Tahmini Kur eklendi, Masaüstünde görünmez)
+    # 2. MOBİL İÇİN ANLIK GÖSTERGE (Tahmini Kur Eklendi)
     weights = {"Öğrenci": [0.25, 0.20, 0.40, 0.15], "Mavi Yaka": [0.10, 0.45, 0.30, 0.15], "Beyaz Yaka": [0.20, 0.25, 0.35, 0.20], "Emekli": [0.05, 0.55, 0.30, 0.10], "Kamu Personeli": [0.15, 0.30, 0.35, 0.20]}
     w = weights[u_prof]
     s_enf_live = round((d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3]), 2)
@@ -241,7 +248,7 @@ alim_kaybi = round((1 - (1 / (1 + res_total/100))) * 100, 2)
 reel_deger = round(1000/(1+res_total/100), 2)
 
 with col_out:
-    # --- YIL SONU ANALİZİ (Masaüstünde görünür, mobilde gizli) ---
+    # --- YIL SONU ANALİZİ (Mobilde GİZLİ, Masaüstünde ŞOV) ---
     st.markdown(f"""<div class="ozet-panel">
         <h3 style="color:#aaa; margin-bottom: 20px;">Yıl Sonu Beklenti Analizi</h3>
         <div style="display:flex; justify-content: space-around; align-items:center; margin-bottom: 15px;">
@@ -257,6 +264,7 @@ with col_out:
     
     st.write("") 
     
+    # Mobilde de masaüstünde de çalışan 3'lü ürün göstergesi
     h1, h2, h3 = st.columns(3)
     with h1: st.metric("🎮 PS5 (2026)", f"{tr_format(P_PS5*(1+res_total/85), 0)} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {tr_format(P_PS5, 0)} TL</p>', unsafe_allow_html=True)
     with h2: st.metric("📱 iPhone (2026)", f"{tr_format(P_IPHONE*(1+res_total/95), 0)} TL"); st.markdown(f'<p class="bugun-etiket">Bugün: {tr_format(P_IPHONE, 0)} TL</p>', unsafe_allow_html=True)
