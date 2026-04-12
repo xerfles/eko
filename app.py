@@ -57,8 +57,9 @@ P_PS5, P_IPHONE, P_CLIO = 42999, 77999, 1795000
 
 st.set_page_config(page_title="LiraPulse: Geleceğin Faturası", layout="wide")
 
-# --- 🎨 CSS: TASARIM VE MOBİL UYUM ZIRHI ---
+# --- 🎨 CSS: BİLGİSAYAR TASARIMI + AKILLI MOBİL KALİBRASYON ---
 st.markdown("""<style>
+    /* --- BİLGİSAYAR İÇİN (HİÇ DOKUNULMADI) --- */
     .main { background-color: #0d1117; }
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; }
@@ -67,16 +68,45 @@ st.markdown("""<style>
     .receipt-box { background-color: #fff; color: #333 !important; padding: 30px; border-radius: 10px; font-family: 'Courier New', monospace; border: 3px dashed #333; margin: 20px auto; max-width: 500px; line-height: 1.8; text-align: left; }
     .receipt-box b, .receipt-box center, .receipt-box p, .receipt-box hr { color: #333 !important; border-color: #333 !important; }
     
+    /* Mobil anlık önizleme kutusu bilgisayarda GİZLİ kalır */
+    .mobile-live-preview { display: none; }
+    
+    /* --- 📱 SADECE MOBİL İÇİN ÖZEL ZIRH --- */
     @media (max-width: 768px) {
-        .main .block-container { padding: 1rem !important; max-width: 100% !important; overflow-x: hidden !important; }
-        .stButton button { padding: 0.2rem !important; font-size: 14px !important; min-height: 2.5rem !important; }
-        [data-testid="stMetric"] { padding: 10px !important; margin-bottom: 5px !important; }
-        [data-testid="stMetricValue"] { font-size: 22px !important; }
+        .main .block-container { padding: 0.8rem !important; max-width: 100% !important; overflow-x: hidden !important; }
+        
+        /* 1. Koca Metrikleri ve Girişleri Zarifleştir */
+        [data-testid="stMetric"] { padding: 5px 10px !important; margin-bottom: 5px !important; }
+        [data-testid="stMetricValue"] { font-size: 16px !important; }
+        [data-testid="stMetricLabel"] { font-size: 11px !important; }
+        .stTextInput>div>div>input, .stSelectbox>div>div>div, .stNumberInput>div>div>input { font-size: 14px !important; padding: 5px !important; min-height: 2rem !important; }
+        
+        /* 2. Slider'lar için kenarlarda "Güvenli Kaydırma" (Safe-Scroll) Boşluğu */
+        [data-testid="stSlider"] { margin-left: 25px !important; margin-right: 25px !important; }
+        
+        /* 3. Mobilde sonucu anında gösteren kutuyu AKTİF ET */
+        .mobile-live-preview {
+            display: block !important;
+            background: linear-gradient(145deg, #251212, #1e1e26);
+            border: 1px solid #ff4b4b;
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 15px 0px 10px 0px;
+            box-shadow: 0px 4px 15px rgba(255, 75, 75, 0.15);
+        }
+        
+        /* 4. Tabloları Zorla Sıkıştır (Yarım çıkmasın) */
+        [data-testid="stDataFrame"] { width: 100% !important; overflow: hidden !important; }
+        [data-testid="stDataFrame"] table { width: 100% !important; table-layout: fixed !important; font-size: 9px !important; }
+        [data-testid="stDataFrame"] th, [data-testid="stDataFrame"] td { padding: 3px !important; white-space: normal !important; word-wrap: break-word !important; }
+        
+        /* Diğer mobil iyileştirmeler */
+        .stButton button { padding: 0.2rem !important; font-size: 13px !important; min-height: 2.2rem !important; }
         .ozet-panel { padding: 15px !important; margin-bottom: 15px !important; }
         .ozet-panel div { font-size: 12px !important; flex-wrap: wrap; }
         .ozet-panel b { font-size: 18px !important; }
         .receipt-box { padding: 15px !important; margin: 10px 0 !important; width: 100% !important; max-width: 100% !important; font-size: 13px !important; box-sizing: border-box !important; }
-        [data-testid="stDataFrame"] { width: 100% !important; overflow-x: auto !important; }
     }
     </style>""", unsafe_allow_html=True)
 
@@ -142,27 +172,32 @@ with col_in:
     if s5.button("🔥 ENAG", use_container_width=True): st.session_state.update({'d_val': 55, 'g_val': 70, 'k_val': 75, 'u_val': 60}); st.rerun()
     if s6.button("🌋 Kriz", use_container_width=True): st.session_state.update({'d_val': 100, 'g_val': 120, 'k_val': 130, 'u_val': 110}); st.rerun()
     
+    # --- 📱 MOBİL İÇİN ANLIK GÖSTERGE (Masaüstünde Görünmez) ---
+    weights = {"Öğrenci": [0.25, 0.20, 0.40, 0.15], "Mavi Yaka": [0.10, 0.45, 0.30, 0.15], "Beyaz Yaka": [0.20, 0.25, 0.35, 0.20], "Emekli": [0.05, 0.55, 0.30, 0.10], "Kamu Personeli": [0.15, 0.30, 0.35, 0.20]}
+    w = weights[u_prof]
+    s_enf_live = round((st.session_state.d_val*w[0] + st.session_state.g_val*w[1] + st.session_state.k_val*w[2] + st.session_state.u_val*w[3]), 2)
+    res_total_live = round(Q1_ENF + s_enf_live, 2)
+    
+    st.markdown(f"""
+    <div class="mobile-live-preview">
+        <span style="color: #ccc; font-size: 13px;">🔥 Anlık Yıl Sonu Tahmini</span><br>
+        <b style="color: #ff4b4b; font-size: 24px;">%{tr_format(res_total_live)}</b>
+    </div>
+    """, unsafe_allow_html=True)
+    # -------------------------------------------------------------
+
     st.divider()
     d_a = st.slider("💵 Dolar Artışı (%)", 0, 150, key='d_val')
     g_a = st.slider("🛒 Gıda Artışı (%)", 0, 150, key='g_val')
     k_a = st.slider("🏠 Kira Artışı (%)", 0, 150, key='k_val')
     u_a = st.slider("🚗 Ulaşım Artışı (%)", 0, 150, key='u_val')
 
-    # --- MOBİL İÇİN ANLIK GÖSTERGE ---
-    weights = {"Öğrenci": [0.25, 0.20, 0.40, 0.15], "Mavi Yaka": [0.10, 0.45, 0.30, 0.15], "Beyaz Yaka": [0.20, 0.25, 0.35, 0.20], "Emekli": [0.05, 0.55, 0.30, 0.10], "Kamu Personeli": [0.15, 0.30, 0.35, 0.20]}
-    w = weights[u_prof]
-    s_enf = round((d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3]), 2)
-    res_total = round(Q1_ENF + s_enf, 2)
-    tahmini_kur = round(GUNCEL_DOLAR * (1 + d_a/100), 2)
-    alim_kaybi = round((1 - (1 / (1 + res_total/100))) * 100, 2)
-    reel_deger = round(1000/(1+res_total/100), 2)
-    
-    st.markdown(f"""
-    <div style="background-color: rgba(255, 75, 75, 0.1); border: 1px solid #ff4b4b; padding: 10px; border-radius: 8px; text-align: center; margin-top: 15px;">
-        <span style="color: #ccc; font-size: 13px;">🔥 Anlık Yıl Sonu Tahmini</span><br>
-        <b style="color: #ff4b4b; font-size: 22px;">%{tr_format(res_total)}</b>
-    </div>
-    """, unsafe_allow_html=True)
+# --- 🧮 MASAÜSTÜ HESAPLAMALARI ---
+s_enf = round((d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3]), 2)
+res_total = round(Q1_ENF + s_enf, 2)
+tahmini_kur = round(GUNCEL_DOLAR * (1 + d_a/100), 2)
+alim_kaybi = round((1 - (1 / (1 + res_total/100))) * 100, 2)
+reel_deger = round(1000/(1+res_total/100), 2)
 
 with col_out:
     # --- YIL SONU ANALİZİ ---
@@ -211,7 +246,7 @@ with col_out:
 
 st.divider()
 
-# --- ⚔️ TABLOLAR (AÇILIR KAPANIR KUTULARA GİZLENDİ) ---
+# --- ⚔️ TABLOLAR ---
 with st.expander("⚔️ 2020-2025: Enflasyonu Yenenler ve Yenilenler Tablosunu Gör", expanded=False):
     st.markdown("<small style='color:#aaa;'>Yeşil yananlar enflasyonu tokatladı, kırmızı yananlar enflasyona ezildi.</small>", unsafe_allow_html=True)
     df_yatirim = pd.DataFrame({
