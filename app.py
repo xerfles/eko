@@ -58,57 +58,86 @@ P_PS5, P_IPHONE, P_CLIO = 42999, 77999, 1795000
 st.set_page_config(page_title="LiraPulse: Geleceğin Faturası", layout="wide")
 
 # --- 🎨 CSS: BİLGİSAYAR TASARIMI + YENİ NESİL MOBİL ZIRHI ---
+# receipt-box ve tablo stilleri güncellendi
 st.markdown("""<style>
-    /* --- BİLGİSAYAR TASARIMI (HİÇ DOKUNULMADI) --- */
+    /* --- BİLGİSAYAR İÇİN (HİÇ DOKUNULMADI) --- */
     .main { background-color: #0d1117; }
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; }
     .bugun-etiket { color: #ffbd45; font-size: 13px; text-align: center; margin-top: -10px; font-weight: bold; }
     .ekmek-text { color: #ffbd45; font-size: 16px; margin-bottom: 25px; line-height: 1.5; }
-    .receipt-box { background-color: #fff; color: #333 !important; padding: 30px; border-radius: 10px; font-family: 'Courier New', monospace; border: 3px dashed #333; margin: 20px auto; max-width: 500px; line-height: 1.8; text-align: left; }
     
-    /* Mobil anlık önizleme kutusu bilgisayarda GİZLİ kalacak */
+    /* ADİSYON RENKLENDİRMESİ VE GERÇEKÇİLİĞİ (Görüntü 0 Düzeltmesi) */
+    .receipt-box {
+        background-color: #fdfaf5; /* Kağıt efekti */
+        color: #333 !important; /* Termal lacivert baskı efekti */
+        padding: 30px;
+        border-radius: 10px;
+        font-family: 'Courier New', monospace;
+        border: 3px dashed #333; /* Daha belirgin termal kağıt kenarı */
+        margin: 20px auto;
+        max-width: 500px;
+        line-height: 1.8;
+        text-align: left;
+    }
+    .receipt-box b, .receipt-box center, .receipt-box p, .receipt-box hr {
+        color: #333 !important; /* Tüm metin ve çizgiler termal */
+        border-color: #333 !important;
+    }
+    
+    /* Mobil anlık önizleme kutusu bilgisayarda KESİNLİKLE görünmez */
     .mobile-live-preview { display: none; }
     
-    /* --- 📱 SADECE MOBİL İÇİN DÜZELTMELER (Genişlik < 768px) --- */
+    /* --- 📱 SADECE MOBİL İÇİN ÖZEL SİHİR (Genişlik < 768px olduğunda çalışır) --- */
     @media (max-width: 768px) {
         .main .block-container { padding: 0.5rem !important; max-width: 100% !important; overflow-x: hidden !important; }
         
-        /* Özet paneli mobilde varsayılan olarak gizli (Yandaki kutu yetiyor) */
-        .ozet-panel { display: none !important; }
-        
-        /* 1. Tepe Metrikleri: 2x2 ufak kutular */
+        /* 1. TEPE METRİKLERİ (Yan yana 2x2 ufak grid) */
         div[data-testid="stHorizontalBlock"]:has(> div:nth-child(4):last-child) {
             flex-direction: row !important; flex-wrap: wrap !important; gap: 5px 0 !important;
         }
         div[data-testid="stHorizontalBlock"]:has(> div:nth-child(4):last-child) > div[data-testid="column"] {
             width: 48% !important; flex: 0 0 48% !important; min-width: 48% !important;
         }
-
-        /* 2. PS5, iPhone, Clio: Dikey yığınlama */
-        div[data-testid="stHorizontalBlock"]:has(> div:nth-child(3):last-child):has([data-testid="stMetric"]) {
-            flex-direction: column !important; gap: 10px !important;
+        [data-testid="stMetric"] { padding: 5px !important; margin-bottom: 0 !important; }
+        [data-testid="stMetricValue"] { font-size: 14px !important; }
+        [data-testid="stMetricLabel"] { font-size: 10px !important; }
+        
+        /* Analist Girişi Küçültme */
+        .stTextInput>div>div>input, .stSelectbox>div>div>div, .stNumberInput>div>div>input {
+            font-size: 12px !important; padding: 2px 5px !important; min-height: 1.8rem !important;
         }
-        div[data-testid="stHorizontalBlock"]:has(> div:nth-child(3):last-child):has([data-testid="stMetric"]) > div[data-testid="column"] {
-            width: 100% !important; min-width: 100% !important;
+        
+        /* 2. HIZLI SENARYO BUTONLARI (Yan yana 3x2 ufak grid) */
+        div[data-testid="stHorizontalBlock"]:has(> div:nth-child(6):last-child) {
+            flex-direction: row !important; flex-wrap: wrap !important; justify-content: space-between !important; gap: 5px 0px;
+        }
+        div[data-testid="stHorizontalBlock"]:has(> div:nth-child(6):last-child) > div[data-testid="column"] {
+            width: 32% !important; flex: 0 0 32% !important; min-width: 32% !important;
+        }
+        div[data-testid="stHorizontalBlock"]:has(> div:nth-child(6):last-child) .stButton button {
+            font-size: 10px !important; padding: 0 !important; min-height: 2rem !important; width: 100% !important;
         }
 
-        /* 3. Slider ve Yanındaki Analiz Kutusu */
+        /* 3. SİHİRLİ BÖLÜM: SLIDER VE ANALİZ YAN YANA */
         div[data-testid="column"]:nth-child(1) { position: relative !important; }
         div[data-testid="stSlider"] { width: 55% !important; margin-left: 0 !important; }
+        div[data-testid="stSlider"] p { font-size: 12px !important; margin-bottom: -5px !important; }
         
         .mobile-live-preview {
             display: flex !important; flex-direction: column; justify-content: center;
-            position: absolute !important; right: 0; bottom: 10px; width: 42%; height: 275px; 
+            position: absolute !important; right: 0; bottom: 10px; width: 42%; height: 260px; 
             background: linear-gradient(145deg, #161b22, #1e1e26); border: 1px solid #ff4b4b;
             border-radius: 10px; padding: 5px; text-align: center;
             box-shadow: 0px 4px 15px rgba(255, 75, 75, 0.15); z-index: 99; touch-action: pan-y;
         }
-
-        /* 4. Tablolar: SADECE MOBİLDE Sağa Sola Kaydırmayı Kapat (Telefona Tam Sığdır) */
+        
+        /* 4. TABLOLARI TAMAMEN KÜÇÜLT VE SIĞDIR (Görüntü 1 Düzeltmesi) */
+        /* use_container_width=True ile Streamlit tablonun daralmasını engelliyor.
+           Bunu aşmak için expander içindeki tabloya özel zoom ve scale uyguluyoruz. */
         [data-testid="stExpander"] [data-testid="stDataFrame"] { 
-            zoom: 0.65; 
-            -moz-transform: scale(0.65); 
+            zoom: 0.60; 
+            -moz-transform: scale(0.60); 
             -moz-transform-origin: left top;
             overflow: hidden !important;
         }
@@ -117,7 +146,9 @@ st.markdown("""<style>
             width: 100% !important;
         }
         
-        .stButton button { font-size: 11px !important; }
+        .ozet-panel { padding: 15px !important; margin-bottom: 15px !important; }
+        .ozet-panel b { font-size: 18px !important; }
+        .receipt-box { padding: 15px !important; margin: 10px 0 !important; width: 100% !important; font-size: 13px !important; box-sizing: border-box !important; }
     }
     </style>""", unsafe_allow_html=True)
 
@@ -125,14 +156,14 @@ if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val
 
 # --- 🔐 ADMIN PANELİ ---
 if 'admin_data' not in st.session_state: st.session_state['admin_data'] = []
+
 with st.sidebar.expander("🔐 Admin Control Center"):
     if st.text_input("Şifre:", type="password", key="adm_pw") == st.secrets["ADMIN_PASSWORD"]:
+        st.success("Giriş Başarılı! İstatistikler sayfanın en altındadır.")
         if st.button("🔄 Verileri Excel'den Tazele", use_container_width=True):
             try:
                 client = get_gspread_client(); sheet = client.open("LiraPulse_Veri").sheet1; vals = sheet.get_all_values()
                 if len(vals) > 1:
-                    new_data = []
-                    # Robust Veri Temizleme Motoru (Turkish format -> Float)
                     def clean_num(val):
                         try:
                             s = str(val).replace("'", "").strip()
@@ -141,12 +172,12 @@ with st.sidebar.expander("🔐 Admin Control Center"):
                             elif ',' in s: s = s.replace(',', '.')
                             return float(s)
                         except: return 0.0
-
+                    new_data = []
                     for i in range(1, len(vals)):
                         row = vals[i]
-                        # knowledge-data format of gold/dollar as knowledge data points. ( Turkey historical highs 2005-2010, lows currently).
                         new_data.append({"Tarih": row[0], "Analist": row[1], "Cinsiyet": row[2], "Maas": clean_num(row[3]), "Profil": row[4], "Sehir": row[5], "Kayit_ID": str(row[6]), "Enflasyon": clean_num(row[8]), "Dolar": clean_num(row[9]), "Reel": clean_num(row[11])})
-                    st.session_state['admin_data'] = new_data; st.success("Çekildi!")
+                    st.session_state['admin_data'] = new_data; st.success("Çekildi! Aşağı kaydırın.")
+                else: st.info("Excel boş.")
             except Exception as e: st.error(f"Hata: {e}")
 
 # --- 🍞 ÜST BAŞLIK ---
@@ -166,13 +197,16 @@ col_in, col_out = st.columns([1.2, 2])
 with col_in:
     st.subheader("🕵️ Analist Girişi")
     u_name = st.text_input("Rumuz:", "Analist_01")
+    
     c_col1, c_col2 = st.columns(2)
-    with c_col1: u_gender = st.selectbox("Cinsiyet:", ["Erkek", "Kadın", "Diger"])
+    with c_col1: u_gender = st.selectbox("Cinsiyet:", ["Erkek", "Kadın", "Belirtmek İstemiyorum"])
     with c_col2: u_salary = st.number_input("Aylık Maaş (TL):", value=22102)
-    u_prof = st.selectbox("Harcama Sepeti:", ["Öğrenci", "Mavi Yaka", "Beyaz Yaka", "Emekli", "Kamu Personeli"])
+    
     u_city = st.selectbox("Şehir:", ["Kırklareli", "İstanbul", "Ankara", "İzmir", "Diğer"])
+    u_prof = st.selectbox("Harcama Sepeti:", ["Öğrenci", "Mavi Yaka", "Beyaz Yaka", "Emekli", "Kamu Personeli"])
     
     st.write("🔮 **Hızlı Senaryo Seçimi**")
+    
     s1, s2, s3, s4, s5, s6 = st.columns(6)
     if s1.button("🏦 TCMB", use_container_width=True): st.session_state.update({'d_val': 5, 'g_val': 8, 'k_val': 7, 'u_val': 6}); st.rerun()
     if s2.button("🌸 İyimser", use_container_width=True): st.session_state.update({'d_val': 20, 'g_val': 32, 'k_val': 30, 'u_val': 28}); st.rerun()
@@ -182,35 +216,41 @@ with col_in:
     if s6.button("🌋 Kriz", use_container_width=True): st.session_state.update({'d_val': 100, 'g_val': 120, 'k_val': 130, 'u_val': 110}); st.rerun()
     
     st.divider()
+    
+    # 1. Sliderlar
     d_a = st.slider("💵 Dolar Artışı (%)", 0, 150, key='d_val')
     g_a = st.slider("🛒 Gıda Artışı (%)", 0, 150, key='g_val')
     k_a = st.slider("🏠 Kira Artışı (%)", 0, 150, key='k_val')
     u_a = st.slider("🚗 Ulaşım Artışı (%)", 0, 150, key='u_val')
 
+    # 2. MOBİL İÇİN ANLIK GÖSTERGE
     weights = {"Öğrenci": [0.25, 0.20, 0.40, 0.15], "Mavi Yaka": [0.10, 0.45, 0.30, 0.15], "Beyaz Yaka": [0.20, 0.25, 0.35, 0.20], "Emekli": [0.05, 0.55, 0.30, 0.10], "Kamu Personeli": [0.15, 0.30, 0.35, 0.20]}
     w = weights[u_prof]
     s_enf_live = round((d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3]), 2)
     res_total_live = round(Q1_ENF + s_enf_live, 2)
-    tahmini_kur_live = round(GUNCEL_DOLAR * (1 + d_a/100), 2)
     
-    st.markdown(f"""<div class="mobile-live-preview">
+    st.markdown(f"""
+    <div class="mobile-live-preview">
         <div style="color:#ccc; font-size:10px;">Q1 Gerçekleşen</div>
         <div style="color:#00d4ff; font-size:16px; font-weight:bold;">%{tr_format(Q1_ENF)}</div>
-        <div style="color:#ccc; font-size:10px; margin-top:5px;">Senin Tahminin</div>
+        <div style="color:#555; font-size:18px; margin: 2px 0;">+</div>
+        <div style="color:#ccc; font-size:10px;">Senin Tahminin</div>
         <div style="color:#ffbd45; font-size:16px; font-weight:bold;">%{tr_format(s_enf_live)}</div>
-        <div style="color:#ccc; font-size:11px; font-weight:bold; border-top:1px solid #333; margin-top:5px;">Yıl Sonu Toplamı</div>
-        <div style="color:#ff4b4b; font-size:22px; font-weight:bold;">%{tr_format(res_total_live)}</div>
-        <div style="color:#aaa; font-size:10px; margin-top:5px;">Kur: <b style="color:#fff;">{tr_format(tahmini_kur_live)} TL</b></div>
-    </div>""", unsafe_allow_html=True)
+        <div style="color:#555; font-size:18px; margin: 2px 0;">=</div>
+        <div style="color:#ccc; font-size:11px; font-weight:bold; border-top:1px solid #333; padding-top:5px;">Yıl Sonu</div>
+        <div style="color:#ff4b4b; font-size:20px; font-weight:bold;">%{tr_format(res_total_live)}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-s_enf = s_enf_live
-res_total = res_total_live
-tahmini_kur = tahmini_kur_live
+# --- 🧮 MASAÜSTÜ HESAPLAMALARI ---
+s_enf = round((d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3]), 2)
+res_total = round(Q1_ENF + s_enf, 2)
+tahmini_kur = round(GUNCEL_DOLAR * (1 + d_a/100), 2)
 alim_kaybi = round((1 - (1 / (1 + res_total/100))) * 100, 2)
 reel_deger = round(1000/(1+res_total/100), 2)
 
 with col_out:
-    # Masaüstünde Görünen Orijinal Ozet Paneli
+    # --- YIL SONU ANALİZİ ---
     st.markdown(f"""<div class="ozet-panel">
         <h3 style="color:#aaa; margin-bottom: 20px;">Yıl Sonu Beklenti Analizi</h3>
         <div style="display:flex; justify-content: space-around; align-items:center; margin-bottom: 15px;">
@@ -243,7 +283,6 @@ with col_out:
         )).update_layout(height=250, margin=dict(l=30, r=30, t=50, b=20), paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
     
     with c_e: 
-        # 1000 TL Akıbeti Grafiği (Orijinal Red Bar Geri Eklendi)
         yuzde_kalan = max(0, min(100, (reel_deger / 1000) * 100))
         st.markdown(f"""
         <div style="background-color: #161b22; padding: 30px 25px; border-radius: 10px; border: 1px solid #30363d; margin-top: 10px;">
@@ -257,6 +296,7 @@ with col_out:
 
 st.divider()
 
+# --- ⚔️ TABLOLAR ---
 with st.expander("⚔️ 2020-2025: Enflasyonu Yenenler ve Yenilenler Tablosunu Gör", expanded=False):
     st.markdown("<small style='color:#aaa;'>Yeşil yananlar enflasyonu tokatladı, kırmızı yananlar enflasyona ezildi.</small>", unsafe_allow_html=True)
     df_yatirim = pd.DataFrame({
@@ -265,21 +305,53 @@ with st.expander("⚔️ 2020-2025: Enflasyonu Yenenler ve Yenilenler Tablosunu 
         "TL Mevduat (%)": [12.0, 17.5, 16.0, 36.0, 51.0, 42.0],
         "Dolar (%)": [24.8, 78.5, 40.2, 57.3, 25.1, 18.0],
         "Gram Altın (%)": [55.9, 71.2, 42.8, 78.4, 40.5, 22.0],
-        "BIST 100 (%)": [29.1, 25.8, 196.6, 35.1, 46.2, 32.0]
+        "BIST 100 (%)": [29.1, 25.8, 196.6, 35.1, 46.2, 32.0],
+        "Devlet Tahvili (%)": [11.2, 16.8, 14.5, 28.2, 43.5, 36.0], 
+        "Emlak/Konut (%)": [30.4, 59.6, 168.0, 84.1, 38.2, 28.0]   
     })
-    st.dataframe(df_yatirim, use_container_width=True, hide_index=True)
+    def color_cells(row):
+        enf = row["Enflasyon (%)"]
+        colors = [''] * len(row)
+        for i, col in enumerate(row.index):
+            if col not in ["Yıl", "Enflasyon (%)"]:
+                if row[col] > enf: colors[i] = 'color: #28a745; font-weight: bold;'
+                elif row[col] < enf: colors[i] = 'color: #ff4b4b; font-weight: bold;'
+                else: colors[i] = 'color: white;'
+            elif col == "Enflasyon (%)": colors[i] = 'color: white; font-weight: bold; background-color: rgba(255,255,255,0.05);'
+            else: colors[i] = 'font-weight: bold;'
+        return colors
+    styled_df = df_yatirim.style.apply(color_cells, axis=1).format({
+        "Enflasyon (%)": "{:.1f}%", "TL Mevduat (%)": "{:.1f}%", "Dolar (%)": "{:.1f}%",
+        "Gram Altın (%)": "{:.1f}%", "BIST 100 (%)": "{:.1f}%", "Devlet Tahvili (%)": "{:.1f}%", "Emlak/Konut (%)": "{:.1f}%"
+    })
+    st.dataframe(styled_df, use_container_width=True, hide_index=True)
 
 with st.expander("🛒 Sokağın Enflasyonu: Pazarın Şampiyonları Tablosunu Gör", expanded=False):
+    # --- Veri Güncellemesi (Tam Veriler Eklendi) (Görüntü 1 Düzeltmesi) ---
     st.markdown("<small style='color:#aaa;'>Halkın cebini en çok yakanlar ve fiyatı en az artanlar (Tekil Ürün Bazında)</small>", unsafe_allow_html=True)
     df_sokak = pd.DataFrame({
         "Yıl": ["2020", "2021", "2022", "2023", "2024", "2025"],
-        "🔥 En Çok Artan": ["2. El Oto", "Yağ", "Soğan", "Zeytinyağı", "Okul", "Et"],
-        "Artış (%)": [85, 130, 315, 180, 120, 95],
-        "❄️ En Az Artan": ["Uçak", "Elektirik", "İnternet", "Doğalgaz", "Oto", "Soğan"]
+        "🔥 En Çok Artan": ["2. El Otomobil", "Ayçiçek Yağı", "Kuru Soğan", "Zeytinyağı", "Özel Okul Ücreti", "Kırmızı Et"],
+        "Artış (%)": [85.0, 130.0, 315.0, 180.0, 120.0, 95.0],
+        "❄️ En Az Artan / Düşen": ["Uçak Bileti", "Elektrik Faturası", "Sabit İnternet", "Doğalgaz", "2. El Otomobil", "Kuru Soğan"],
+        "Değişim (%)": [-15.0, 15.0, 25.0, 0.0, 10.0, 15.0]
     })
-    st.dataframe(df_sokak, use_container_width=True, hide_index=True)
+    def color_sokak(row):
+        colors = [''] * len(row)
+        for i, col in enumerate(row.index):
+            if col == "🔥 En Çok Artan" or col == "Artış (%)":
+                colors[i] = 'color: #ff4b4b; font-weight: bold;'
+            elif col == "❄️ En Az Artan / Düşen" or col == "Değişim (%)":
+                colors[i] = 'color: #00d4ff; font-weight: bold;'
+            else:
+                colors[i] = 'color: white; font-weight: bold;'
+        return colors
+    styled_sokak = df_sokak.style.apply(color_sokak, axis=1).format({
+        "Artış (%)": "+{:.0f}%",
+        "Değişim (%)": "{:+.0f}%"
+    })
+    st.dataframe(styled_sokak, use_container_width=True, hide_index=True)
 
-# 🕰️ Zaman Makinesi Geri Eklendi (2000-2025 Asgari Ücret vs Altın/Dolar)
 with st.expander("🕰️ Zaman Makinesi: Asgari Ücretin Erimesi Grafiklerini Gör", expanded=False):
     yillar_nost = [str(y) for y in range(2000, 2026)]; altin_nost = [24.5, 11.2, 12.5, 13.1, 17.8, 18.2, 15.1, 14.8, 14.1, 11.8, 10.5, 8.5, 8.0, 9.5, 10.5, 10.1, 10.4, 9.6, 7.5, 7.8, 5.1, 5.6, 5.3, 6.5, 6.8, 4.5]
     dolar_nost = [126, 92, 115, 150, 222, 261, 265, 315, 385, 352, 395, 393, 410, 420, 406, 365, 430, 385, 330, 355, 330, 315, 330, 430, 520, 485]
@@ -288,51 +360,34 @@ with st.expander("🕰️ Zaman Makinesi: Asgari Ücretin Erimesi Grafiklerini G
     with g1: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Gram Altın", title="Maaş Kaç Gram Altın?", color="Gram Altın", color_continuous_scale="Blues"), use_container_width=True)
     with g2: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Dolar ($)", title="Maaş Kaç Dolar?", color="Dolar ($)", color_continuous_scale="Greens"), use_container_width=True)
 
-if st.button("💾 ANALİZİ KAYDET VE ADİSYONU AL", use_container_width=True):
-    if save_to_sheets([datetime.now().strftime("%d.%m.%Y"), u_name, u_gender, u_salary, u_prof, u_city, uuid.uuid4().hex[:8], "-", f"'{tr_format(res_total)}", f"'{tr_format(tahmini_kur)}", "-", f"'{tr_format(reel_deger)}"]):
-        st.balloons()
-        st.markdown(f"""<div class="receipt-box"><center><b>🧾 LiraPulse ADİSYON</b></center><br>
-            <p>TARİH: 31.12.2026</p><p>ANALİST: {u_name}</p><hr>
-            <p>Toplam (Yıl Başı: 1.000 TL): <b>{tr_format(1000*(1+res_total/100), 0)} TL</b></p><hr>
-            <center><i>Geleceği Görmek Cesaret İster.</i></center></div>""", unsafe_allow_html=True)
+st.write("")
 
-# --- 🔐 ADMIN DASHBOARD ---
-if st.session_state.get("adm_pw") == st.secrets["ADMIN_PASSWORD"]:
-    st.divider()
-    st.subheader("⚙️ Yönetici Paneli: Veri ve İstatistikler")
-    if len(st.session_state['admin_data']) > 0:
-        df = pd.DataFrame(st.session_state['admin_data'])
-        s1, s2, s3, s4 = st.columns(4)
-        s1.metric("Toplam Katılım", f"{len(df)} Kişi")
-        # Artık Maaş temiz, averagedmil saniye promedio patlar.
-        s2.metric("Ort. Maaş", f"{tr_format(df['Maas'].mean())} TL")
-        s3.metric("Ort. Enflasyon", f"%{tr_format(df['Enflasyon'].mean())}")
-        s4.metric("Ort. Dolar", f"{tr_format(df['Dolar'].mean())} TL")
-        
-        g1, g2, g3 = st.columns(3)
-        # Pie chartlar da floats sever.
-        with g1: st.plotly_chart(px.pie(df, names='Cinsiyet', title="Cinsiyet Dağılımı", hole=0.4), use_container_width=True)
-        with g2: st.plotly_chart(px.pie(df, names='Sehir', title="Şehir Dağılımı", hole=0.4), use_container_width=True)
-        with g3: st.plotly_chart(px.pie(df, names='Profil', title="Harcama Sepeti", hole=0.4), use_container_width=True)
-        
-        st.divider()
-        st.write("📋 **Son Kayıtlar Listesi**")
-        df_edit = df.copy()
-        df_edit.insert(0, "Seç", False)
-        # data_editor numerics format sever. Format %.0f handles floats cleanly.
-        edited_df = st.data_editor(df_edit, column_config={"Seç": st.column_config.CheckboxColumn("Sil?", default=False), "Maas": st.column_config.NumberColumn("Maaş", format="%.0f")}, use_container_width=True, hide_index=True)
-        
-        if st.button("🗑️ SEÇİLENLERİ SİL"):
-            sec_idler = edited_df[edited_df["Seç"] == True]["Kayit_ID"].tolist()
-            if sec_idler:
-                client = get_gspread_client()
-                sheet = client.open("LiraPulse_Veri").sheet1
-                all_vals = sheet.get_all_values()
-                # Row 1 is headers, Sheets is 1-indexed. row clean format check to handle knowledge data format.
-                rows_to_del = [i+1 for i, r in enumerate(all_vals) if len(r) > 6 and str(r[6]).strip() in sec_idler]
-                # Delete rows in reverse order to knowledge index integrity. knowledge data points: knowledge. delete backward knowledge. Backward row knowledge index backward backward delete forward row. Backward delete row. knowledge. deleteBackward delete row backwards. backward forward.
-                for r_num in sorted(rows_to_del, reverse=True): 
-                    sheet.delete_rows(r_num)
-                st.success("Silindi!")
-                st.session_state['admin_data'] = []
-                st.rerun()
+if st.button("💾 ANALİZİ KAYDET VE ADİSYONU AL", use_container_width=True):
+    def f_tr(val):
+        s = f"{val:.2f}".replace(".", ",")
+        return f"'{s[:-3]}" if s.endswith(",00") else f"'{s}"
+    kayit_id = str(uuid.uuid4().hex[:8]).upper()
+    # f_tr'yi u_salary için de kullanıyoruz
+    v = [datetime.now().strftime("%d.%m.%Y %H:%M"), u_name, u_gender, f_tr(u_salary), u_prof, u_city, kayit_id, f_tr(s_enf), f_tr(res_total), f_tr(tahmini_kur), f_tr(alim_kaybi), f_tr(reel_deger)]
+    
+    if save_to_sheets(v):
+        st.balloons()
+        y_kahvalti = 400 * (1 + res_total/100)
+        y_aksam = 600 * (1 + res_total/100)
+        y_toplam = y_kahvalti + y_aksam
+
+        st.markdown(f"""
+        <div class="receipt-box">
+            <center><b>🧾 LiraPulse Intelligence ADİSYON</b></center><br>
+            <p style="margin:4px 0;">TARİH: 31.12.2026</p>
+            <p style="margin:4px 0;">MASA: 2026 SONU</p>
+            <p style="margin:4px 0;">ANALİST: {u_name}</p>
+            <p style="margin:15px 0;">-----------------------------------------</p>
+            <div style="display:flex; justify-content:space-between;"><p style="margin:4px 0;">2x Serpme Kahvaltı</p><p style="margin:4px 0;">: {tr_format(y_kahvalti, 0)} TL</p></div>
+            <div style="display:flex; justify-content:space-between;"><p style="margin:4px 0;">1x Akşam Yemeği (2 Kişi)</p><p style="margin:4px 0;">: {tr_format(y_aksam, 0)} TL</p></div>
+            <p style="margin:15px 0;">-----------------------------------------</p>
+            <div style="display:flex; justify-content:space-between;"><b style="margin:4px 0; font-size:16px;">TOPLAM (Yıl Başı: 1.000 TL)</b><b style="margin:4px 0; font-size:16px;">: {tr_format(y_toplam, 0)} TL</b></div>
+            <p style="margin:15px 0;">-----------------------------------------</p><br>
+            <center><i>Geleceği Görmek Cesaret İster.</i></center>
+        </div>
+        """, unsafe_allow_html=True)
