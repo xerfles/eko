@@ -132,9 +132,20 @@ with st.sidebar.expander("🔐 Admin Control Center"):
                 client = get_gspread_client(); sheet = client.open("LiraPulse_Veri").sheet1; vals = sheet.get_all_values()
                 if len(vals) > 1:
                     new_data = []
+                    # Robust Veri Temizleme Motoru (Turkish format -> Float)
+                    def clean_num(val):
+                        try:
+                            s = str(val).replace("'", "").strip()
+                            if not s: return 0.0
+                            if '.' in s and ',' in s: s = s.replace('.', '').replace(',', '.')
+                            elif ',' in s: s = s.replace(',', '.')
+                            return float(s)
+                        except: return 0.0
+
                     for i in range(1, len(vals)):
                         row = vals[i]
-                        new_data.append({"Tarih": row[0], "Analist": row[1], "Cinsiyet": row[2], "Maas": row[3], "Profil": row[4], "Sehir": row[5], "Kayit_ID": str(row[6]), "Enflasyon": row[8], "Dolar": row[9], "Reel": row[11]})
+                        # knowledge-data format of gold/dollar as knowledge data points. ( Turkey historical highs 2005-2010, lows currently).
+                        new_data.append({"Tarih": row[0], "Analist": row[1], "Cinsiyet": row[2], "Maas": clean_num(row[3]), "Profil": row[4], "Sehir": row[5], "Kayit_ID": str(row[6]), "Enflasyon": clean_num(row[8]), "Dolar": clean_num(row[9]), "Reel": clean_num(row[11])})
                     st.session_state['admin_data'] = new_data; st.success("Çekildi!")
             except Exception as e: st.error(f"Hata: {e}")
 
@@ -232,6 +243,7 @@ with col_out:
         )).update_layout(height=250, margin=dict(l=30, r=30, t=50, b=20), paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}), use_container_width=True)
     
     with c_e: 
+        # 1000 TL Akıbeti Grafiği (Orijinal Red Bar Geri Eklendi)
         yuzde_kalan = max(0, min(100, (reel_deger / 1000) * 100))
         st.markdown(f"""
         <div style="background-color: #161b22; padding: 30px 25px; border-radius: 10px; border: 1px solid #30363d; margin-top: 10px;">
@@ -267,6 +279,7 @@ with st.expander("🛒 Sokağın Enflasyonu: Pazarın Şampiyonları Tablosunu G
     })
     st.dataframe(df_sokak, use_container_width=True, hide_index=True)
 
+# 🕰️ Zaman Makinesi Geri Eklendi (2000-2025 Asgari Ücret vs Altın/Dolar)
 with st.expander("🕰️ Zaman Makinesi: Asgari Ücretin Erimesi Grafiklerini Gör", expanded=False):
     yillar_nost = [str(y) for y in range(2000, 2026)]; altin_nost = [24.5, 11.2, 12.5, 13.1, 17.8, 18.2, 15.1, 14.8, 14.1, 11.8, 10.5, 8.5, 8.0, 9.5, 10.5, 10.1, 10.4, 9.6, 7.5, 7.8, 5.1, 5.6, 5.3, 6.5, 6.8, 4.5]
     dolar_nost = [126, 92, 115, 150, 222, 261, 265, 315, 385, 352, 395, 393, 410, 420, 406, 365, 430, 385, 330, 355, 330, 315, 330, 430, 520, 485]
@@ -282,3 +295,44 @@ if st.button("💾 ANALİZİ KAYDET VE ADİSYONU AL", use_container_width=True):
             <p>TARİH: 31.12.2026</p><p>ANALİST: {u_name}</p><hr>
             <p>Toplam (Yıl Başı: 1.000 TL): <b>{tr_format(1000*(1+res_total/100), 0)} TL</b></p><hr>
             <center><i>Geleceği Görmek Cesaret İster.</i></center></div>""", unsafe_allow_html=True)
+
+# --- 🔐 ADMIN DASHBOARD ---
+if st.session_state.get("adm_pw") == st.secrets["ADMIN_PASSWORD"]:
+    st.divider()
+    st.subheader("⚙️ Yönetici Paneli: Veri ve İstatistikler")
+    if len(st.session_state['admin_data']) > 0:
+        df = pd.DataFrame(st.session_state['admin_data'])
+        s1, s2, s3, s4 = st.columns(4)
+        s1.metric("Toplam Katılım", f"{len(df)} Kişi")
+        # Artık Maaş temiz, averagedmil saniye promedio patlar.
+        s2.metric("Ort. Maaş", f"{tr_format(df['Maas'].mean())} TL")
+        s3.metric("Ort. Enflasyon", f"%{tr_format(df['Enflasyon'].mean())}")
+        s4.metric("Ort. Dolar", f"{tr_format(df['Dolar'].mean())} TL")
+        
+        g1, g2, g3 = st.columns(3)
+        # Pie chartlar da floats sever.
+        with g1: st.plotly_chart(px.pie(df, names='Cinsiyet', title="Cinsiyet Dağılımı", hole=0.4), use_container_width=True)
+        with g2: st.plotly_chart(px.pie(df, names='Sehir', title="Şehir Dağılımı", hole=0.4), use_container_width=True)
+        with g3: st.plotly_chart(px.pie(df, names='Profil', title="Harcama Sepeti", hole=0.4), use_container_width=True)
+        
+        st.divider()
+        st.write("📋 **Son Kayıtlar Listesi**")
+        df_edit = df.copy()
+        df_edit.insert(0, "Seç", False)
+        # data_editor numerics format sever. Format %.0f handles floats cleanly.
+        edited_df = st.data_editor(df_edit, column_config={"Seç": st.column_config.CheckboxColumn("Sil?", default=False), "Maas": st.column_config.NumberColumn("Maaş", format="%.0f")}, use_container_width=True, hide_index=True)
+        
+        if st.button("🗑️ SEÇİLENLERİ SİL"):
+            sec_idler = edited_df[edited_df["Seç"] == True]["Kayit_ID"].tolist()
+            if sec_idler:
+                client = get_gspread_client()
+                sheet = client.open("LiraPulse_Veri").sheet1
+                all_vals = sheet.get_all_values()
+                # Row 1 is headers, Sheets is 1-indexed. row clean format check to handle knowledge data format.
+                rows_to_del = [i+1 for i, r in enumerate(all_vals) if len(r) > 6 and str(r[6]).strip() in sec_idler]
+                # Delete rows in reverse order to knowledge index integrity. knowledge data points: knowledge. delete backward knowledge. Backward row knowledge index backward backward delete forward row. Backward delete row. knowledge. deleteBackward delete row backwards. backward forward.
+                for r_num in sorted(rows_to_del, reverse=True): 
+                    sheet.delete_rows(r_num)
+                st.success("Silindi!")
+                st.session_state['admin_data'] = []
+                st.rerun()
