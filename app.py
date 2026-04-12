@@ -102,7 +102,7 @@ st.markdown("""<style>
             font-size: 10px !important; padding: 0 !important; min-height: 2rem !important; width: 100% !important;
         }
 
-        /* 3. SİHİRLİ BÖLÜM: SLIDER VE ANALİZ YAN YANA */
+        /* 3. SİHİRLİ BÖLÜM: SLIDER VE ANALİZ YAN YANA (Düzeltildi) */
         /* Ana kolonu relative yapıyoruz ki içindeki kutuyu sağ alta sabitleyebilelim */
         div[data-testid="column"]:nth-child(1) {
             position: relative !important;
@@ -115,16 +115,16 @@ st.markdown("""<style>
         }
         div[data-testid="stSlider"] p { font-size: 12px !important; margin-bottom: -5px !important; }
         
-        /* Q1+Tahmin=YılSonu Kutusu Sağdaki Boşluğa Oturtuluyor */
+        /* Q1+Tahmin=YılSonu Kutusu Sağdaki Boşluğa Tam Oturtuluyor */
         .mobile-live-preview {
             display: flex !important;
             flex-direction: column;
             justify-content: center;
             position: absolute !important;
             right: 0;
-            bottom: 25px; /* Sliderların tabanıyla hizalı */
-            width: 40%;
-            height: 260px; /* Slider yüksekliğine eşit */
+            bottom: 10px; /* Sliderların tabanıyla milimetrik hizalandı, artık yukarı uçmayacak */
+            width: 42%; /* Sağ boşluğu tam dolduracak genişlik */
+            height: 260px; /* 4 slider'ın kapladığı yüksekliğe eşit */
             background: linear-gradient(145deg, #161b22, #1e1e26);
             border: 1px solid #ff4b4b;
             border-radius: 10px;
@@ -132,7 +132,6 @@ st.markdown("""<style>
             text-align: center;
             box-shadow: 0px 4px 15px rgba(255, 75, 75, 0.15);
             z-index: 99;
-            /* Güvenli kaydırma alanı (Thumb Safe Scroll) */
             touch-action: pan-y;
         }
         
@@ -217,10 +216,18 @@ with col_in:
     if s5.button("🔥 ENAG", use_container_width=True): st.session_state.update({'d_val': 55, 'g_val': 70, 'k_val': 75, 'u_val': 60}); st.rerun()
     if s6.button("🌋 Kriz", use_container_width=True): st.session_state.update({'d_val': 100, 'g_val': 120, 'k_val': 130, 'u_val': 110}); st.rerun()
     
-    # --- 📱 MOBİL İÇİN ANLIK GÖSTERGE (Sliderların SAĞINA sabitlenir) ---
+    st.divider()
+    
+    # 1. Sliderlar
+    d_a = st.slider("💵 Dolar Artışı (%)", 0, 150, key='d_val')
+    g_a = st.slider("🛒 Gıda Artışı (%)", 0, 150, key='g_val')
+    k_a = st.slider("🏠 Kira Artışı (%)", 0, 150, key='k_val')
+    u_a = st.slider("🚗 Ulaşım Artışı (%)", 0, 150, key='u_val')
+
+    # 2. MOBİL İÇİN ANLIK GÖSTERGE (Tam olarak sliderların altına yazıldı, böylece sağ boşluğa kilitlenecek)
     weights = {"Öğrenci": [0.25, 0.20, 0.40, 0.15], "Mavi Yaka": [0.10, 0.45, 0.30, 0.15], "Beyaz Yaka": [0.20, 0.25, 0.35, 0.20], "Emekli": [0.05, 0.55, 0.30, 0.10], "Kamu Personeli": [0.15, 0.30, 0.35, 0.20]}
     w = weights[u_prof]
-    s_enf_live = round((st.session_state.d_val*w[0] + st.session_state.g_val*w[1] + st.session_state.k_val*w[2] + st.session_state.u_val*w[3]), 2)
+    s_enf_live = round((d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3]), 2)
     res_total_live = round(Q1_ENF + s_enf_live, 2)
     
     st.markdown(f"""
@@ -235,13 +242,6 @@ with col_in:
         <div style="color:#ff4b4b; font-size:20px; font-weight:bold;">%{tr_format(res_total_live)}</div>
     </div>
     """, unsafe_allow_html=True)
-    # -------------------------------------------------------------
-
-    st.divider()
-    d_a = st.slider("💵 Dolar Artışı (%)", 0, 150, key='d_val')
-    g_a = st.slider("🛒 Gıda Artışı (%)", 0, 150, key='g_val')
-    k_a = st.slider("🏠 Kira Artışı (%)", 0, 150, key='k_val')
-    u_a = st.slider("🚗 Ulaşım Artışı (%)", 0, 150, key='u_val')
 
 # --- 🧮 MASAÜSTÜ HESAPLAMALARI ---
 s_enf = round((d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3]), 2)
