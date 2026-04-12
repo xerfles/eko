@@ -41,7 +41,7 @@ def tr_format(number, decimals=2):
             return s
     except: return "0"
 
-# --- 🌐 CANLI DOLAR ÇEKİCİ (ZIRHLI VE HIZLI) ---
+# --- 🌐 CANLI DOLAR ÇEKİCİ ---
 @st.cache_data(ttl=3600)
 def get_live_usd():
     try:
@@ -57,9 +57,8 @@ P_PS5, P_IPHONE, P_CLIO = 42999, 77999, 1795000
 
 st.set_page_config(page_title="LiraPulse: Geleceğin Faturası", layout="wide")
 
-# --- 🎨 CSS: TASARIM VE MOBİL UYUM KORUMASI ---
+# --- 🎨 CSS: TASARIM VE MOBİL UYUM ZIRHI ---
 st.markdown("""<style>
-    /* BİLGİSAYAR TASARIMI (ESKİ HALİYLE %100 AYNI KORUNDU) */
     .main { background-color: #0d1117; }
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
     .ozet-panel { background: linear-gradient(145deg, #1e1e26, #252532); padding: 25px; border-radius: 15px; border: 1px solid #30363d; text-align: center; }
@@ -68,39 +67,22 @@ st.markdown("""<style>
     .receipt-box { background-color: #fff; color: #333 !important; padding: 30px; border-radius: 10px; font-family: 'Courier New', monospace; border: 3px dashed #333; margin: 20px auto; max-width: 500px; line-height: 1.8; text-align: left; }
     .receipt-box b, .receipt-box center, .receipt-box p, .receipt-box hr { color: #333 !important; border-color: #333 !important; }
     
-    /* 📱 EFSANE MOBİL UYUM ZIRHI (Sadece Ekran Küçüldüğünde Devreye Girer) */
     @media (max-width: 768px) {
-        /* Sitenin sağa sola kaymasını (taşmayı) engelle */
         .main .block-container { padding: 1rem !important; max-width: 100% !important; overflow-x: hidden !important; }
-        
-        /* Senaryo Butonları ve Metrikleri daraltarak sıkışmayı önle */
         .stButton button { padding: 0.2rem !important; font-size: 14px !important; min-height: 2.5rem !important; }
         [data-testid="stMetric"] { padding: 10px !important; margin-bottom: 5px !important; }
         [data-testid="stMetricValue"] { font-size: 22px !important; }
-        
-        /* Özet Panelindeki büyük yazıları telefona sığdır */
         .ozet-panel { padding: 15px !important; margin-bottom: 15px !important; }
         .ozet-panel div { font-size: 12px !important; flex-wrap: wrap; }
         .ozet-panel b { font-size: 18px !important; }
-        
-        /* Adisyon Fişinin ekrandan taşmasını engelle, tam oturt */
-        .receipt-box { 
-            padding: 15px !important; 
-            margin: 10px 0 !important; 
-            width: 100% !important; 
-            max-width: 100% !important;
-            font-size: 13px !important; 
-            box-sizing: border-box !important;
-        }
-        
-        /* Grafikler ve Tabloların yarım çıkmasını engelle */
+        .receipt-box { padding: 15px !important; margin: 10px 0 !important; width: 100% !important; max-width: 100% !important; font-size: 13px !important; box-sizing: border-box !important; }
         [data-testid="stDataFrame"] { width: 100% !important; overflow-x: auto !important; }
     }
     </style>""", unsafe_allow_html=True)
 
 if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
 
-# --- 🔐 ADMIN PANELİ GİRİŞİ (SOL MENÜDE) ---
+# --- 🔐 ADMIN PANELİ ---
 if 'admin_data' not in st.session_state: st.session_state['admin_data'] = []
 
 with st.sidebar.expander("🔐 Admin Control Center"):
@@ -126,11 +108,11 @@ with st.sidebar.expander("🔐 Admin Control Center"):
                 else: st.info("Excel boş.")
             except Exception as e: st.error(f"Hata: {e}")
 
-# --- 🍞 ÜST BAŞLIK VE EKMEK ÖRNEĞİ ---
+# --- 🍞 ÜST BAŞLIK ---
 st.title("🛰️ LiraPulse: Geleceğin Faturası")
 st.markdown('<p class="ekmek-text">💡 <b>Enflasyon Nedir?</b><br>Bugün 100 liraya aldığın 10 ekmeğin, seneye aynı parayla sadece 6 tanesini alabilmendir.</p>', unsafe_allow_html=True)
 
-# --- 📈 4'LÜ TEPE METRİKLERİ ---
+# --- 📈 TEPE METRİKLERİ ---
 tm1, tm2, tm3, tm4 = st.columns(4)
 tm1.metric("💵 Güncel Dolar", f"{GUNCEL_DOLAR} TL")
 tm2.metric("📉 Q1 Enflasyon", f"%{Q1_ENF}")
@@ -166,17 +148,24 @@ with col_in:
     k_a = st.slider("🏠 Kira Artışı (%)", 0, 150, key='k_val')
     u_a = st.slider("🚗 Ulaşım Artışı (%)", 0, 150, key='u_val')
 
-# --- 🧮 HESAPLAMA ---
-weights = {"Öğrenci": [0.25, 0.20, 0.40, 0.15], "Mavi Yaka": [0.10, 0.45, 0.30, 0.15], "Beyaz Yaka": [0.20, 0.25, 0.35, 0.20], "Emekli": [0.05, 0.55, 0.30, 0.10], "Kamu Personeli": [0.15, 0.30, 0.35, 0.20]}
-w = weights[u_prof]
-s_enf = round((d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3]), 2)
-res_total = round(Q1_ENF + s_enf, 2)
-tahmini_kur = round(GUNCEL_DOLAR * (1 + d_a/100), 2)
-alim_kaybi = round((1 - (1 / (1 + res_total/100))) * 100, 2)
-reel_deger = round(1000/(1+res_total/100), 2)
+    # --- MOBİL İÇİN ANLIK GÖSTERGE ---
+    weights = {"Öğrenci": [0.25, 0.20, 0.40, 0.15], "Mavi Yaka": [0.10, 0.45, 0.30, 0.15], "Beyaz Yaka": [0.20, 0.25, 0.35, 0.20], "Emekli": [0.05, 0.55, 0.30, 0.10], "Kamu Personeli": [0.15, 0.30, 0.35, 0.20]}
+    w = weights[u_prof]
+    s_enf = round((d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3]), 2)
+    res_total = round(Q1_ENF + s_enf, 2)
+    tahmini_kur = round(GUNCEL_DOLAR * (1 + d_a/100), 2)
+    alim_kaybi = round((1 - (1 / (1 + res_total/100))) * 100, 2)
+    reel_deger = round(1000/(1+res_total/100), 2)
+    
+    st.markdown(f"""
+    <div style="background-color: rgba(255, 75, 75, 0.1); border: 1px solid #ff4b4b; padding: 10px; border-radius: 8px; text-align: center; margin-top: 15px;">
+        <span style="color: #ccc; font-size: 13px;">🔥 Anlık Yıl Sonu Tahmini</span><br>
+        <b style="color: #ff4b4b; font-size: 22px;">%{tr_format(res_total)}</b>
+    </div>
+    """, unsafe_allow_html=True)
 
 with col_out:
-    # --- YIL SONU ANALİZİ (MATEMATİKLİ YAPI) ---
+    # --- YIL SONU ANALİZİ ---
     st.markdown(f"""<div class="ozet-panel">
         <h3 style="color:#aaa; margin-bottom: 20px;">Yıl Sonu Beklenti Analizi</h3>
         <div style="display:flex; justify-content: space-around; align-items:center; margin-bottom: 15px;">
@@ -222,79 +211,70 @@ with col_out:
 
 st.divider()
 
-# --- ⚔️ YATIRIM TABLOSU ---
-st.subheader("⚔️ 2020-2025: Enflasyonu Yenenler ve Yenilenler")
-st.markdown("<small style='color:#aaa;'>Yeşil yananlar enflasyonu tokatladı, kırmızı yananlar enflasyona ezildi.</small>", unsafe_allow_html=True)
+# --- ⚔️ TABLOLAR (AÇILIR KAPANIR KUTULARA GİZLENDİ) ---
+with st.expander("⚔️ 2020-2025: Enflasyonu Yenenler ve Yenilenler Tablosunu Gör", expanded=False):
+    st.markdown("<small style='color:#aaa;'>Yeşil yananlar enflasyonu tokatladı, kırmızı yananlar enflasyona ezildi.</small>", unsafe_allow_html=True)
+    df_yatirim = pd.DataFrame({
+        "Yıl": ["2020", "2021", "2022", "2023", "2024", "2025"],
+        "Enflasyon (%)": [14.6, 36.1, 64.3, 64.8, 44.8, 25.0],
+        "TL Mevduat (%)": [12.0, 17.5, 16.0, 36.0, 51.0, 42.0],
+        "Dolar (%)": [24.8, 78.5, 40.2, 57.3, 25.1, 18.0],
+        "Gram Altın (%)": [55.9, 71.2, 42.8, 78.4, 40.5, 22.0],
+        "BIST 100 (%)": [29.1, 25.8, 196.6, 35.1, 46.2, 32.0],
+        "Devlet Tahvili (%)": [11.2, 16.8, 14.5, 28.2, 43.5, 36.0], 
+        "Emlak/Konut (%)": [30.4, 59.6, 168.0, 84.1, 38.2, 28.0]   
+    })
+    def color_cells(row):
+        enf = row["Enflasyon (%)"]
+        colors = [''] * len(row)
+        for i, col in enumerate(row.index):
+            if col not in ["Yıl", "Enflasyon (%)"]:
+                if row[col] > enf: colors[i] = 'color: #28a745; font-weight: bold;'
+                elif row[col] < enf: colors[i] = 'color: #ff4b4b; font-weight: bold;'
+                else: colors[i] = 'color: white;'
+            elif col == "Enflasyon (%)": colors[i] = 'color: white; font-weight: bold; background-color: rgba(255,255,255,0.05);'
+            else: colors[i] = 'font-weight: bold;'
+        return colors
+    styled_df = df_yatirim.style.apply(color_cells, axis=1).format({
+        "Enflasyon (%)": "{:.1f}%", "TL Mevduat (%)": "{:.1f}%", "Dolar (%)": "{:.1f}%",
+        "Gram Altın (%)": "{:.1f}%", "BIST 100 (%)": "{:.1f}%", "Devlet Tahvili (%)": "{:.1f}%", "Emlak/Konut (%)": "{:.1f}%"
+    })
+    st.dataframe(styled_df, use_container_width=True, hide_index=True)
 
-df_yatirim = pd.DataFrame({
-    "Yıl": ["2020", "2021", "2022", "2023", "2024", "2025"],
-    "Enflasyon (%)": [14.6, 36.1, 64.3, 64.8, 44.8, 25.0],
-    "TL Mevduat (%)": [12.0, 17.5, 16.0, 36.0, 51.0, 42.0],
-    "Dolar (%)": [24.8, 78.5, 40.2, 57.3, 25.1, 18.0],
-    "Gram Altın (%)": [55.9, 71.2, 42.8, 78.4, 40.5, 22.0],
-    "BIST 100 (%)": [29.1, 25.8, 196.6, 35.1, 46.2, 32.0],
-    "Devlet Tahvili (%)": [11.2, 16.8, 14.5, 28.2, 43.5, 36.0], 
-    "Emlak/Konut (%)": [30.4, 59.6, 168.0, 84.1, 38.2, 28.0]   
-})
+with st.expander("🛒 Sokağın Enflasyonu: Pazarın Şampiyonları Tablosunu Gör", expanded=False):
+    st.markdown("<small style='color:#aaa;'>Halkın cebini en çok yakanlar ve fiyatı en az artanlar (Tekil Ürün Bazında)</small>", unsafe_allow_html=True)
+    df_sokak = pd.DataFrame({
+        "Yıl": ["2020", "2021", "2022", "2023", "2024", "2025"],
+        "🔥 En Çok Artan": ["2. El Otomobil", "Ayçiçek Yağı", "Kuru Soğan", "Zeytinyağı", "Özel Okul Ücreti", "Kırmızı Et"],
+        "Artış (%)": [85.0, 130.0, 315.0, 180.0, 120.0, 95.0],
+        "❄️ En Az Artan / Düşen": ["Uçak Bileti", "Elektrik Faturası", "Sabit İnternet", "Doğalgaz", "2. El Otomobil", "Kuru Soğan"],
+        "Değişim (%)": [-15.0, 15.0, 25.0, 0.0, 10.0, 15.0]
+    })
+    def color_sokak(row):
+        colors = [''] * len(row)
+        for i, col in enumerate(row.index):
+            if col == "🔥 En Çok Artan" or col == "Artış (%)":
+                colors[i] = 'color: #ff4b4b; font-weight: bold;'
+            elif col == "❄️ En Az Artan / Düşen" or col == "Değişim (%)":
+                colors[i] = 'color: #00d4ff; font-weight: bold;'
+            else:
+                colors[i] = 'color: white; font-weight: bold;'
+        return colors
+    styled_sokak = df_sokak.style.apply(color_sokak, axis=1).format({
+        "Artış (%)": "+{:.0f}%",
+        "Değişim (%)": "{:+.0f}%"
+    })
+    st.dataframe(styled_sokak, use_container_width=True, hide_index=True)
 
-def color_cells(row):
-    enf = row["Enflasyon (%)"]
-    colors = [''] * len(row)
-    for i, col in enumerate(row.index):
-        if col not in ["Yıl", "Enflasyon (%)"]:
-            if row[col] > enf: colors[i] = 'color: #28a745; font-weight: bold;'
-            elif row[col] < enf: colors[i] = 'color: #ff4b4b; font-weight: bold;'
-            else: colors[i] = 'color: white;'
-        elif col == "Enflasyon (%)": colors[i] = 'color: white; font-weight: bold; background-color: rgba(255,255,255,0.05);'
-        else: colors[i] = 'font-weight: bold;'
-    return colors
+with st.expander("🕰️ Zaman Makinesi: Asgari Ücretin Erimesi Grafiklerini Gör", expanded=False):
+    yillar_nost = [str(y) for y in range(2000, 2026)]; altin_nost = [24.5, 11.2, 12.5, 13.1, 17.8, 18.2, 15.1, 14.8, 14.1, 11.8, 10.5, 8.5, 8.0, 9.5, 10.5, 10.1, 10.4, 9.6, 7.5, 7.8, 5.1, 5.6, 5.3, 6.5, 6.8, 4.5]
+    dolar_nost = [126, 92, 115, 150, 222, 261, 265, 315, 385, 352, 395, 393, 410, 420, 406, 365, 430, 385, 330, 355, 330, 315, 330, 430, 520, 485]
+    df_nost = pd.DataFrame({"Yıl": yillar_nost, "Gram Altın": altin_nost, "Dolar ($)": dolar_nost})
+    g1, g2 = st.columns(2)
+    with g1: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Gram Altın", title="Maaş Kaç Gram Altın?", color="Gram Altın", color_continuous_scale="Blues"), use_container_width=True)
+    with g2: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Dolar ($)", title="Maaş Kaç Dolar?", color="Dolar ($)", color_continuous_scale="Greens"), use_container_width=True)
 
-styled_df = df_yatirim.style.apply(color_cells, axis=1).format({
-    "Enflasyon (%)": "{:.1f}%", "TL Mevduat (%)": "{:.1f}%", "Dolar (%)": "{:.1f}%",
-    "Gram Altın (%)": "{:.1f}%", "BIST 100 (%)": "{:.1f}%", "Devlet Tahvili (%)": "{:.1f}%", "Emlak/Konut (%)": "{:.1f}%"
-})
-st.dataframe(styled_df, use_container_width=True, hide_index=True)
-
-# --- 🛒 SOKAĞIN ENFLASYONU ---
 st.write("")
-st.subheader("🛒 Sokağın Enflasyonu: Pazarın Şampiyonları ve Kaybedenleri")
-st.markdown("<small style='color:#aaa;'>Halkın cebini en çok yakanlar ve fiyatı en az artanlar (Tekil Ürün Bazında)</small>", unsafe_allow_html=True)
-
-df_sokak = pd.DataFrame({
-    "Yıl": ["2020", "2021", "2022", "2023", "2024", "2025"],
-    "🔥 En Çok Artan": ["2. El Otomobil", "Ayçiçek Yağı", "Kuru Soğan", "Zeytinyağı", "Özel Okul Ücreti", "Kırmızı Et"],
-    "Artış (%)": [85.0, 130.0, 315.0, 180.0, 120.0, 95.0],
-    "❄️ En Az Artan / Düşen": ["Uçak Bileti", "Elektrik Faturası", "Sabit İnternet", "Doğalgaz", "2. El Otomobil", "Kuru Soğan"],
-    "Değişim (%)": [-15.0, 15.0, 25.0, 0.0, 10.0, 15.0]
-})
-
-def color_sokak(row):
-    colors = [''] * len(row)
-    for i, col in enumerate(row.index):
-        if col == "🔥 En Çok Artan" or col == "Artış (%)":
-            colors[i] = 'color: #ff4b4b; font-weight: bold;'
-        elif col == "❄️ En Az Artan / Düşen" or col == "Değişim (%)":
-            colors[i] = 'color: #00d4ff; font-weight: bold;'
-        else:
-            colors[i] = 'color: white; font-weight: bold;'
-    return colors
-
-styled_sokak = df_sokak.style.apply(color_sokak, axis=1).format({
-    "Artış (%)": "+{:.0f}%",
-    "Değişim (%)": "{:+.0f}%"
-})
-st.dataframe(styled_sokak, use_container_width=True, hide_index=True)
-
-st.divider()
-
-# --- 🕰️ ZAMAN MAKİNESİ ---
-st.subheader("🕰️ Zaman Makinesi: Asgari Ücretin Erimesi (2000-2025)")
-yillar_nost = [str(y) for y in range(2000, 2026)]; altin_nost = [24.5, 11.2, 12.5, 13.1, 17.8, 18.2, 15.1, 14.8, 14.1, 11.8, 10.5, 8.5, 8.0, 9.5, 10.5, 10.1, 10.4, 9.6, 7.5, 7.8, 5.1, 5.6, 5.3, 6.5, 6.8, 4.5]
-dolar_nost = [126, 92, 115, 150, 222, 261, 265, 315, 385, 352, 395, 393, 410, 420, 406, 365, 430, 385, 330, 355, 330, 315, 330, 430, 520, 485]
-df_nost = pd.DataFrame({"Yıl": yillar_nost, "Gram Altın": altin_nost, "Dolar ($)": dolar_nost})
-g1, g2 = st.columns(2)
-with g1: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Gram Altın", title="Maaş Kaç Gram Altın?", color="Gram Altın", color_continuous_scale="Blues"), use_container_width=True)
-with g2: st.plotly_chart(px.bar(df_nost, x="Yıl", y="Dolar ($)", title="Maaş Kaç Dolar?", color="Dolar ($)", color_continuous_scale="Greens"), use_container_width=True)
 
 if st.button("💾 ANALİZİ KAYDET VE ADİSYONU AL", use_container_width=True):
     def f_tr(val):
@@ -325,7 +305,7 @@ if st.button("💾 ANALİZİ KAYDET VE ADİSYONU AL", use_container_width=True):
         </div>
         """, unsafe_allow_html=True)
 
-# --- 🔐 ADMIN DASHBOARD (EN ALTTA, SADECE GİRİŞ YAPILINCA ÇIKAR) ---
+# --- 🔐 ADMIN DASHBOARD ---
 if st.session_state.get("adm_pw") == st.secrets["ADMIN_PASSWORD"]:
     st.divider()
     st.subheader("⚙️ Yönetici Paneli: Veri ve İstatistikler")
