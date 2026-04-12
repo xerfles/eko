@@ -75,6 +75,9 @@ st.markdown("""<style>
     @media (max-width: 768px) {
         .main .block-container { padding: 0.5rem !important; max-width: 100% !important; overflow-x: hidden !important; }
         
+        /* ÇİFT PANEL SORUNU: Masaüstü özet panelini mobilde GİZLE */
+        .ozet-panel { display: none !important; }
+        
         /* 1. TEPE METRİKLERİ (Yan yana 2x2 ufak grid) */
         div[data-testid="stHorizontalBlock"]:has(> div:nth-child(4):last-child) {
             flex-direction: row !important; flex-wrap: wrap !important; gap: 5px 0 !important;
@@ -102,53 +105,38 @@ st.markdown("""<style>
             font-size: 10px !important; padding: 0 !important; min-height: 2rem !important; width: 100% !important;
         }
 
-        /* 3. SİHİRLİ BÖLÜM: SLIDER VE ANALİZ YAN YANA (Düzeltildi) */
-        /* Ana kolonu relative yapıyoruz ki içindeki kutuyu sağ alta sabitleyebilelim */
-        div[data-testid="column"]:nth-child(1) {
-            position: relative !important;
+        /* 3. PS5, IPHONE, CLIO YAN YANA (Sadece metrik içeren 3'lü kolonları hedefler) */
+        div[data-testid="stHorizontalBlock"]:has(> div:nth-child(3):last-child):has([data-testid="stMetric"]) {
+            flex-direction: row !important; flex-wrap: nowrap !important; justify-content: space-between !important; gap: 2px !important;
         }
-        
-        /* Sliderları sola sıkıştır %55, sağda %45 boşluk bırak */
-        div[data-testid="stSlider"] {
-            width: 55% !important;
-            margin-left: 0 !important;
+        div[data-testid="stHorizontalBlock"]:has(> div:nth-child(3):last-child):has([data-testid="stMetric"]) > div[data-testid="column"] {
+            width: 32% !important; flex: 0 0 32% !important; min-width: 32% !important;
         }
+        div[data-testid="stHorizontalBlock"]:has(> div:nth-child(3):last-child):has([data-testid="stMetric"]) [data-testid="stMetricValue"] {
+            font-size: 11px !important;
+        }
+        div[data-testid="stHorizontalBlock"]:has(> div:nth-child(3):last-child):has([data-testid="stMetric"]) [data-testid="stMetricLabel"] {
+            font-size: 9px !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
+        }
+        .bugun-etiket { font-size: 8px !important; margin-top: -5px !important; }
+
+        /* 4. SİHİRLİ BÖLÜM: SLIDER VE ANALİZ YAN YANA */
+        div[data-testid="column"]:nth-child(1) { position: relative !important; }
+        div[data-testid="stSlider"] { width: 55% !important; margin-left: 0 !important; }
         div[data-testid="stSlider"] p { font-size: 12px !important; margin-bottom: -5px !important; }
         
-        /* Q1+Tahmin=YılSonu Kutusu Sağdaki Boşluğa Tam Oturtuluyor */
         .mobile-live-preview {
-            display: flex !important;
-            flex-direction: column;
-            justify-content: center;
-            position: absolute !important;
-            right: 0;
-            bottom: 10px; /* Sliderların tabanıyla milimetrik hizalandı, artık yukarı uçmayacak */
-            width: 42%; /* Sağ boşluğu tam dolduracak genişlik */
-            height: 260px; /* 4 slider'ın kapladığı yüksekliğe eşit */
-            background: linear-gradient(145deg, #161b22, #1e1e26);
-            border: 1px solid #ff4b4b;
-            border-radius: 10px;
-            padding: 5px;
-            text-align: center;
-            box-shadow: 0px 4px 15px rgba(255, 75, 75, 0.15);
-            z-index: 99;
-            touch-action: pan-y;
+            display: flex !important; flex-direction: column; justify-content: center;
+            position: absolute !important; right: 0; bottom: 10px; width: 42%; height: 275px; 
+            background: linear-gradient(145deg, #161b22, #1e1e26); border: 1px solid #ff4b4b;
+            border-radius: 10px; padding: 5px; text-align: center;
+            box-shadow: 0px 4px 15px rgba(255, 75, 75, 0.15); z-index: 99; touch-action: pan-y;
         }
         
-        /* 4. TABLOLARI TAMAMEN KÜÇÜLT VE SIĞDIR */
-        [data-testid="stExpander"] [data-testid="stDataFrame"] {
-            zoom: 0.60; 
-            -moz-transform: scale(0.60); 
-            -moz-transform-origin: left top;
-            overflow: hidden !important;
-        }
-        [data-testid="stExpander"] [data-testid="stDataFrame"] table {
-            table-layout: fixed !important;
-            width: 100% !important;
-        }
+        /* 5. TABLOLARI TAMAMEN KÜÇÜLT VE SIĞDIR */
+        [data-testid="stExpander"] [data-testid="stDataFrame"] { zoom: 0.60; -moz-transform: scale(0.60); -moz-transform-origin: left top; overflow: hidden !important; }
+        [data-testid="stExpander"] [data-testid="stDataFrame"] table { table-layout: fixed !important; width: 100% !important; }
         
-        .ozet-panel { padding: 15px !important; margin-bottom: 15px !important; }
-        .ozet-panel b { font-size: 18px !important; }
         .receipt-box { padding: 15px !important; margin: 10px 0 !important; width: 100% !important; font-size: 13px !important; box-sizing: border-box !important; }
     }
     </style>""", unsafe_allow_html=True)
@@ -224,11 +212,12 @@ with col_in:
     k_a = st.slider("🏠 Kira Artışı (%)", 0, 150, key='k_val')
     u_a = st.slider("🚗 Ulaşım Artışı (%)", 0, 150, key='u_val')
 
-    # 2. MOBİL İÇİN ANLIK GÖSTERGE (Tam olarak sliderların altına yazıldı, böylece sağ boşluğa kilitlenecek)
+    # 2. MOBİL İÇİN ANLIK GÖSTERGE (Tahmini Kur eklendi, Masaüstünde görünmez)
     weights = {"Öğrenci": [0.25, 0.20, 0.40, 0.15], "Mavi Yaka": [0.10, 0.45, 0.30, 0.15], "Beyaz Yaka": [0.20, 0.25, 0.35, 0.20], "Emekli": [0.05, 0.55, 0.30, 0.10], "Kamu Personeli": [0.15, 0.30, 0.35, 0.20]}
     w = weights[u_prof]
     s_enf_live = round((d_a*w[0] + g_a*w[1] + k_a*w[2] + u_a*w[3]), 2)
     res_total_live = round(Q1_ENF + s_enf_live, 2)
+    tahmini_kur_live = round(GUNCEL_DOLAR * (1 + d_a/100), 2)
     
     st.markdown(f"""
     <div class="mobile-live-preview">
@@ -240,6 +229,7 @@ with col_in:
         <div style="color:#555; font-size:18px; margin: 2px 0;">=</div>
         <div style="color:#ccc; font-size:11px; font-weight:bold; border-top:1px solid #333; padding-top:5px;">Yıl Sonu</div>
         <div style="color:#ff4b4b; font-size:20px; font-weight:bold;">%{tr_format(res_total_live)}</div>
+        <div style="color:#aaa; font-size:10px; margin-top:5px;">Kur: <b style="color:#fff;">{tr_format(tahmini_kur_live)} TL</b></div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -251,7 +241,7 @@ alim_kaybi = round((1 - (1 / (1 + res_total/100))) * 100, 2)
 reel_deger = round(1000/(1+res_total/100), 2)
 
 with col_out:
-    # --- YIL SONU ANALİZİ ---
+    # --- YIL SONU ANALİZİ (Masaüstünde görünür, mobilde gizli) ---
     st.markdown(f"""<div class="ozet-panel">
         <h3 style="color:#aaa; margin-bottom: 20px;">Yıl Sonu Beklenti Analizi</h3>
         <div style="display:flex; justify-content: space-around; align-items:center; margin-bottom: 15px;">
