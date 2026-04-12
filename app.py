@@ -57,7 +57,7 @@ P_PS5, P_IPHONE, P_CLIO = 42999, 77999, 1795000
 
 st.set_page_config(page_title="LiraPulse: Geleceğin Faturası", layout="wide")
 
-# --- 🎨 CSS: TASARIM KORUMASI ---
+# --- 🎨 CSS: TASARIM VE MOBİL UYUM KORUMASI ---
 st.markdown("""<style>
     .main { background-color: #0d1117; }
     [data-testid="stMetric"] { background-color: #161b22; padding: 15px !important; border-radius: 15px; border-left: 5px solid #00d4ff; }
@@ -66,6 +66,14 @@ st.markdown("""<style>
     .ekmek-text { color: #ffbd45; font-size: 16px; margin-bottom: 25px; line-height: 1.5; }
     .receipt-box { background-color: #fff; color: #333 !important; padding: 30px; border-radius: 10px; font-family: 'Courier New', monospace; border: 3px dashed #333; margin: 20px auto; max-width: 500px; line-height: 1.8; text-align: left; }
     .receipt-box b, .receipt-box center, .receipt-box p, .receipt-box hr { color: #333 !important; border-color: #333 !important; }
+    
+    /* 📱 MOBİL EKRANLAR İÇİN ÖZEL DOKUNUŞLAR (Desktop'u etkilemez) */
+    @media (max-width: 768px) {
+        .ozet-panel { padding: 15px; }
+        .receipt-box { padding: 20px; font-size: 14px; margin: 10px auto; }
+        .ekmek-text { font-size: 14px; }
+        [data-testid="stMetric"] { margin-bottom: 10px; }
+    }
     </style>""", unsafe_allow_html=True)
 
 if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val': 55, 'k_val': 65, 'u_val': 45})
@@ -74,7 +82,6 @@ if 'd_val' not in st.session_state: st.session_state.update({'d_val': 35, 'g_val
 if 'admin_data' not in st.session_state: st.session_state['admin_data'] = []
 
 with st.sidebar.expander("🔐 Admin Control Center"):
-    # ŞİFRE ARTIK KODDA DEĞİL, GİZLİ KASADAN (SECRETS) ÇEKİLİYOR
     if st.text_input("Şifre:", type="password", key="adm_pw") == st.secrets["ADMIN_PASSWORD"]:
         st.success("Giriş Başarılı! İstatistikler sayfanın en altındadır.")
         if st.button("🔄 Verileri Excel'den Tazele", use_container_width=True):
@@ -124,12 +131,13 @@ with col_in:
     
     st.write("🔮 **Hızlı Senaryo Seçimi**")
     s1, s2, s3, s4, s5, s6 = st.columns(6)
-    if s1.button("🏦 TCMB"): st.session_state.update({'d_val': 5, 'g_val': 8, 'k_val': 7, 'u_val': 6}); st.rerun()
-    if s2.button("🌸 İyimser"): st.session_state.update({'d_val': 20, 'g_val': 32, 'k_val': 30, 'u_val': 28}); st.rerun()
-    if s3.button("📉 TÜİK"): st.session_state.update({'d_val': 12, 'g_val': 22, 'k_val': 20, 'u_val': 16}); st.rerun()
-    if s4.button("📊 Realist"): st.session_state.update({'d_val': 35, 'g_val': 48, 'k_val': 50, 'u_val': 42}); st.rerun()
-    if s5.button("🔥 ENAG"): st.session_state.update({'d_val': 55, 'g_val': 70, 'k_val': 75, 'u_val': 60}); st.rerun()
-    if s6.button("🌋 Kriz"): st.session_state.update({'d_val': 100, 'g_val': 120, 'k_val': 130, 'u_val': 110}); st.rerun()
+    # Butonlara "use_container_width=True" eklendi. Bilgisayarda şık, mobilde parmak dostu olacak.
+    if s1.button("🏦 TCMB", use_container_width=True): st.session_state.update({'d_val': 5, 'g_val': 8, 'k_val': 7, 'u_val': 6}); st.rerun()
+    if s2.button("🌸 İyimser", use_container_width=True): st.session_state.update({'d_val': 20, 'g_val': 32, 'k_val': 30, 'u_val': 28}); st.rerun()
+    if s3.button("📉 TÜİK", use_container_width=True): st.session_state.update({'d_val': 12, 'g_val': 22, 'k_val': 20, 'u_val': 16}); st.rerun()
+    if s4.button("📊 Realist", use_container_width=True): st.session_state.update({'d_val': 35, 'g_val': 48, 'k_val': 50, 'u_val': 42}); st.rerun()
+    if s5.button("🔥 ENAG", use_container_width=True): st.session_state.update({'d_val': 55, 'g_val': 70, 'k_val': 75, 'u_val': 60}); st.rerun()
+    if s6.button("🌋 Kriz", use_container_width=True): st.session_state.update({'d_val': 100, 'g_val': 120, 'k_val': 130, 'u_val': 110}); st.rerun()
     
     st.divider()
     d_a = st.slider("💵 Dolar Artışı (%)", 0, 150, key='d_val')
@@ -281,7 +289,7 @@ if st.button("💾 ANALİZİ KAYDET VE ADİSYONU AL", use_container_width=True):
         y_toplam = y_kahvalti + y_aksam
 
         st.markdown(f"""
-        <div style="background-color: #fff; color: #000; padding: 30px; font-family: 'Courier New', Courier, monospace; width: 100%; max-width: 480px; margin: 30px auto; border: 1px solid #ddd; box-shadow: 2px 2px 15px rgba(0,0,0,0.5);">
+        <div class="receipt-box">
             <center><b>🧾 LiraPulse Intelligence ADİSYON</b></center><br>
             <p style="margin:4px 0;">TARİH: 31.12.2026</p>
             <p style="margin:4px 0;">MASA: 2026 SONU</p>
@@ -297,7 +305,6 @@ if st.button("💾 ANALİZİ KAYDET VE ADİSYONU AL", use_container_width=True):
         """, unsafe_allow_html=True)
 
 # --- 🔐 ADMIN DASHBOARD (EN ALTTA, SADECE GİRİŞ YAPILINCA ÇIKAR) ---
-# ŞİFRE KONTROLÜ BURADA DA GİZLİ KASADAN (SECRETS) YAPILIYOR
 if st.session_state.get("adm_pw") == st.secrets["ADMIN_PASSWORD"]:
     st.divider()
     st.subheader("⚙️ Yönetici Paneli: Veri ve İstatistikler")
